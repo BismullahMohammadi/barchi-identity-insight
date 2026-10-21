@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { JALALI_MONTHS, formatJ, parseJalali } from "@/lib/jalali";
+import { sheetSchema } from "@/lib/sheet-schema";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell } from "@/lib/normalize";
 
@@ -43,10 +44,10 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
           const o: Record<string, string | number> = {
             label: dates[i] ? formatJ(dates[i]!).slice(5) : String(r[table.labelCol] ?? ""),
           };
-          metricCols.forEach((c) => { const key = table.headers[c]; if (key !== undefined) o[key] = typeof r[c] === "number" ? (r[c] as number) : 0; });
+          chartCols.forEach((c) => { const key = table.headers[c]; if (key !== undefined) o[key] = typeof r[c] === "number" ? (r[c] as number) : 0; });
           return o;
         }),
-    [rows, dates, metricCols, table],
+    [rows, dates, chartCols, table],
   );
 
   function exportCsv() {
@@ -108,7 +109,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
         </div>
       )}
 
-      {chartData.length > 1 && metricCols.length > 0 && (
+      {chartData.length > 1 && chartCols.length > 0 && (
         <div className="rounded-xl border bg-card p-4 shadow-card">
           <div className="h-72" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
@@ -118,7 +119,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
                 <YAxis tick={{ fontSize: 11 }} orientation="right" />
                 <Tooltip contentStyle={{ fontFamily: "Vazirmatn", direction: "rtl" }} />
                 <Legend wrapperStyle={{ fontFamily: "Vazirmatn", fontSize: 12 }} />
-                {metricCols.map((c, i) =>
+                {chartCols.map((c, i) =>
                   table.dateCol >= 0 ? (
                     <Line key={c} type="monotone" dataKey={table.headers[c] ?? `ستون ${c + 1}`} stroke={CHART_COLORS[i]} strokeWidth={2} dot={false} />
                   ) : (
