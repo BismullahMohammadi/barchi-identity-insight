@@ -17,7 +17,7 @@ export function DashboardSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold"><Settings2 className="h-6 w-6" />سیټینګونه</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-extrabold"><Settings2 className="h-6 w-6" />تنظیمات</h1>
         <p className="text-sm text-muted-foreground">د Dashboard د ښودلو او تازه کېدو تنظیمات یوازې په همدې براوزر کې ساتل کېږي.</p>
       </div>
       <section className="space-y-4 rounded-xl border bg-card p-5">
