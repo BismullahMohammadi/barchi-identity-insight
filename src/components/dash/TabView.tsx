@@ -112,7 +112,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
                   table.dateCol >= 0 ? (
                     <Line key={c} type="monotone" dataKey={table.headers[c] ?? `ستون ${c + 1}`} stroke={CHART_COLORS[i]} strokeWidth={2} dot={false} />
                   ) : (
-                    <Bar key={c} dataKey={table.headers[c]} fill={CHART_COLORS[i]} radius={[4, 4, 0, 0]} />
+                    <Bar key={c} dataKey={table.headers[c] ?? `ستون ${c + 1}`} fill={CHART_COLORS[i]} radius={[4, 4, 0, 0]} />
                   ),
                 )}
               </ChartEl>
