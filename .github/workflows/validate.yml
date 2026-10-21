@@ -1,7 +1,7 @@
 name: Validate dashboard
 on:
   push:
-    branches: [main, fix/dashboard-build-and-security]
+    branches: [main, 'fix/**']
   pull_request:
     branches: [main]
 jobs:
