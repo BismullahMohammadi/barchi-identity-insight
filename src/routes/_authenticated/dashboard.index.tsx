@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { ArrowLeft } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
-import { errorText, sheetQuery } from "@/lib/queries";
+import { errorText, sheetQuery, dailyFormsQuery } from "@/lib/queries";
 import { formatJ } from "@/lib/jalali";
 import { isTotalRow, normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
@@ -32,6 +32,7 @@ const DEMO = OVERVIEW_SLUGS.map((s) => ({ slug: s, total: null as number | null,
 
 function Overview() {
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS));
+  const daily = useQuery(dailyFormsQuery);
 
   const cards = useMemo(() => {
     if (!q.data) return null;
@@ -70,6 +71,25 @@ function Overview() {
           <DemoBadge /> لاندې شمېرې نمونه دي، اصلي معلومات نه دي. کله چې شیټ په خوندي ډول وصل شي، اصلي شمېرې ښکاري.
         </p>
       )}
+
+      <section className="rounded-xl border bg-card p-5 shadow-card" aria-label="د ورځني معرفي شويو فورمونو راپور">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-bold">د ورځې معرفي شوي فورمونه</h2>
+          <span className="text-xs text-muted-foreground">{daily.data?.tabName ?? "د ورځې ټب نه دی موندل شوی"}</span>
+        </div>
+        {daily.error && <p role="alert" className="mt-2 text-sm text-destructive">{errorText(daily.error)}</p>}
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-xs text-muted-foreground">AH2 — د ورځې مجموعه</p>
+            <p className="mt-1 text-2xl font-bold">{daily.isLoading ? "…" : daily.data?.ah2 ?? "—"}</p>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-xs text-muted-foreground">AI2 — دویم ارزښت</p>
+            <p className="mt-1 text-2xl font-bold">{daily.isLoading ? "…" : daily.data?.ai2 ?? "—"}</p>
+          </div>
+        </div>
+        {daily.data?.tabName && <p className="mt-2 text-xs text-muted-foreground">د {daily.data.date} نېټې وروستی موجود راپور — تش سیل صفر نه شمېرل کېږي</p>}
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(cards ?? DEMO.map((d) => ({ ...d, series: [], rows: 0 }))).map((c, i) => {
