@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAccess, getSheetTabs, getDailyForms } from "./sheets.functions";
+import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
 
@@ -27,10 +27,20 @@ export const dailyFormsQuery = queryOptions({
   retry: 1,
 });
 
+export const dailyCoordinationQuery = queryOptions({
+  queryKey: ["daily-coordination"],
+  queryFn: () => getDailyCoordination(),
+  refetchInterval: REFRESH_MS,
+  refetchIntervalInBackground: false,
+  retry: 1,
+});
+
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
   if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: ستاسو ایمیل د مالک په لیست کې نشته.";
   if (m.includes("SHEETS_NOT_CONNECTED")) return "د ګوګل شیټ اړیکه نه ده جوړه شوې.";
+  if (m.includes("COORDINATION_SHEETS_ERROR_403") || m.includes("COORDINATION_SHEETS_ERROR_404")) return "د هماهنګۍ Google Sheet ته د لوستلو اجازه نشته.";
+  if (m.includes("COORDINATION_SHEETS_ERROR")) return "د ثبت نام هماهنګۍ ورځنی راپور ونه لوستل شو.";
   if (m.includes("FORMS_SHEETS_ERROR_403") || m.includes("FORMS_SHEETS_ERROR_404")) return "دویم Google Sheet ته د لوستلو اجازه نشته.";
   if (m.includes("FORMS_SHEETS_ERROR")) return "د ورځنیو فورمونو شیټ لوستل ناکام شول.";
   if (m.includes("SHEETS_ERROR_429")) return "د ګوګل محدودیت؛ لږ وروسته به بیا هڅه وشي.";

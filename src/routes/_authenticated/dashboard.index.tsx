@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { ArrowLeft } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
-import { errorText, sheetQuery, dailyFormsQuery } from "@/lib/queries";
+import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { formatJ } from "@/lib/jalali";
 import { isTotalRow, normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
@@ -33,6 +33,7 @@ const DEMO = OVERVIEW_SLUGS.map((s) => ({ slug: s, total: null as number | null,
 function Overview() {
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS));
   const daily = useQuery(dailyFormsQuery);
+  const coordination = useQuery(dailyCoordinationQuery);
 
   const cards = useMemo(() => {
     if (!q.data) return null;
@@ -84,6 +85,20 @@ function Overview() {
           <p className="mt-1 text-xs text-muted-foreground">له AH2:AI2 ګډ (Merge) سیل څخه</p>
         </div>
         {daily.data?.tabName && <p className="mt-2 text-xs text-muted-foreground">د {daily.data.date} نېټې وروستی موجود راپور — که معلومات نه وي، تش حالت ښکاري</p>}
+      </section>
+
+      <section className="rounded-xl border bg-card p-5 shadow-card" aria-label="ثبت نام ته هماهنګي شوي مراجعین">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-bold">ثبت نام ته هماهنګي شوي مراجعین</h2>
+          <span className="text-xs text-muted-foreground">{coordination.data?.tabName ?? "د ورځې ټب نه دی موندل شوی"}</span>
+        </div>
+        {coordination.error && <p role="alert" className="mt-2 text-sm text-destructive">{errorText(coordination.error)}</p>}
+        <div className="mt-3 rounded-lg bg-muted/50 p-4">
+          <p className="text-sm text-muted-foreground">د ورځې هماهنګي شوي مراجعین</p>
+          <p className="mt-2 text-3xl font-extrabold tabular-nums">{coordination.isLoading ? "…" : coordination.data?.count ?? "—"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">د G3:L3 له Merge شوي سیل څخه</p>
+        </div>
+        {coordination.data?.tabName && <p className="mt-2 text-xs text-muted-foreground">د {coordination.data.date} نېټې وروستی موجود راپور</p>}
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
