@@ -28,7 +28,8 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 function TabPage() {
   const { slug } = Route.useParams();
   const tab = getTab(slug)!;
-  const q = useQuery(sheetQuery(slug === "total" ? TOTAL_REPORT_SLUGS : [slug]));
+  const settings = useDashboardSettings();
+  const q = useQuery(sheetQuery(slug === "total" ? TOTAL_REPORT_SLUGS : [slug], settingsRefreshMs(settings)));
   const grid = q.data?.tabs[0]?.grid;
 
   return (
