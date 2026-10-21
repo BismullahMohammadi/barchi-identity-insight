@@ -1,4 +1,5 @@
 import { jKey, parseJalali, toLatinDigits, type JDate } from "./jalali";
+import { SHEET_COLUMNS, headerMatches } from "./sheet-columns";
 
 export type Cell = string | number | null;
 export type NormalizedTable = {
@@ -26,7 +27,10 @@ export function isTotalRow(row: Cell[]): boolean {
 }
 
 /** Turn a raw sheet grid into a typed table: detect header, date column, numeric columns. */
-export function normalizeGrid(grid: string[][]): NormalizedTable {
+export function normalizeGrid(grid: string[][], sheetTitle?: string): NormalizedTable {
+  const mapping = sheetTitle ? SHEET_COLUMNS[sheetTitle] : undefined;
+  if (mapping && sheetTitle === "ریاست ته ګزارش") return normalizeDirectorate(grid);
+  if (mapping) return normalizeMapped(grid, mapping);
   const width = Math.max(0, ...grid.map((r) => r.length));
   const filled = (r: string[]) => r.filter((c) => String(c ?? "").trim() !== "").length;
 
@@ -72,6 +76,48 @@ export function normalizeGrid(grid: string[][]): NormalizedTable {
   const dates = rows.map((r) => (dateCol >= 0 && r[dateCol] != null ? parseJalali(String(r[dateCol])) : null));
 
   return { headers, rows, dates, dateCol, numericCols: finalNumeric, labelCol: Math.max(0, labelCol) };
+}
+
+/** Deterministic mapping from the actual sheet's header row. */
+function normalizeMapped(grid: string[][], config: import("./sheet-columns").SheetColumns): NormalizedTable {
+  const header = grid[config.headerRow] ?? [];
+  const width = Math.max(header.length, ...grid.map(r => r.length), 0);
+  const headers = Array.from({length:width},(_,i)=>String(header[i] ?? "").trim() || `ستون ${i+1}`);
+  // A source template might change: fail visibly instead of reporting incorrect totals.
+  for (const [index, expected] of Object.entries(config.expectedHeaders)) {
+    const n = Number(index);
+    if (!headerMatches(headers[n] ?? "", expected)) {
+      throw new Error(`SHEET_MAPPING_MISMATCH: ${expected}`);
+    }
+  }
+  const metricCols = config.metricCols.filter(c => c < width);
+  const candidate = grid.slice(config.headerRow+1);
+  const body = candidate.filter(r=>{
+    if (config.dateCol >= 0) return !!parseJalali(String(r[config.dateCol]??""));
+    // Yearly summary has month names and quarter/subtotal rows; only known months.
+    const label = String(r[config.labelCol]??"").trim();
+    return !!label && ["حمل","ثور","جوزا","سرطان","سراطان","اسد","سنبله","میزان","عقرب","قوس","جدی","جدي","دلو","حوت"].includes(label);
+  });
+  const rows:Cell[][] = body.map(r=>Array.from({length:width},(_,c)=>{
+    const value=String(r[c]??"").trim();
+    if (!value) return null;
+    if (metricCols.includes(c)) return parseNumber(value) ?? value;
+    return value;
+  }));
+  const dates = rows.map(r=>config.dateCol>=0?parseJalali(String(r[config.dateCol]??"")):null);
+  return { headers,rows,dates,dateCol:config.dateCol,numericCols:metricCols,labelCol:config.labelCol };
+}
+/** Row-oriented directorate report: services are rows, days are columns, total in AG.
+ * Transpose to allow meaningful per-service comparison without adding totals twice.
+ */
+function normalizeDirectorate(grid:string[][]):NormalizedTable {
+  const width = Math.max(0,...grid.map(r=>r.length));
+  const headings = grid[0] ?? [];
+  const totalCol = headings.findIndex(h=>String(h??"").trim()==="جمله");
+  if (totalCol<1) throw new Error("SHEET_MAPPING_MISMATCH: جمله");
+  const rows:Cell[][] = grid.slice(1).filter(r=>String(r[0]??"").trim()!=="")
+    .map(r=>[String(r[0]??"").trim(),parseNumber(r[totalCol])??null]);
+  return {headers:["بخشونه","مجموعه"],rows,dates:rows.map(()=>null),dateCol:-1,numericCols:[1],labelCol:0};
 }
 
 export type DateFilter = { from: JDate | null; to: JDate | null };
