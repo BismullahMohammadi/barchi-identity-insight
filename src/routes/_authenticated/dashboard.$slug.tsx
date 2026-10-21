@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${params.slug === "settings" ? "سیټینګونه" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${params.slug === "settings" ? "تنظیمات" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
     return {
       meta: [
         { title },
