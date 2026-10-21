@@ -8,6 +8,7 @@ import { errorText, sheetQuery } from "@/lib/queries";
 import { formatJ } from "@/lib/jalali";
 import { isTotalRow, normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
+import { sheetSchema } from "@/lib/sheet-schema";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
