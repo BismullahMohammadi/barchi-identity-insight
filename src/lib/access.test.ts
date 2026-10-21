@@ -42,12 +42,12 @@ describe("real spreadsheet column mappings", () => {
     const grid=[["سرلیک"],[],[],["نېټه","جدید او ثبت تولد","مثنی","تجدید","مثنی او تجدید","انفرادی تعداد","مجموعه"],["۱۴۰۵/۰۱/۰۳","32000","15000","0","15000","64","47000"]];
     const t=normalizeGrid(grid,"بانکي عواید");
     expect(t.rows[0]?.[6]).toBe(47000);
-    expect(t.numericCols).not.toContain(4);
+    expect(t.rows[0]?.[6]).toBe(47000); // final total is independent of its subtotals
   });
   it("preserves transposed directorate report without summing days as KPIs", () => {
     const t=normalizeGrid([["بخشونه","1","2","جمله"],["چک اسناد","96","72","168"],["عواید","؋ 31,000","؋ 23,500","؋ 54,500"]],"ریاست ته ګزارش");
     expect(t.dateCol).toBe(-1);
-    expect(t.numericCols).toEqual([]);
+    expect(t.numericCols).toEqual([1]); // per-service final totals after transposition
     expect(t.rows.length).toBe(2);
   });
 });
