@@ -8,6 +8,7 @@ import { errorText, sheetQuery } from "@/lib/queries";
 import { formatJ } from "@/lib/jalali";
 import { isTotalRow, normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
+import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -25,7 +26,7 @@ const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
 // Clearly labeled sample shape shown only while live data is unavailable.
-const DEMO = OVERVIEW_SLUGS.map((s, i) => ({ slug: s, total: [1200, 850000, 640, 910][i], header: "نمونه" }));
+const DEMO = OVERVIEW_SLUGS.map((s) => ({ slug: s, total: null as number | null, header: "د اصلي معلوماتو انتظار" }));
 
 function Overview() {
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS));
@@ -33,8 +34,10 @@ function Overview() {
   const cards = useMemo(() => {
     if (!q.data) return null;
     return q.data.tabs.map((t) => {
-      const n = normalizeGrid(t.grid);
-      const col = n.numericCols[0];
+      let n;
+      try { n = normalizeGrid(t.grid, t.title); }
+      catch { return { slug: t.slug, total: null, header: "د شیټ د کالمونو نقشه تایید ته اړتیا لري", series: [], rows: 0 }; }
+      const col = SHEET_COLUMNS[t.title]?.primaryCol ?? null;
       const series = col == null ? [] : n.rows
         .map((r, i) => ({ r, d: n.dates[i] }))
         .filter(({ r }) => !isTotalRow(r))
