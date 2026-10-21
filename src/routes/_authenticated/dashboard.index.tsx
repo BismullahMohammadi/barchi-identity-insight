@@ -77,21 +77,18 @@ function Overview() {
       )}
 
       {settings.showDailyVisitors && (
-        <section className="rounded-xl border bg-card p-5 shadow-card" aria-label="ورځني مراجعین">
-          <h2 className="text-lg font-extrabold">ورځني مراجعین</h2>
-          <p className="mt-1 text-xs text-muted-foreground">د هرې برخې د وروستي موجود ورځني ټب شمېره</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm font-semibold">نوي معرفي شوي مراجعین</p>
-              <p className="mt-2 text-3xl font-extrabold tabular-nums">{daily.isLoading ? "…" : daily.data?.ah2 ?? "—"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{daily.data?.tabName ?? "د ورځې ټب نشته"} · AH2:AI2</p>
-              {daily.error && <p role="alert" className="mt-2 text-xs text-destructive">{errorText(daily.error)}</p>}
+        <section className="rounded-xl border bg-card p-4 shadow-card sm:p-5" aria-label="ورځني مراجعین">
+          <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
+              <p className="text-sm text-muted-foreground">نوي معرفي شوي مراجعین</p>
+              <p className="mt-1 text-2xl font-extrabold tabular-nums">{daily.isLoading ? "…" : daily.data?.ah2 ?? "—"}</p>
+              {daily.error && <p role="alert" className="mt-1 text-xs text-destructive">{errorText(daily.error)}</p>}
             </div>
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm font-semibold">ثبت نام ته معرفي شوي مراجعین</p>
-              <p className="mt-2 text-3xl font-extrabold tabular-nums">{coordination.isLoading ? "…" : coordination.data?.count ?? "—"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{coordination.data?.tabName ?? "د ورځې ټب نشته"} · G3:L3</p>
-              {coordination.error && <p role="alert" className="mt-2 text-xs text-destructive">{errorText(coordination.error)}</p>}
+            <div className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
+              <p className="text-sm text-muted-foreground">ثبت نام ته معرفي شوي مراجعین</p>
+              <p className="mt-1 text-2xl font-extrabold tabular-nums">{coordination.isLoading ? "…" : coordination.data?.count ?? "—"}</p>
+              {coordination.error && <p role="alert" className="mt-1 text-xs text-destructive">{errorText(coordination.error)}</p>}
             </div>
           </div>
         </section>
