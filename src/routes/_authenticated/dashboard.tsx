@@ -30,7 +30,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
         <LayoutDashboard className="h-4 w-4" /> عمومي کتنه
       </Link>
-      <Link to="/dashboard/settings" className={cls} activeProps={active} onClick={onNavigate}>
+      <Link to="/dashboard/$slug" params={{slug:"settings"}} className={cls} activeProps={active} onClick={onNavigate}>
         <Settings className="h-4 w-4" /> سیټینګونه
       </Link>
       {TABS.map((t) => (
