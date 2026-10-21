@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAccess, getSheetTabs } from "./sheets.functions";
+import { getAccess, getSheetTabs, getDailyForms } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
 
@@ -19,10 +19,20 @@ export const sheetQuery = (slugs: string[]) =>
     retry: (count, err) => !String((err as Error)?.message).includes("ACCESS_DENIED") && count < 2,
   });
 
+export const dailyFormsQuery = queryOptions({
+  queryKey: ["daily-forms"],
+  queryFn: () => getDailyForms(),
+  refetchInterval: REFRESH_MS,
+  refetchIntervalInBackground: false,
+  retry: 1,
+});
+
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
   if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: ستاسو ایمیل د مالک په لیست کې نشته.";
   if (m.includes("SHEETS_NOT_CONNECTED")) return "د ګوګل شیټ اړیکه نه ده جوړه شوې.";
+  if (m.includes("FORMS_SHEETS_ERROR_403") || m.includes("FORMS_SHEETS_ERROR_404")) return "دویم Google Sheet ته د لوستلو اجازه نشته.";
+  if (m.includes("FORMS_SHEETS_ERROR")) return "د ورځنیو فورمونو شیټ لوستل ناکام شول.";
   if (m.includes("SHEETS_ERROR_429")) return "د ګوګل محدودیت؛ لږ وروسته به بیا هڅه وشي.";
   if (m.includes("SHEETS_ERROR_403") || m.includes("SHEETS_ERROR_404")) return "شیټ ته لاسرسی نشته — د شیټ اجازه وګورئ.";
   if (m.includes("SHEETS_ERROR")) return "د شیټ لوستل ناکام شول.";
