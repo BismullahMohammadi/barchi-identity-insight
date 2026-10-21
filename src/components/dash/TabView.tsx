@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { JALALI_MONTHS, formatJ, parseJalali } from "@/lib/jalali";
+import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell } from "@/lib/normalize";
 
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 2 });
 
 export function TabView({ title, grid }: { title: string; grid: string[][] }) {
-  const table = useMemo(() => normalizeGrid(grid), [grid]);
+  const table = useMemo(() => normalizeGrid(grid, title), [grid, title]);
   const [month, setMonth] = useState("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -26,7 +27,8 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
   }, [month, from, to]);
 
   const { rows, dates } = useMemo(() => filterByDate(table, range), [table, range]);
-  const metricCols = table.numericCols.slice(0, 5);
+  const primary = SHEET_COLUMNS[title]?.primaryCol;
+  const metricCols = [...table.numericCols].sort((a,b) => Number(b === primary) - Number(a === primary)).slice(0, 5);
 
   const chartData = useMemo(
     () =>
