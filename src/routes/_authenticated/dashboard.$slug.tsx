@@ -4,15 +4,17 @@ import { SyncBar } from "@/components/dash/SyncBar";
 import { TabView } from "@/components/dash/TabView";
 import { errorText, sheetQuery } from "@/lib/queries";
 import { getTab, TOTAL_REPORT_SLUGS } from "@/lib/tabs";
+import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
+import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { TotalReportExtras } from "@/components/dash/TotalReportExtras";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
-    if (!getTab(params.slug)) throw notFound();
+    if (params.slug !== "settings" && !getTab(params.slug)) throw notFound();
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${t?.label ?? "پاڼه"} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${params.slug === "settings" ? "سیټینګونه" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
     return {
       meta: [
         { title },
@@ -27,6 +29,11 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 
 function TabPage() {
   const { slug } = Route.useParams();
+  if (slug === "settings") return <DashboardSettingsPage />;
+  return <ReportPage slug={slug} />;
+}
+
+function ReportPage({slug}:{slug:string}) {
   const tab = getTab(slug)!;
   const settings = useDashboardSettings();
   const q = useQuery(sheetQuery(slug === "total" ? TOTAL_REPORT_SLUGS : [slug], settingsRefreshMs(settings)));
