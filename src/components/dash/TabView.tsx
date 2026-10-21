@@ -34,6 +34,8 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
   const primary = SHEET_COLUMNS[title]?.primaryCol;
   const metricCols = [...table.numericCols].sort((a,b) => Number(b === primary) - Number(a === primary)).slice(0, 5);
 
+  const chartCols = (sheetSchema(title)?.chartMetrics ?? metricCols).filter(c => table.numericCols.includes(c)).slice(0, 5);
+
   const chartData = useMemo(
     () =>
       rows
