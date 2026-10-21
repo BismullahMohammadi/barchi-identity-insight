@@ -34,7 +34,9 @@ function Overview() {
   const cards = useMemo(() => {
     if (!q.data) return null;
     return q.data.tabs.map((t) => {
-      const n = normalizeGrid(t.grid, t.title);
+      let n;
+      try { n = normalizeGrid(t.grid, t.title); }
+      catch { return { slug: t.slug, total: null, header: "د شیټ د کالمونو نقشه تایید ته اړتیا لري", series: [], rows: 0 }; }
       const col = SHEET_COLUMNS[t.title]?.primaryCol ?? null;
       const series = col == null ? [] : n.rows
         .map((r, i) => ({ r, d: n.dates[i] }))
