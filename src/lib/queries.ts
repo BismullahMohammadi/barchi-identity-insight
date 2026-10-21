@@ -10,27 +10,27 @@ export const accessQuery = queryOptions({
   retry: false,
 });
 
-export const sheetQuery = (slugs: string[]) =>
+export const sheetQuery = (slugs: string[], refreshMs = REFRESH_MS) =>
   queryOptions({
     queryKey: ["sheet", ...slugs],
     queryFn: () => getSheetTabs({ data: { slugs } }),
-    refetchInterval: REFRESH_MS,
+    refetchInterval: refreshMs,
     refetchIntervalInBackground: false,
     retry: (count, err) => !String((err as Error)?.message).includes("ACCESS_DENIED") && count < 2,
   });
 
-export const dailyFormsQuery = queryOptions({
+export const dailyFormsQuery = (refreshMs = REFRESH_MS) => queryOptions({
   queryKey: ["daily-forms"],
   queryFn: () => getDailyForms(),
-  refetchInterval: REFRESH_MS,
+  refetchInterval: refreshMs,
   refetchIntervalInBackground: false,
   retry: 1,
 });
 
-export const dailyCoordinationQuery = queryOptions({
+export const dailyCoordinationQuery = (refreshMs = REFRESH_MS) => queryOptions({
   queryKey: ["daily-coordination"],
   queryFn: () => getDailyCoordination(),
-  refetchInterval: REFRESH_MS,
+  refetchInterval: refreshMs,
   refetchIntervalInBackground: false,
   retry: 1,
 });

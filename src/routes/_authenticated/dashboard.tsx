@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, ShieldAlert, FileSpreadsheet } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, ShieldAlert, FileSpreadsheet, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,9 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex flex-col gap-1">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
         <LayoutDashboard className="h-4 w-4" /> عمومي کتنه
+      </Link>
+      <Link to="/dashboard/$slug" params={{slug:"settings"}} className={cls} activeProps={active} onClick={onNavigate}>
+        <Settings className="h-4 w-4" /> سیټینګونه
       </Link>
       {TABS.map((t) => (
         <Link key={t.slug} to="/dashboard/$slug" params={{ slug: t.slug }} className={cls} activeProps={active} onClick={onNavigate}>

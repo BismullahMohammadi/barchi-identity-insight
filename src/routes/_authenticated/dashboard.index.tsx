@@ -11,6 +11,7 @@ import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
 import { sheetSchema } from "@/lib/sheet-schema";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { getSummaryMetrics } from "@/lib/summary-metrics";
+import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -31,9 +32,11 @@ const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--cha
 const DEMO = OVERVIEW_SLUGS.map((s) => ({ slug: s, total: null as number | null, header: "د اصلي معلوماتو انتظار" }));
 
 function Overview() {
-  const q = useQuery(sheetQuery(OVERVIEW_SLUGS));
-  const daily = useQuery(dailyFormsQuery);
-  const coordination = useQuery(dailyCoordinationQuery);
+  const settings = useDashboardSettings();
+  const refreshMs = settingsRefreshMs(settings);
+  const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
+  const daily = useQuery(dailyFormsQuery(refreshMs));
+  const coordination = useQuery(dailyCoordinationQuery(refreshMs));
 
   const cards = useMemo(() => {
     if (!q.data) return null;
@@ -73,39 +76,32 @@ function Overview() {
         </p>
       )}
 
-      <section className="rounded-xl border bg-card p-5 shadow-card" aria-label="د ورځني معرفي شويو فورمونو راپور">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-bold">د ورځې معرفي شوي فورمونه</h2>
-          <span className="text-xs text-muted-foreground">{daily.data?.tabName ?? "د ورځې ټب نه دی موندل شوی"}</span>
-        </div>
-        {daily.error && <p role="alert" className="mt-2 text-sm text-destructive">{errorText(daily.error)}</p>}
-        <div className="mt-3 rounded-lg bg-muted/50 p-4">
-          <p className="text-sm text-muted-foreground">د ورځې د معرفي شویو فورمونو مجموعه</p>
-          <p className="mt-2 text-3xl font-extrabold tabular-nums">{daily.isLoading ? "…" : daily.data?.ah2 ?? "—"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">له AH2:AI2 ګډ (Merge) سیل څخه</p>
-        </div>
-        {daily.data?.tabName && <p className="mt-2 text-xs text-muted-foreground">د {daily.data.date} نېټې وروستی موجود راپور — که معلومات نه وي، تش حالت ښکاري</p>}
-      </section>
+      {settings.showDailyVisitors && (
+        <section className="rounded-xl border bg-card p-5 shadow-card" aria-label="ورځني مراجعین">
+          <h2 className="text-lg font-extrabold">ورځني مراجعین</h2>
+          <p className="mt-1 text-xs text-muted-foreground">د هرې برخې د وروستي موجود ورځني ټب شمېره</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-sm font-semibold">نوي معرفي شوي مراجعین</p>
+              <p className="mt-2 text-3xl font-extrabold tabular-nums">{daily.isLoading ? "…" : daily.data?.ah2 ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{daily.data?.tabName ?? "د ورځې ټب نشته"} · AH2:AI2</p>
+              {daily.error && <p role="alert" className="mt-2 text-xs text-destructive">{errorText(daily.error)}</p>}
+            </div>
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-sm font-semibold">ثبت نام ته معرفي شوي مراجعین</p>
+              <p className="mt-2 text-3xl font-extrabold tabular-nums">{coordination.isLoading ? "…" : coordination.data?.count ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{coordination.data?.tabName ?? "د ورځې ټب نشته"} · G3:L3</p>
+              {coordination.error && <p role="alert" className="mt-2 text-xs text-destructive">{errorText(coordination.error)}</p>}
+            </div>
+          </div>
+        </section>
+      )}
 
-      <section className="rounded-xl border bg-card p-5 shadow-card" aria-label="ثبت نام ته هماهنګي شوي مراجعین">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-bold">ثبت نام ته هماهنګي شوي مراجعین</h2>
-          <span className="text-xs text-muted-foreground">{coordination.data?.tabName ?? "د ورځې ټب نه دی موندل شوی"}</span>
-        </div>
-        {coordination.error && <p role="alert" className="mt-2 text-sm text-destructive">{errorText(coordination.error)}</p>}
-        <div className="mt-3 rounded-lg bg-muted/50 p-4">
-          <p className="text-sm text-muted-foreground">د ورځې هماهنګي شوي مراجعین</p>
-          <p className="mt-2 text-3xl font-extrabold tabular-nums">{coordination.isLoading ? "…" : coordination.data?.count ?? "—"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">د G3:L3 له Merge شوي سیل څخه</p>
-        </div>
-        {coordination.data?.tabName && <p className="mt-2 text-xs text-muted-foreground">د {coordination.data.date} نېټې وروستی موجود راپور</p>}
-      </section>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={settings.compactCards ? "grid gap-2 sm:grid-cols-2 xl:grid-cols-4" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"}>
         {(cards ?? DEMO.map((d) => ({ ...d, series: [], rows: 0 }))).map((c, i) => {
           const tab = getTab(c.slug)!;
           return (
-            <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className="group rounded-xl border bg-card p-5 shadow-card transition-transform hover:-translate-y-0.5">
+            <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className={settings.compactCards ? "group rounded-xl border bg-card p-3 shadow-card transition-transform hover:-translate-y-0.5" : "group rounded-xl border bg-card p-5 shadow-card transition-transform hover:-translate-y-0.5"}>
               <div className="flex items-center justify-between">
                 <h3 className="font-bold">{tab.label}</h3>
                 {demo ? <DemoBadge /> : <ArrowLeft className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-x-1" />}
@@ -123,7 +119,7 @@ function Overview() {
               {c.slug === "revenue" && extras && (
                 <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">د مثنی او تجدید عواید: <strong className="text-foreground">{extras.serviceRevenue.toLocaleString("fa-AF")} AFN</strong></div>
               )}
-              {c.series.length > 1 && (
+              {settings.showCharts && c.series.length > 1 && (
                 <div className="mt-3 h-16" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={c.series}>
