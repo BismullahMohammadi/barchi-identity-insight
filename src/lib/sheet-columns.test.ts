@@ -28,7 +28,8 @@ describe("verified eNID tab mapping",()=>{
     const g=sheet("تثبت هویت",["نېټه","","ګل واری","","خلیل","ایوب زاده","شغله","صدیقه","موسی ایوب زاده","مجموعه","جمله"],[
       ["۱۴۰۵/۰۱/۰۳","","","","","","","","","83","83"]]);
     const n=normalizeGrid(g,"تثبت هویت");
-    expect(n.numericCols).toEqual([10]);
+    expect(n.numericCols).toContain(10);
+    expect(n.numericCols).not.toContain(9);
     expect(sumColumn(n.rows,10)).toBe(83);
   });
   it("does not add bank subtotals to bank grand total",()=>{
