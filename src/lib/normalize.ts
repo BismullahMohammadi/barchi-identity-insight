@@ -1,4 +1,5 @@
 import { jKey, parseJalali, toLatinDigits, type JDate } from "./jalali";
+import { sheetSchema } from "./sheet-schema";
 import { SHEET_COLUMNS, headerMatches } from "./sheet-columns";
 
 export type Cell = string | number | null;
