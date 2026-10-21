@@ -84,3 +84,50 @@ export const getDailyForms = createServerFn({ method: "GET" })
     const value=(i:number):string|null=>row[i]==null||String(row[i]).trim()===""?null:String(row[i]).trim();
     return {tabName:match.name,date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,ah2:value(0),fetchedAt:Date.now()};
   });
+
+/**
+ * Daily registration coordination — G3:L3 is one merged cell, anchored at G3.
+ * Source: جدول هماهنگی سال 1405. Read only; no modification to the source.
+ */
+const COORDINATION_SPREADSHEET_ID = "17XdiY4dWl_K5WbK1owVulYmglql1pI6Twe_2Io6ka_I";
+export type DailyCoordinationPayload = {
+  tabName: string | null;
+  date: string | null;
+  count: string | null;
+  fetchedAt: number;
+};
+export const getDailyCoordination = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<DailyCoordinationPayload> => {
+    setResponseHeader("Cache-Control", "private, no-store");
+    if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
+    const lovableKey=process.env["LOVABLE_API_KEY"];
+    const sheetsKey=process.env["GOOGLE_SHEETS_API_KEY"];
+    if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
+    const headers={Authorization:`Bearer ${lovableKey}`,"X-Connection-Api-Key":sheetsKey};
+    const metaResponse=await fetch(
+      `${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}?fields=sheets(properties(title))`,
+      {method:"GET",headers},
+    );
+    if (!metaResponse.ok) throw new Error(`COORDINATION_SHEETS_ERROR_${metaResponse.status}`);
+    const meta=await metaResponse.json() as {sheets?:{properties?:{title?:string}}[]};
+    const names=(meta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>typeof x==="string");
+    const match=selectDailyTab(names,todayJalali());
+    if (!match) return {tabName:null,date:null,count:null,fetchedAt:Date.now()};
+    const escaped=match.name.replace(/'/g,"''");
+    const range=encodeURIComponent(`'${escaped}'!G3`);
+    const response=await fetch(
+      `${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE`,
+      {method:"GET",headers},
+    );
+    if (!response.ok) throw new Error(`COORDINATION_SHEETS_ERROR_${response.status}`);
+    const data=await response.json() as {values?:unknown[][]};
+    const raw=data.values?.[0]?.[0];
+    const count=raw===undefined||raw===null||String(raw).trim()==="" ? null : String(raw).trim();
+    return {
+      tabName:match.name,
+      date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,
+      count,
+      fetchedAt:Date.now(),
+    };
+  });
