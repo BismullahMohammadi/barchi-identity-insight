@@ -25,20 +25,43 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const cls = "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent";
   const active = { className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` };
+  const groups = [
+    { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
+    { title: "مالي راپورونه", slugs: ["revenue", "bank"] },
+    { title: "نور راپورونه", slugs: ["directorate", "weekly", "annual"] },
+  ];
   return (
-    <nav className="flex flex-col gap-1">
+    <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-3">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
-        <LayoutDashboard className="h-4 w-4" /> عمومي کتنه
+        <LayoutDashboard className="h-4 w-4 shrink-0" /> عمومي کتنه
       </Link>
-      <Link to="/dashboard/$slug" params={{slug:"settings"}} className={cls} activeProps={active} onClick={onNavigate}>
-        <Settings className="h-4 w-4" /> سیټینګونه
-      </Link>
-      {TABS.map((t) => (
-        <Link key={t.slug} to="/dashboard/$slug" params={{ slug: t.slug }} className={cls} activeProps={active} onClick={onNavigate}>
-          <FileSpreadsheet className="h-4 w-4 opacity-70" /> {t.label}
-        </Link>
+      {groups.map((group) => (
+        <div key={group.title} className="space-y-1">
+          <p className="px-3 pb-1 pt-2 text-xs font-semibold text-sidebar-foreground/60">{group.title}</p>
+          {group.slugs.map((slug) => {
+            const tab = TABS.find((item) => item.slug === slug);
+            if (!tab) return null;
+            return (
+              <Link key={slug} to="/dashboard/$slug" params={{ slug }}
+                className={cls} activeProps={active} onClick={onNavigate}>
+                <FileSpreadsheet className="h-4 w-4 shrink-0 opacity-70" />
+                <span className="min-w-0 truncate">{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       ))}
     </nav>
+  );
+}
+function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
+  const cls = "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent";
+  return (
+    <Link to="/dashboard/$slug" params={{ slug: "settings" }} className={cls}
+      activeProps={{ className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` }}
+      onClick={onNavigate}>
+      <Settings className="h-4 w-4 shrink-0" /> تنظیمات
+    </Link>
   );
 }
 
@@ -64,17 +87,21 @@ function DashboardLayout() {
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="no-print hidden w-64 shrink-0 bg-sidebar p-5 text-sidebar-foreground md:block">
-        <div className="sticky top-5">
+      <aside className="no-print hidden w-64 shrink-0 bg-sidebar p-4 text-sidebar-foreground md:block">
+        <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
-          <Nav />
+          <div className="min-h-0 flex-1 overflow-y-auto pe-1"><Nav /></div>
+          <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>
         </div>
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-72 bg-sidebar p-5 text-sidebar-foreground">
+        <SheetContent side="right" className="w-72 overflow-y-auto bg-sidebar p-5 text-sidebar-foreground">
           <SheetTitle className="sr-only">مینو</SheetTitle>
-          {brand}
-          <Nav onNavigate={() => setOpen(false)} />
+          <div className="flex max-h-full flex-col">
+            {brand}
+            <div className="min-h-0 flex-1 overflow-y-auto"><Nav onNavigate={() => setOpen(false)} /></div>
+            <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>
+          </div>
         </SheetContent>
       </Sheet>
       <div className="print-full flex-1 min-w-0">
