@@ -10,6 +10,7 @@ import { isTotalRow, normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
 import { sheetSchema } from "@/lib/sheet-schema";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
+import { getSummaryMetrics } from "@/lib/summary-metrics";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -34,7 +35,7 @@ function Overview() {
 
   const cards = useMemo(() => {
     if (!q.data) return null;
-    return q.data.tabs.map((t) => {
+    return q.data.tabs.filter(t => t.slug !== "services").map((t) => {
       let n;
       try { n = normalizeGrid(t.grid, t.title); }
       catch { return { slug: t.slug, total: null, header: "د شیټ د کالمونو نقشه تایید ته اړتیا لري", series: [], rows: 0 }; }
@@ -48,6 +49,9 @@ function Overview() {
   }, [q.data]);
 
   const demo = !cards;
+  const servicesGrid = q.data?.tabs.find(t => t.slug === "services")?.grid;
+  let extras: ReturnType<typeof getSummaryMetrics> | null = null;
+  try { if (servicesGrid) extras = getSummaryMetrics(servicesGrid); } catch { /* The sheet mapping error is shown on its detail page. */ }
 
   return (
     <div className="space-y-6">
@@ -80,6 +84,15 @@ function Overview() {
               <p className="mt-3 text-3xl font-extrabold" style={{ color: COLORS[i] }}>
                 {q.isLoading ? "…" : c.total == null ? "—" : fmt(c.total)}
               </p>
+              {c.slug === "total" && extras && (
+                <div className="mt-3 flex flex-wrap gap-3 border-t pt-3 text-xs text-muted-foreground">
+                  <span>مثنی: <strong className="text-foreground">{extras.duplicate.toLocaleString("fa-AF")}</strong></span>
+                  <span>تجدید: <strong className="text-foreground">{extras.renewal.toLocaleString("fa-AF")}</strong></span>
+                </div>
+              )}
+              {c.slug === "revenue" && extras && (
+                <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">د مثنی او تجدید عواید: <strong className="text-foreground">{extras.serviceRevenue.toLocaleString("fa-AF")} AFN</strong></div>
+              )}
               {c.series.length > 1 && (
                 <div className="mt-3 h-16" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
