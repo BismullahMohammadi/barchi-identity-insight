@@ -38,7 +38,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
           const o: Record<string, string | number> = {
             label: dates[i] ? formatJ(dates[i]!).slice(5) : String(r[table.labelCol] ?? ""),
           };
-          metricCols.forEach((c) => (o[table.headers[c]] = typeof r[c] === "number" ? (r[c] as number) : 0));
+          metricCols.forEach((c) => { const key = table.headers[c]; if (key !== undefined) o[key] = typeof r[c] === "number" ? (r[c] as number) : 0; });
           return o;
         }),
     [rows, dates, metricCols, table],
@@ -110,7 +110,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
                 <Legend wrapperStyle={{ fontFamily: "Vazirmatn", fontSize: 12 }} />
                 {metricCols.map((c, i) =>
                   table.dateCol >= 0 ? (
-                    <Line key={c} type="monotone" dataKey={table.headers[c]} stroke={CHART_COLORS[i]} strokeWidth={2} dot={false} />
+                    <Line key={c} type="monotone" dataKey={table.headers[c] ?? `ستون ${c + 1}`} stroke={CHART_COLORS[i]} strokeWidth={2} dot={false} />
                   ) : (
                     <Bar key={c} dataKey={table.headers[c]} fill={CHART_COLORS[i]} radius={[4, 4, 0, 0]} />
                   ),
