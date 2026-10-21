@@ -56,7 +56,6 @@ export type DailyFormsPayload = {
   tabName: string | null;
   date: string | null;
   ah2: string | null;
-  ai2: string | null;
   fetchedAt: number;
 };
 export const getDailyForms = createServerFn({ method: "GET" })
@@ -74,13 +73,14 @@ export const getDailyForms = createServerFn({ method: "GET" })
     const metadata=await metadataResponse.json() as {sheets?:{properties?:{title?:string}}[]};
     const names=(metadata.sheets ?? []).map(s=>s.properties?.title).filter((x):x is string=>typeof x==="string");
     const match=selectDailyTab(names,todayJalali());
-    if (!match) return {tabName:null,date:null,ah2:null,ai2:null,fetchedAt:Date.now()};
+    if (!match) return {tabName:null,date:null,ah2:null,fetchedAt:Date.now()};
     const escaped=match.name.replace(/'/g,"''");
-    const range=encodeURIComponent(`'${escaped}'!AH2:AI2`);
+    // AH2:AI2 is one merged cell; Google Sheets stores its value in AH2 only.
+    const range=encodeURIComponent(`'${escaped}'!AH2`);
     const response=await fetch(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE`,{method:"GET",headers});
     if (!response.ok) throw new Error(`FORMS_SHEETS_ERROR_${response.status}`);
     const body=await response.json() as {values?:unknown[][]};
     const row=body.values?.[0] ?? [];
     const value=(i:number):string|null=>row[i]==null||String(row[i]).trim()===""?null:String(row[i]).trim();
-    return {tabName:match.name,date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,ah2:value(0),ai2:value(1),fetchedAt:Date.now()};
+    return {tabName:match.name,date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,ah2:value(0),fetchedAt:Date.now()};
   });
