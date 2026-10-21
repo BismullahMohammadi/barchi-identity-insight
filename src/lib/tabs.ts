@@ -13,10 +13,12 @@ export const TABS: TabDef[] = [
   { slug: "distribution", title: "توزیع", label: "توزیع", description: "توزیع شوې تذکرې" },
   { slug: "directorate", title: "ریاست ته ګزارش", label: "ریاست ته ګزارش", description: "ریاست ته استول شوی ګزارش" },
   { slug: "weekly", title: "پاس شوي دوسیې (هفته وار)", label: "پاس شوي دوسیې (هفته وار)", description: "هفته وار پاس شوي دوسیې" },
+  { slug: "arrivals", title: "راسیدلې تذکرې", label: "د تذکرو انتقالات", description: "مرکز ته را رسېدلې او ناقصې تذکرې" },
   { slug: "annual", title: "کالنی ګزارش", label: "کالنی ګزارش", description: "د ۱۴۰۵ کال لنډیز" },
 ];
 
-export const OVERVIEW_SLUGS = ["total", "revenue", "identity", "distribution"];
+export const OVERVIEW_SLUGS = ["total", "revenue", "identity", "distribution", "services"];
+export const TOTAL_REPORT_SLUGS = ["total", "services", "arrivals"];
 
 export function getTab(slug: string): TabDef | undefined {
   return TABS.find((t) => t.slug === slug);
