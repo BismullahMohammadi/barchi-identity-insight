@@ -25,6 +25,6 @@ describe("jalali filtering", () => {
     const t = normalizeGrid([["نیټه", "شمېر"], ["1405/01/05", "3"], ["1405/02/05", "4"]]);
     const r = filterByDate(t, { from: { y: 1405, m: 2, d: 1 }, to: { y: 1405, m: 2, d: 31 } });
     expect(r.rows.length).toBe(1);
-    expect(r.rows[0][1]).toBe(4);
+    expect(r.rows[0]?.[1]).toBe(4);
   });
 });
