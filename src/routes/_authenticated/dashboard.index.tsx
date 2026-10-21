@@ -50,7 +50,8 @@ function Overview() {
 
   const demo = !cards;
   const servicesGrid = q.data?.tabs.find(t => t.slug === "services")?.grid;
-  const extras = servicesGrid ? getSummaryMetrics(servicesGrid) : null;
+  let extras: ReturnType<typeof getSummaryMetrics> | null = null;
+  try { if (servicesGrid) extras = getSummaryMetrics(servicesGrid); } catch { /* The sheet mapping error is shown on its detail page. */ }
 
   return (
     <div className="space-y-6">
