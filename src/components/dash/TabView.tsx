@@ -13,7 +13,10 @@ const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 2 });
 
 export function TabView({ title, grid }: { title: string; grid: string[][] }) {
-  const table = useMemo(() => normalizeGrid(grid, title), [grid, title]);
+  const { table, mappingError } = useMemo(() => {
+    try { return { table: normalizeGrid(grid, title), mappingError: null as string | null }; }
+    catch (e) { return { table: normalizeGrid([]), mappingError: e instanceof Error ? e.message : "SHEET_MAPPING_MISMATCH" }; }
+  }, [grid, title]);
   const [month, setMonth] = useState("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -55,6 +58,11 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
     URL.revokeObjectURL(a.href);
   }
 
+  if (mappingError) {
+    return <p role="alert" className="rounded-xl border border-destructive bg-card p-6 text-destructive">
+      د شیټ سرلیکونه له ثبت شوې کالم‌نقشې سره سمون نه لري. تر اصلاح پورې شمېرې نه ښودل کېږي: {mappingError}
+    </p>;
+  }
   if (!grid.length) {
     return <p className="rounded-xl border bg-card p-6 text-muted-foreground">په دې پاڼه کې معلومات نشته.</p>;
   }
