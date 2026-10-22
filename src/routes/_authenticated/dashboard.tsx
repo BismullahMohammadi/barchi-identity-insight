@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
-  const cls = "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent";
+  const cls = "group flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` };
   const groups = [
     { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
@@ -79,9 +79,10 @@ function DashboardLayout() {
   }
 
   const brand = (
-    <div className="mb-6">
-      <p className="text-xs text-sidebar-primary">eNID · ۱۴۰۵</p>
-      <h2 className="font-display text-lg font-extrabold">دشت برچي مرکز</h2>
+    <div className="mb-5 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-3 py-4">
+      <p className="text-xs font-semibold tracking-wide text-sidebar-primary">eNID · ۱۴۰۵</p>
+      <h2 className="mt-1 font-display text-lg font-extrabold">دشت برچي مرکز</h2>
+      <p className="mt-1 text-xs text-sidebar-foreground/65">د مدیریتي راپورونو سیستم</p>
     </div>
   );
 
@@ -114,7 +115,7 @@ function DashboardLayout() {
             <LogOut /> وتل
           </Button>
         </header>
-        <main className="px-4 py-6 md:px-8">
+        <main className="px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
             <p className="text-muted-foreground">لاسرسی کتل کېږي…</p>
           ) : !access.data?.allowed ? (

@@ -5,12 +5,16 @@ export type DashboardSettings = {
   showDailyVisitors: boolean;
   showCharts: boolean;
   compactCards: boolean;
+  showTodo: boolean;
+  showAdvice: boolean;
 };
 export const DEFAULT_SETTINGS: DashboardSettings = Object.freeze({
   refreshSeconds: 60,
   showDailyVisitors: true,
   showCharts: true,
   compactCards: false,
+  showTodo: true,
+  showAdvice: true,
 });
 const KEY = "barchi-dashboard-preferences-v1";
 let snapshot: DashboardSettings = DEFAULT_SETTINGS;
@@ -27,6 +31,8 @@ function parseSettings(value: unknown): DashboardSettings {
     showDailyVisitors: typeof obj.showDailyVisitors === "boolean" ? obj.showDailyVisitors : true,
     showCharts: typeof obj.showCharts === "boolean" ? obj.showCharts : true,
     compactCards: typeof obj.compactCards === "boolean" ? obj.compactCards : false,
+    showTodo: typeof obj.showTodo === "boolean" ? obj.showTodo : true,
+    showAdvice: typeof obj.showAdvice === "boolean" ? obj.showAdvice : true,
   };
 }
 function init() {

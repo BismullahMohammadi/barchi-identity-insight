@@ -116,3 +116,18 @@
   body { background: white; }
   .print-full { width: 100% !important; margin: 0 !important; }
 }
+
+/* Consistent interaction affordances across dashboard, reports and widgets. */
+@layer base {
+  :where(button, a, input, textarea, [role="switch"]):focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
