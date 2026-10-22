@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Lightbulb } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TabView } from "@/components/dash/TabView";
-import { JALALI_MONTHS, todayJalali } from "@/lib/jalali";
+import { JALALI_MONTHS } from "@/lib/jalali";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable } from "@/lib/normalize";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 
 type Kind = "total" | "identity" | "control" | "services" | "bank" | "annual";
 const format = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
-const MONEY = new Set(["bank"]);
 const SPECIAL = new Set<Kind>(["total", "identity", "control", "services", "bank", "annual"]);
 export function isManagementReport(slug: string): slug is Kind { return SPECIAL.has(slug as Kind); }
 
@@ -47,7 +46,7 @@ function MonthSelect({month,change}: {month:string;change:(s:string)=>void}) {
     </div>
   );
 }
-function TeamTable({table,rows,columns}: {table:NormalizedTable;rows:Cell[][];columns:number[]}) {
+function TeamTable({table,rows,columns}: {table:NormalizedTable;rows: Cell[][];columns:number[]}) {
   const records=columns
     .filter(index => table.headers[index] && !/^ستون \d+$/.test(table.headers[index]))
     .map(index => ({label:table.headers[index], value:valueOf(rows,index,true)}))
@@ -57,7 +56,7 @@ function TeamTable({table,rows,columns}: {table:NormalizedTable;rows:Cell[][];co
     <div className="overflow-hidden rounded-xl border bg-card shadow-card">
       <h2 className="border-b px-4 py-3 font-bold">د کارمندانو او ټیمونو فعالیت</h2>
       <div className="divide-y">
-        {records.map((row,i)=> (
+        {records.map((row)=> (
           <div key={row.label} className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
             <span className="min-w-0">{row.label}</span>
             <strong className="shrink-0 tabular-nums">{format(row.value!)}</strong>
