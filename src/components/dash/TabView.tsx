@@ -1,158 +1,134 @@
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
-import { Download, Printer } from "lucide-react";
+import { ChevronDown, Download, Printer, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { JALALI_MONTHS, formatJ, parseJalali } from "@/lib/jalali";
-import { sheetSchema } from "@/lib/sheet-schema";
+import { JALALI_MONTHS } from "@/lib/jalali";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell } from "@/lib/normalize";
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 2 });
+const PAGE_SIZE = 20;
 
+/**
+ * Keep report pages actionable, not a second full Google Sheet.
+ * Show the main verified metric first. Full rows/exports are optional.
+ */
 export function TabView({ title, grid }: { title: string; grid: string[][] }) {
   const { table, mappingError } = useMemo(() => {
     try { return { table: normalizeGrid(grid, title), mappingError: null as string | null }; }
-    catch (e) { return { table: normalizeGrid([]), mappingError: e instanceof Error ? e.message : "SHEET_MAPPING_MISMATCH" }; }
+    catch (e) {
+      return { table: normalizeGrid([]), mappingError: e instanceof Error ? e.message : "SHEET_MAPPING_MISMATCH" };
+    }
   }, [grid, title]);
   const [month, setMonth] = useState("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [search, setSearch] = useState("");
+  const [shown, setShown] = useState(PAGE_SIZE);
+  const [expanded, setExpanded] = useState(false);
 
-  const range = useMemo(() => {
-    if (month !== "all") {
-      const m = +month;
-      return { from: { y: 1405, m, d: 1 }, to: { y: 1405, m, d: 31 } };
-    }
-    return { from: parseJalali(from), to: parseJalali(to) };
-  }, [month, from, to]);
-
-  const { rows, dates } = useMemo(() => filterByDate(table, range), [table, range]);
-  const primary = SHEET_COLUMNS[title]?.primaryCol;
-  const metricCols = title === "ریاست ته ګزارش" ? [] : [...table.numericCols].sort((a,b) => Number(b === primary) - Number(a === primary)).slice(0, 5);
-
-  const chartCols = (sheetSchema(title)?.chartMetrics ?? metricCols).filter(c => table.numericCols.includes(c)).slice(0, 5);
-
-  const chartData = useMemo(
-    () =>
-      rows
-        .map((r, i) => ({ r, i }))
-        .filter(({ r }) => !isTotalRow(r))
-        .slice(0, 400)
-        .map(({ r, i }) => {
-          const o: Record<string, string | number> = {
-            label: dates[i] ? formatJ(dates[i]!).slice(5) : String(r[table.labelCol] ?? ""),
-          };
-          chartCols.forEach((c) => { const key = table.headers[c]; if (key !== undefined) o[key] = typeof r[c] === "number" ? (r[c] as number) : 0; });
-          return o;
-        }),
-    [rows, dates, chartCols, table],
-  );
+  const range = useMemo(() => month === "all"
+    ? { from: null, to: null }
+    : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } },
+  [month]);
+  const { rows } = useMemo(() => filterByDate(table, range), [table, range]);
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLocaleLowerCase();
+    return q ? rows.filter(row => row.some(cell => String(cell ?? "").toLocaleLowerCase().includes(q))) : rows;
+  }, [rows, search]);
+  const primary = SHEET_COLUMNS[title]?.primaryCol ?? null;
+  const canSum = primary !== null && table.numericCols.includes(primary);
+  const validRows = rows.filter(row => !isTotalRow(row));
+  const mainTotal = canSum && validRows.length > 0 ? sumColumn(validRows, primary) : null;
+  const primaryLabel = canSum ? table.headers[primary] : null;
+  const shownRows = filteredRows.slice(0, shown);
 
   function exportCsv() {
-    const blob = new Blob([toCsv(table.headers, rows)], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${title}-1405.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const blob = new Blob([toCsv(table.headers, filteredRows)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = title + "-1405.csv";
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
-  if (mappingError) {
-    return <p role="alert" className="rounded-xl border border-destructive bg-card p-6 text-destructive">
-      د شیټ سرلیکونه له ثبت شوې کالم‌نقشې سره سمون نه لري. تر اصلاح پورې شمېرې نه ښودل کېږي: {mappingError}
-    </p>;
-  }
-  if (!grid.length) {
-    return <p className="rounded-xl border bg-card p-6 text-muted-foreground">په دې پاڼه کې معلومات نشته.</p>;
-  }
-
-  const ChartEl = table.dateCol >= 0 ? LineChart : BarChart;
+  if (mappingError) return (
+    <p role="alert" className="rounded-xl border border-destructive/50 bg-card p-5 text-sm text-destructive">
+      د شیټ د کالمونو جوړښت بدل شوی دی. د ناسمو شمېرو د مخنیوي لپاره راپور نه ښکاري: {mappingError}
+    </p>
+  );
+  if (!grid.length) return <p className="rounded-xl border bg-card p-5 text-muted-foreground">د دې راپور معلومات لا نه دي ترلاسه شوي.</p>;
 
   return (
-    <div className="space-y-6">
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4 shadow-card">
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">میاشت (۱۴۰۵)</label>
-          <Select value={month} onValueChange={setMonth} disabled={table.dateCol < 0}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">ټول کال</SelectItem>
-              {JALALI_MONTHS.map((m, i) => <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>)}
-            </SelectContent>
-          </Select>
+    <div className="space-y-4">
+      <section className="flex flex-wrap items-end justify-between gap-4 rounded-xl border bg-card p-4 shadow-card">
+        <div>
+          <p className="text-sm text-muted-foreground">{primaryLabel ?? "د راپور قطارونه"}</p>
+          <p className="mt-1 text-3xl font-extrabold tabular-nums">
+            {mainTotal === null ? (canSum ? "—" : fmt(validRows.length)) : fmt(mainTotal)}
+          </p>
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">له نېټې</label>
-          <Input dir="ltr" placeholder="1405/01/01" className="w-32" value={from} disabled={month !== "all" || table.dateCol < 0} onChange={(e) => setFrom(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">تر نېټې</label>
-          <Input dir="ltr" placeholder="1405/12/29" className="w-32" value={to} disabled={month !== "all" || table.dateCol < 0} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        {table.dateCol < 0 && <p className="text-xs text-muted-foreground">په دې پاڼه کې د نېټې ستون ونه موندل شو.</p>}
-        <div className="ms-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={exportCsv}><Download /> CSV</Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()}><Printer /> PDF</Button>
-        </div>
-      </div>
-
-      {metricCols.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          {metricCols.map((c, i) => (
-            <div key={c} className="rounded-xl border bg-card p-4 shadow-card">
-              <p className="truncate text-xs text-muted-foreground" title={table.headers[c]}>{table.headers[c]}</p>
-              <p className="mt-2 text-2xl font-extrabold" style={{ color: CHART_COLORS[i] }}>{fmt(sumColumn(rows, c))}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {chartData.length > 1 && chartCols.length > 0 && (
-        <div className="rounded-xl border bg-card p-4 shadow-card">
-          <div className="h-72" dir="ltr">
-            <ResponsiveContainer width="100%" height="100%">
-              <ChartEl data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} reversed />
-                <YAxis tick={{ fontSize: 11 }} orientation="right" />
-                <Tooltip contentStyle={{ fontFamily: "Vazirmatn", direction: "rtl" }} />
-                <Legend wrapperStyle={{ fontFamily: "Vazirmatn", fontSize: 12 }} />
-                {chartCols.map((c, i) =>
-                  table.dateCol >= 0 ? (
-                    <Line key={c} type="monotone" dataKey={table.headers[c] ?? `ستون ${c + 1}`} stroke={CHART_COLORS[i]} strokeWidth={2} dot={false} />
-                  ) : (
-                    <Bar key={c} dataKey={table.headers[c] ?? `ستون ${c + 1}`} fill={CHART_COLORS[i]} radius={[4, 4, 0, 0]} />
-                  ),
-                )}
-              </ChartEl>
-            </ResponsiveContainer>
+        {table.dateCol >= 0 && (
+          <div className="space-y-1">
+            <label htmlFor="report-month" className="text-xs text-muted-foreground">د راپور میاشت</label>
+            <Select value={month} onValueChange={value => { setMonth(value); setShown(PAGE_SIZE); }}>
+              <SelectTrigger id="report-month" className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">ټول کال</SelectItem>
+                {JALALI_MONTHS.map((name, i) => <SelectItem key={name} value={String(i + 1)}>{name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-        <div className="max-h-[560px] overflow-auto">
-          <Table>
-            <TableHeader className="sticky top-0 bg-muted">
-              <TableRow>{table.headers.map((h, i) => <TableHead key={i} className="whitespace-nowrap text-right">{h}</TableHead>)}</TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r: Cell[], i) => (
-                <TableRow key={i} className={isTotalRow(r) ? "bg-secondary font-bold" : ""}>
-                  {r.map((c, j) => (
-                    <TableCell key={j} className="whitespace-nowrap">{typeof c === "number" ? fmt(c) : c}</TableCell>
+      <section className="overflow-hidden rounded-xl border bg-card shadow-card">
+        <button type="button" aria-expanded={expanded}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold hover:bg-muted/40"
+          onClick={() => setExpanded(v => !v)}>
+          <span>تفصیلي معلومات {expanded ? "" : "(د اړتیا پر مهال)"}</span>
+          <ChevronDown aria-hidden className={expanded ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
+        </button>
+        {expanded && (
+          <div className="space-y-3 border-t p-3">
+            <div className="no-print flex flex-wrap items-center gap-2">
+              <div className="relative min-w-40 flex-1 sm:max-w-xs">
+                <Search aria-hidden className="absolute start-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input aria-label="په راپور کې پلټنه" placeholder="په جدول کې پلټنه" className="ps-8"
+                  value={search} onChange={event => { setSearch(event.target.value); setShown(PAGE_SIZE); }} />
+              </div>
+              <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filteredRows.length}>
+                <Download className="h-4 w-4" /> CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => window.print()} disabled={!filteredRows.length}>
+                <Printer className="h-4 w-4" /> چاپ
+              </Button>
+            </div>
+            <div className="max-h-[450px] overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-muted">
+                  <TableRow>{table.headers.map((name, i) => <TableHead key={i} className="whitespace-nowrap text-right">{name}</TableHead>)}</TableRow>
+                </TableHeader>
+                <TableBody>
+                  {shownRows.map((row: Cell[], i) => (
+                    <TableRow key={i} className={isTotalRow(row) ? "bg-secondary font-bold" : ""}>
+                      {row.map((value, j) => <TableCell key={j} className="whitespace-nowrap">{typeof value === "number" ? fmt(value) : value ?? "—"}</TableCell>)}
+                    </TableRow>
                   ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <p className="border-t px-4 py-2 text-xs text-muted-foreground">{fmt(rows.length)} قطارونه</p>
-      </div>
+                </TableBody>
+              </Table>
+              {!shownRows.length && <p className="p-4 text-center text-sm text-muted-foreground">د دې انتخاب لپاره معلومات نشته.</p>}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>{fmt(shownRows.length)} له {fmt(filteredRows.length)} قطارونو</span>
+              {shownRows.length < filteredRows.length && (
+                <Button size="sm" variant="ghost" onClick={() => setShown(n => n + PAGE_SIZE)}>نور ښکاره کړئ</Button>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

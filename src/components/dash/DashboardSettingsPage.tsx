@@ -1,11 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, RotateCcw, ShieldCheck, Database, Settings2, Monitor } from "lucide-react";
+import { RefreshCw, RotateCcw, ShieldCheck, Settings2, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDashboardSettings, saveDashboardSettings, resetDashboardSettings, type DashboardSettings } from "@/lib/dashboard-settings";
 import { accessQuery } from "@/lib/queries";
-import { SPREADSHEET_ID } from "@/lib/tabs";
 
 export function DashboardSettingsPage() {
   const settings = useDashboardSettings();
@@ -18,7 +17,7 @@ export function DashboardSettingsPage() {
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-extrabold"><Settings2 className="h-6 w-6" />تنظیمات</h1>
-        <p className="text-sm text-muted-foreground">د Dashboard د ښودلو او تازه کېدو تنظیمات یوازې په همدې براوزر کې ساتل کېږي.</p>
+        <p className="text-sm text-muted-foreground">د ښودلو او تازه کېدو ساده تنظیمات.</p>
       </div>
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="flex items-center gap-2 font-bold"><RefreshCw className="h-4 w-4" />د معلوماتو تازه کول</h2>
@@ -52,12 +51,6 @@ export function DashboardSettingsPage() {
         <p className="text-sm">ننوتلی حساب: <strong dir="ltr">{access.data?.email ?? "—"}</strong></p>
         <p className="text-sm">د مالک اجازه: <strong>{access.data?.allowed ? "فعاله" : "تایید نه ده"}</strong></p>
         <p className="text-xs text-muted-foreground">د مالک ایمیل، Google Sheets د اتصال کلۍ او د لاسرسي اجازې یوازې په سرور کې تنظیمېږي؛ له دې پاڼې نه بدلېږي.</p>
-      </section>
-      <section className="space-y-3 rounded-xl border bg-card p-5">
-        <h2 className="flex items-center gap-2 font-bold"><Database className="h-4 w-4" />د راپور سرچینې</h2>
-        <p className="text-sm text-muted-foreground">مجموعي راپور او اړوند ورځني راپورونه له Google Sheets څخه په Read-only ډول لوستل کېږي.</p>
-        <p className="break-all font-mono text-xs text-muted-foreground">Primary Sheet ID: {SPREADSHEET_ID}</p>
-        <p className="text-xs text-muted-foreground">د ورځني معرفي شويو فورمونو او هماهنګۍ راپورونه له خپلو جلا Google Sheets فایلونو څخه اخیستل کېږي.</p>
       </section>
       <Button variant="outline" onClick={resetDashboardSettings}><RotateCcw className="h-4 w-4" /> اصلي تنظیمات بېرته راوګرځوئ</Button>
     </div>
