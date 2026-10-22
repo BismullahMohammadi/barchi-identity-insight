@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { nowJalaliTime } from "@/lib/jalali";
 
 export function SyncBar({
-  fetchedAt, isFetching, error, onRefresh,
-}: { fetchedAt?: number | undefined; isFetching: boolean; error?: string | null; onRefresh: () => void }) {
+  fetchedAt, isFetching, error, onRefresh, refreshMs = 60_000,
+}: { fetchedAt?: number | undefined; isFetching: boolean; error?: string | null; onRefresh: () => void; refreshMs?: number }) {
   return (
     <div className="no-print flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-2.5 text-sm shadow-card">
       {error ? (
@@ -14,7 +14,7 @@ export function SyncBar({
       ) : (
         <span className="text-muted-foreground">همغږي روانه ده…</span>
       )}
-      <span className="text-xs text-muted-foreground">هر ۶۰ ثانیې تازه کېږي</span>
+      <span className="text-xs text-muted-foreground">هر {Math.round(refreshMs / 1000)} ثانیې تازه کېږي</span>
       <Button variant="ghost" size="sm" className="ms-auto" onClick={onRefresh} disabled={isFetching}>
         <RefreshCw className={isFetching ? "animate-spin" : ""} /> اوس تازه کړئ
       </Button>

@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
-import { formatJ } from "@/lib/jalali";
-import { isTotalRow, normalizeGrid, sumColumn } from "@/lib/normalize";
+import { todayJalali, yesterdayJalali } from "@/lib/jalali";
+import { normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
-import { sheetSchema } from "@/lib/sheet-schema";
+import { periodRows, previousDayChange, type OverviewPeriod } from "@/lib/overview-period";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { getSummaryMetrics } from "@/lib/summary-metrics";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
@@ -29,10 +28,13 @@ const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
 // Clearly labeled sample shape shown only while live data is unavailable.
-const DEMO = OVERVIEW_SLUGS.map((s) => ({ slug: s, total: null as number | null, header: "د اصلي معلوماتو انتظار" }));
+const DEMO = OVERVIEW_SLUGS.filter(s => s !== "services").map((s) => ({ slug: s, total: null as number | null, change: null as number | null }));
 
 function Overview() {
   const settings = useDashboardSettings();
+  const [period, setPeriod] = useState<OverviewPeriod>("all");
+  const today = todayJalali();
+  const yesterday = yesterdayJalali();
   const refreshMs = settingsRefreshMs(settings);
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
   const daily = useQuery(dailyFormsQuery(refreshMs));
@@ -41,17 +43,23 @@ function Overview() {
   const cards = useMemo(() => {
     if (!q.data) return null;
     return q.data.tabs.filter(t => t.slug !== "services").map((t) => {
-      let n;
-      try { n = normalizeGrid(t.grid, t.title); }
-      catch { return { slug: t.slug, total: null, header: "د شیټ د کالمونو نقشه تایید ته اړتیا لري", series: [], rows: 0 }; }
-      const col = SHEET_COLUMNS[t.title]?.primaryCol ?? null;
-      const series = col == null ? [] : n.rows
-        .map((r, i) => ({ r, d: n.dates[i] }))
-        .filter(({ r }) => !isTotalRow(r))
-        .map(({ r, d }) => ({ x: d ? formatJ(d).slice(5) : "", v: typeof r[col] === "number" ? (r[col] as number) : 0 }));
-      return { slug: t.slug, total: col == null ? null : sumColumn(n.rows, col), header: col == null ? "" : n.headers[col], series, rows: n.rows.length };
+      try {
+        const n = normalizeGrid(t.grid, t.title);
+        const col = SHEET_COLUMNS[t.title]?.primaryCol ?? null;
+        const rows = periodRows(n, period, today);
+        const isDated = n.dateCol >= 0;
+        // Missing rows do not equal a real reported zero.
+        const total = col === null || (period !== "all" && (!isDated || rows.length === 0))
+          ? null : sumColumn(rows, col);
+        const change = period === "today" && col !== null && isDated
+          ? previousDayChange(n, col, today, yesterday) : null;
+        return {slug: t.slug, total, change};
+      } catch {
+        return {slug: t.slug, total: null, change: null};
+      }
     });
-  }, [q.data]);
+  // The chosen period changes independently of the polling results.
+  }, [q.data, period, today.y, today.m, today.d, yesterday.y, yesterday.m, yesterday.d]);
 
   const demo = !cards;
   const servicesGrid = q.data?.tabs.find(t => t.slug === "services")?.grid;
@@ -68,7 +76,23 @@ function Overview() {
         </div>
       </section>
 
-      <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} />
+      <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
+
+      <div className="flex flex-wrap items-center gap-2" aria-label="د راپور موده">
+        {([
+          ["all", "ټول کال"],
+          ["month", "روانه میاشت"],
+          ["today", "نن"],
+        ] as const).map(([value, label]) => (
+          <button key={value} type="button" onClick={() => setPeriod(value)}
+            aria-pressed={period === value}
+            className={period === value
+              ? "rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground"
+              : "rounded-lg border bg-card px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"}>
+            {label}
+          </button>
+        ))}
+      </div>
 
       {demo && !q.isLoading && (
         <p className="rounded-lg border border-warning bg-warning/10 p-3 text-sm">
@@ -95,7 +119,7 @@ function Overview() {
       )}
 
       <div className={settings.compactCards ? "grid gap-2 sm:grid-cols-2 xl:grid-cols-4" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"}>
-        {(cards ?? DEMO.map((d) => ({ ...d, series: [], rows: 0 }))).map((c, i) => {
+        {(cards ?? DEMO).map((c, i) => {
           const tab = getTab(c.slug)!;
           return (
             <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className={settings.compactCards ? "group rounded-xl border bg-card p-3 shadow-card transition-transform hover:-translate-y-0.5" : "group rounded-xl border bg-card p-5 shadow-card transition-transform hover:-translate-y-0.5"}>
@@ -103,30 +127,23 @@ function Overview() {
                 <h3 className="font-bold">{tab.label}</h3>
                 {demo ? <DemoBadge /> : <ArrowLeft className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-x-1" />}
               </div>
-              <p className="mt-1 truncate text-xs text-muted-foreground">{c.header}</p>
+
               <p className="mt-3 text-3xl font-extrabold" style={{ color: COLORS[i] }}>
                 {q.isLoading ? "…" : c.total == null ? "—" : fmt(c.total)}
               </p>
-              {c.slug === "total" && extras && (
+              {c.change !== null && (
+                <p className="mt-1 text-xs text-muted-foreground">د پرون پرتله: <strong className={c.change > 0 ? "text-emerald-600" : c.change < 0 ? "text-destructive" : "text-foreground"}>{c.change > 0 ? "+" : ""}{c.change}%</strong></p>
+              )}
+              {period === "all" && c.slug === "total" && extras && (
                 <div className="mt-3 flex flex-wrap gap-3 border-t pt-3 text-xs text-muted-foreground">
                   <span>مثنی: <strong className="text-foreground">{extras.duplicate.toLocaleString("fa-AF")}</strong></span>
                   <span>تجدید: <strong className="text-foreground">{extras.renewal.toLocaleString("fa-AF")}</strong></span>
                 </div>
               )}
-              {c.slug === "revenue" && extras && (
+              {period === "all" && c.slug === "revenue" && extras && (
                 <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">د مثنی او تجدید عواید: <strong className="text-foreground">{extras.serviceRevenue.toLocaleString("fa-AF")} AFN</strong></div>
               )}
-              {settings.showCharts && c.series.length > 1 && (
-                <div className="mt-3 h-16" dir="ltr">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={c.series}>
-                      <XAxis dataKey="x" hide reversed />
-                      <Tooltip contentStyle={{ fontFamily: "Vazirmatn" }} />
-                      <Area type="monotone" dataKey="v" stroke={COLORS[i]} fill={COLORS[i]} fillOpacity={0.15} strokeWidth={2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
+
             </Link>
           );
         })}

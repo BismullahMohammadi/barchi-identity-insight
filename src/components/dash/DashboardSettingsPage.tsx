@@ -43,10 +43,6 @@ export function DashboardSettingsPage() {
           <Switch checked={settings.showDailyVisitors} onCheckedChange={(v) => update("showDailyVisitors",v)} aria-label="ورځني مراجعین ښکاره کړئ" />
         </div>
         <div className="flex items-center justify-between gap-3">
-          <div><p className="text-sm font-semibold">ګرافونه</p><p className="text-xs text-muted-foreground">د عمومي کتنې کوچني ګرافونه</p></div>
-          <Switch checked={settings.showCharts} onCheckedChange={(v) => update("showCharts",v)} aria-label="ګرافونه ښکاره کړئ" />
-        </div>
-        <div className="flex items-center justify-between gap-3">
           <div><p className="text-sm font-semibold">لنډ کارتونه</p><p className="text-xs text-muted-foreground">په عمومي کتنه کې لږ ځای نیسي</p></div>
           <Switch checked={settings.compactCards} onCheckedChange={(v) => update("compactCards",v)} aria-label="لنډ کارتونه فعال کړئ" />
         </div>
