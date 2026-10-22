@@ -10,6 +10,7 @@ import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
 import { periodRows, previousDayChange, type OverviewPeriod } from "@/lib/overview-period";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
+import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -71,6 +72,8 @@ function Overview() {
           <h1 className="mt-1 font-display text-3xl font-extrabold md:text-4xl">د ۱۴۰۵ کال عمومي کتنه</h1>
         </div>
       </section>
+
+      <PinnedWidgets />
 
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
 
