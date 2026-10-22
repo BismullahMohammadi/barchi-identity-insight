@@ -9,7 +9,6 @@ import { normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
 import { periodRows, previousDayChange, type OverviewPeriod } from "@/lib/overview-period";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
-import { getSummaryMetrics } from "@/lib/summary-metrics";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
@@ -62,9 +61,6 @@ function Overview() {
   }, [q.data, period, today.y, today.m, today.d, yesterday.y, yesterday.m, yesterday.d]);
 
   const demo = !cards;
-  const servicesGrid = q.data?.tabs.find(t => t.slug === "services")?.grid;
-  let extras: ReturnType<typeof getSummaryMetrics> | null = null;
-  try { if (servicesGrid) extras = getSummaryMetrics(servicesGrid); } catch { /* The sheet mapping error is shown on its detail page. */ }
 
   return (
     <div className="space-y-6">
@@ -134,16 +130,6 @@ function Overview() {
               {c.change !== null && (
                 <p className="mt-1 text-xs text-muted-foreground">د پرون پرتله: <strong className={c.change > 0 ? "text-emerald-600" : c.change < 0 ? "text-destructive" : "text-foreground"}>{c.change > 0 ? "+" : ""}{c.change}%</strong></p>
               )}
-              {period === "all" && c.slug === "total" && extras && (
-                <div className="mt-3 flex flex-wrap gap-3 border-t pt-3 text-xs text-muted-foreground">
-                  <span>مثنی: <strong className="text-foreground">{extras.duplicate.toLocaleString("fa-AF")}</strong></span>
-                  <span>تجدید: <strong className="text-foreground">{extras.renewal.toLocaleString("fa-AF")}</strong></span>
-                </div>
-              )}
-              {period === "all" && c.slug === "revenue" && extras && (
-                <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">د مثنی او تجدید عواید: <strong className="text-foreground">{extras.serviceRevenue.toLocaleString("fa-AF")} AFN</strong></div>
-              )}
-
             </Link>
           );
         })}

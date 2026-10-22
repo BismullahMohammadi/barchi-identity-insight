@@ -27,8 +27,8 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const active = { className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` };
   const groups = [
     { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
-    { title: "مالي راپورونه", slugs: ["revenue", "bank"] },
-    { title: "نور راپورونه", slugs: ["directorate", "weekly", "annual"] },
+    { title: "مالي راپورونه", slugs: ["bank"] },
+    { title: "نور راپورونه", slugs: ["annual"] },
   ];
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-3">
@@ -90,16 +90,16 @@ function DashboardLayout() {
       <aside className="no-print hidden w-64 shrink-0 bg-sidebar p-4 text-sidebar-foreground md:block">
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
-          <div className="min-h-0 flex-1 overflow-y-auto pe-1"><Nav /></div>
+          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav /></div>
           <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>
         </div>
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-72 overflow-y-auto bg-sidebar p-5 text-sidebar-foreground">
+        <SheetContent side="right" className="w-72 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-sidebar p-5 text-sidebar-foreground">
           <SheetTitle className="sr-only">مینو</SheetTitle>
           <div className="flex max-h-full flex-col">
             {brand}
-            <div className="min-h-0 flex-1 overflow-y-auto"><Nav onNavigate={() => setOpen(false)} /></div>
+            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav onNavigate={() => setOpen(false)} /></div>
             <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>
           </div>
         </SheetContent>

@@ -15,14 +15,16 @@ const PAGE_SIZE = 20;
  * Keep report pages actionable, not a second full Google Sheet.
  * Show the main verified metric first. Full rows/exports are optional.
  */
-export function TabView({ title, grid }: { title: string; grid: string[][] }) {
+export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void }) {
   const { table, mappingError } = useMemo(() => {
     try { return { table: normalizeGrid(grid, title), mappingError: null as string | null }; }
     catch (e) {
       return { table: normalizeGrid([]), mappingError: e instanceof Error ? e.message : "SHEET_MAPPING_MISMATCH" };
     }
   }, [grid, title]);
-  const [month, setMonth] = useState("all");
+  const [internalMonth, setInternalMonth] = useState("all");
+  const month = selectedMonth ?? internalMonth;
+  const setMonth = onSelectedMonthChange ?? setInternalMonth;
   const [search, setSearch] = useState("");
   const [shown, setShown] = useState(PAGE_SIZE);
   const [expanded, setExpanded] = useState(false);
@@ -62,7 +64,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
 
   return (
     <div className="space-y-4">
-      <section className="flex flex-wrap items-end justify-between gap-4 rounded-xl border bg-card p-4 shadow-card">
+      {!detailsOnly && <section className="flex flex-wrap items-end justify-between gap-4 rounded-xl border bg-card p-4 shadow-card">
         <div>
           <p className="text-sm text-muted-foreground">{primaryLabel ?? "د راپور قطارونه"}</p>
           <p className="mt-1 text-3xl font-extrabold tabular-nums">
@@ -81,7 +83,7 @@ export function TabView({ title, grid }: { title: string; grid: string[][] }) {
             </Select>
           </div>
         )}
-      </section>
+      </section>}
 
       <section className="overflow-hidden rounded-xl border bg-card shadow-card">
         <button type="button" aria-expanded={expanded}
