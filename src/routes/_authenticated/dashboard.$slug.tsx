@@ -43,13 +43,17 @@ function ReportPage({slug}:{slug:string}) {
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl font-extrabold md:text-3xl">{tab.label}</h1>
-        <p className="text-sm text-muted-foreground">{tab.description}</p>
       </div>
-      <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} />
-      {slug === "total" && q.data && <TotalReportExtras tabs={q.data.tabs} />}
+      <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={settingsRefreshMs(settings)} />
+      {slug === "total" && q.data && (
+        <details className="rounded-xl border bg-card p-4 shadow-card">
+          <summary className="cursor-pointer text-sm font-semibold">نور شاخصونه</summary>
+          <div className="mt-4"><TotalReportExtras tabs={q.data.tabs} /></div>
+        </details>
+      )}
       {grid ? <TabView key={slug} title={tab.label} grid={grid} /> : q.isLoading ? (
         <div className="h-64 animate-pulse rounded-xl bg-muted" />
-      ) : null}
+      ) : q.error ? <p role="alert" className="text-sm text-destructive">{errorText(q.error)}</p> : <p className="text-sm text-muted-foreground">د راپور معلومات نه دي ترلاسه شوي.</p>}
     </div>
   );
 }
