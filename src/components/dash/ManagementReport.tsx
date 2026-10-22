@@ -23,11 +23,13 @@ export function valueOf(rows: Cell[][], index: number, enabled: boolean): number
   if (!enabled || rows.length === 0 || !rows.some(row => typeof row[index] === "number")) return null;
   return sumColumn(rows, index);
 }
-function Stat({label,value,currency = false}: {label:string;value:number|null;currency?:boolean}) {
+function Stat({label,value,currency = false,tone = "default"}: {label:string;value:number|null;currency?:boolean;tone?:"default"|"teal"|"amber"|"blue"}) {
+  const accent = {default:"border-s-border",teal:"border-s-primary",amber:"border-s-amber-500",blue:"border-s-sky-500"}[tone];
+  const numberTone = {default:"text-foreground",teal:"text-primary",amber:"text-amber-700",blue:"text-sky-700"}[tone];
   return (
-    <div className="min-w-0 rounded-xl border bg-card p-4 shadow-card">
+    <div className={"min-w-0 rounded-xl border border-s-4 bg-card p-4 shadow-card "+accent}>
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold tabular-nums">{value === null ? "—" : format(value)}
+      <p className={"mt-2 text-2xl font-extrabold tabular-nums "+numberTone}>{value === null ? "—" : format(value)}
         {currency && value !== null && <span className="ms-1 text-xs font-medium text-muted-foreground">AFN</span>}
       </p>
     </div>
@@ -47,24 +49,39 @@ function MonthSelect({month,change}: {month:string;change:(s:string)=>void}) {
     </div>
   );
 }
-function TeamTable({table,rows,columns}: {table:NormalizedTable;rows: Cell[][];columns:number[]}) {
+function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Cell[][];columns:number[];identity:boolean}) {
+  // Do not hide staff merely because the original Google Sheet left their cells blank.
   const records=columns
-    .filter(index => table.headers[index] && !/^ستون \d+$/.test(table.headers[index]))
-    .map(index => ({label:table.headers[index], value:valueOf(rows,index,true)}))
-    .filter(row=>row.value!==null);
-  if (!records.length) return <p className="text-sm text-muted-foreground">د دې مودې د کارمندانو جلا شمېرې په شیټ کې نه دي ثبت شوې.</p>;
+    .filter(index => table.headers[index] && !/^ستون \\d+$/.test(table.headers[index]))
+    .map(index => ({
+      label:table.headers[index],
+      value:valueOf(rows,index,table.numericCols.includes(index)),
+    }));
+  if (!records.length) return <p className="text-sm text-muted-foreground">په سرچینه کې د کارمندانو کالمونه نه دي پېژندل شوي.</p>;
+  const reported=records.filter(r=>r.value!==null);
+  const max=Math.max(1,...reported.map(r=>r.value??0));
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-      <h2 className="border-b px-4 py-3 font-bold">د کارمندانو او ټیمونو فعالیت</h2>
-      <div className="divide-y">
-        {records.map((row)=> (
-          <div key={row.label} className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
-            <span className="min-w-0">{row.label}</span>
-            <strong className="shrink-0 tabular-nums">{format(row.value!)}</strong>
+    <section className="overflow-hidden rounded-xl border bg-card shadow-card" aria-label={identity?"د تثبیت هویت د کارمندانو فعالیت":"د کنټرول د ټیمونو فعالیت"}>
+      <div className="border-b px-4 py-3">
+        <h2 className="font-bold">{identity?"د هر کارمند فعالیت":"د هر ټیم فعالیت"}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې ثبت شوې شمېرې · تش کالمونه صفر نه ګڼل کېږي</p>
+      </div>
+      <div className="grid gap-2 p-3 sm:grid-cols-2 xl:grid-cols-3">
+        {records.map(row=> (
+          <div key={row.label} className="min-w-0 rounded-lg border bg-muted/20 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <span className="min-w-0 break-words text-sm font-medium">{row.label}</span>
+              <strong className={"shrink-0 tabular-nums "+(row.value===null?"text-muted-foreground":"text-primary")}>{row.value===null?"—":format(row.value)}</strong>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary/75 transition-all" style={{width:row.value===null?"0%":`${Math.min(100,(row.value/max)*100)}%`}} />
+            </div>
+            {row.value===null&&<p className="mt-1 text-xs text-muted-foreground">جلا معلومات نشته</p>}
           </div>
         ))}
       </div>
-    </div>
+      {!reported.length&&<p className="border-t px-4 py-3 text-sm text-amber-700">په Google Sheets کې د کارمندانو نومونه شته، خو د ټاکلې مودې جلا شمېرې تشې دي. د مجموعي شمېر پر اساس یې پر کارمندانو نه وېشو.</p>}
+    </section>
   );
 }
 
@@ -80,11 +97,11 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
   const {table,rows}=parsed.data;
   const metric=(index:number)=>valueOf(rows,index,table.numericCols.includes(index));
   const activity = kind === "total" ? latestActivitySignal(table, 3) : null;
-  const cards: {label:string;value:number|null;currency?:boolean}[]=[];
+  const cards: {label:string;value:number|null;currency?:boolean;tone?:"default"|"teal"|"amber"|"blue"}[]=[];
   if(kind==="total") cards.push(
-    {label:"پاس شوې تذکرې",value:metric(3)},
-    {label:"عواید",value:metric(2),currency:true},
-    {label:"توزیع",value:metric(5)},
+    {label:"پاس شوې تذکرې",value:metric(3),tone:"teal"},
+    {label:"عواید",value:metric(2),currency:true,tone:"amber"},
+    {label:"توزیع",value:metric(5),tone:"blue"},
     {label:"تعرفې",value:metric(1)},
   );
   if(kind==="services") cards.push(
@@ -94,13 +111,13 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
     {label:"ثبت ازدواج",value:metric(4)},
   );
   if(kind==="bank") cards.push(
-    {label:"مجموعي بانکي عواید",value:metric(6),currency:true},
+    {label:"مجموعي بانکي عواید",value:metric(6),currency:true,tone:"teal"},
     {label:"جدید او ثبت تولد",value:metric(1),currency:true},
     {label:"مثنی او تجدید",value:metric(4),currency:true},
     {label:"انفرادي مراجعین",value:metric(5)},
   );
   if(kind==="identity" || kind==="control") cards.push(
-    {label:kind==="identity"?"مجموعي تثبیت هویت":"د کنټرول مجموعه",value:metric(kind==="identity"?10:6)},
+    {label:kind==="identity"?"مجموعي تثبیت هویت":"د کنټرول مجموعه",value:metric(kind==="identity"?10:6),tone:"teal"},
   );
   if(kind==="annual") cards.push(
     {label:"مجموعي عواید",value:metric(14),currency:true},
@@ -132,7 +149,7 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
       )}
       {(kind==="identity"||kind==="control") && (
         <TeamTable table={table} rows={rows}
-          columns={kind==="identity"?[2,4,5,6,7,8]:[1,2,3,4]}/>
+          columns={kind==="identity"?[2,4,5,6,7,8]:[1,2,3,4]} identity={kind==="identity"}/>
       )}
       {kind==="services" && metric(5)!==null && (
         <p className="text-sm text-muted-foreground">د ټولو خدماتو مجموعه: <strong className="text-foreground">{format(metric(5)!)}</strong></p>
