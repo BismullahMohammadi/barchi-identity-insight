@@ -18,6 +18,7 @@ function localJalali(date: Date): JDate {
   return {y:get("year"),m:get("month"),d:get("day")};
 }
 export function todayJalali(): JDate { return localJalali(new Date()); }
+export function yesterdayJalali(): JDate { return localJalali(new Date(Date.now() - 86400000)); }
 export function nowJalaliTime(ts: number): string {
   const date = new Date(ts);
   const time = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(date);
