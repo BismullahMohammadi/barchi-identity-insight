@@ -14,8 +14,8 @@ export function latestActivitySignal(table: NormalizedTable, metricIndex: number
     days.set(key, { date, count: (prev?.count ?? 0) + count });
   });
   const sorted = [...days.values()].sort((a,b) => jKey(b.date) - jKey(a.date));
-  if (!sorted.length) return null;
   const latest = sorted[0];
+  if (!latest) return null;
   const prior = sorted[1];
   let changePercent: number | null = null;
   let message: string | null = null;
