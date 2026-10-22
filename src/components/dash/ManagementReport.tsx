@@ -5,6 +5,7 @@ import { TabView } from "@/components/dash/TabView";
 import { JALALI_MONTHS } from "@/lib/jalali";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable } from "@/lib/normalize";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
+import { latestActivitySignal } from "@/lib/management-insight";
 
 type Kind = "total" | "identity" | "control" | "services" | "bank" | "annual";
 const format = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
@@ -78,6 +79,7 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
   }
   const {table,rows}=parsed.data;
   const metric=(index:number)=>valueOf(rows,index,table.numericCols.includes(index));
+  const activity = kind === "total" ? latestActivitySignal(table, 3) : null;
   const cards: {label:string;value:number|null;currency?:boolean}[]=[];
   if(kind==="total") cards.push(
     {label:"پاس شوې تذکرې",value:metric(3)},
@@ -122,6 +124,12 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
       <div className={cards.length===1?"grid grid-cols-1 gap-3 sm:max-w-sm":"grid grid-cols-2 gap-3 lg:grid-cols-4"}>
         {cards.map(card=><Stat key={card.label} {...card}/>)}
       </div>
+      {kind==="total" && activity && (
+        <div className="rounded-xl border bg-card px-4 py-3 text-sm">
+          <p className="text-muted-foreground">وروستی ثبت شوی راپور: <strong className="text-foreground">{activity.lastDate}</strong></p>
+          {activity.message && <p className="mt-1">{activity.message}</p>}
+        </div>
+      )}
       {(kind==="identity"||kind==="control") && (
         <TeamTable table={table} rows={rows}
           columns={kind==="identity"?[2,4,5,6,7,8]:[1,2,3,4]}/>
