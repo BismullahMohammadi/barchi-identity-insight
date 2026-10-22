@@ -38,6 +38,14 @@ export function DashboardSettingsPage() {
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="flex items-center gap-2 font-bold"><Monitor className="h-4 w-4" />د ښودلو تنظیمات</h2>
         <div className="flex items-center justify-between gap-3">
+          <div><p className="text-sm font-semibold">زما دندې (To-Do)</p><p className="text-xs text-muted-foreground">د عمومي کتنې په سر کې یې ښکاره کړئ</p></div>
+          <Switch checked={settings.showTodo} onCheckedChange={v=>update("showTodo",v)} aria-label="زما دندې فعالې کړئ"/>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div><p className="text-sm font-semibold">د پرون مدیریتي مشوره</p><p className="text-xs text-muted-foreground">له موجود راپور څخه اتومات تحلیل</p></div>
+          <Switch checked={settings.showAdvice} onCheckedChange={v=>update("showAdvice",v)} aria-label="د پرون مشوره فعاله کړئ"/>
+        </div>
+        <div className="flex items-center justify-between gap-3">
           <div><p className="text-sm font-semibold">ورځني مراجعین</p><p className="text-xs text-muted-foreground">د نوي معرفي شويو او ثبت نام ته معرفي شويو ګډ کارت</p></div>
           <Switch checked={settings.showDailyVisitors} onCheckedChange={(v) => update("showDailyVisitors",v)} aria-label="ورځني مراجعین ښکاره کړئ" />
         </div>
