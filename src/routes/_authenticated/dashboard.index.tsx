@@ -73,8 +73,6 @@ function Overview() {
         </div>
       </section>
 
-      <PinnedWidgets />
-
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
 
       <div className="flex flex-wrap items-center gap-2" aria-label="د راپور موده">
@@ -137,6 +135,8 @@ function Overview() {
           );
         })}
       </div>
+
+      <PinnedWidgets />
     </div>
   );
 }
