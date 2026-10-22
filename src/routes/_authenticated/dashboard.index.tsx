@@ -64,12 +64,12 @@ function Overview() {
   const demo = !cards;
 
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl bg-hero p-6 text-primary-foreground md:p-8">
+    <div className="mx-auto max-w-7xl space-y-5 pb-8 sm:space-y-6">
+      <section className="relative overflow-hidden rounded-2xl bg-hero p-5 text-primary-foreground shadow-card md:p-7">
         <div className="absolute inset-0 pattern-dots" aria-hidden />
         <div className="relative">
           <p className="text-sm text-sidebar-primary">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold md:text-4xl">د ۱۴۰۵ کال عمومي کتنه</h1>
+          <h1 className="mt-1 font-display text-2xl font-extrabold md:text-3xl">د ۱۴۰۵ کال عمومي کتنه</h1>
         </div>
       </section>
 
@@ -121,7 +121,7 @@ function Overview() {
         {(cards ?? DEMO).map((c, i) => {
           const tab = getTab(c.slug)!;
           return (
-            <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className={settings.compactCards ? "group rounded-xl border bg-card p-3 shadow-card transition-transform hover:-translate-y-0.5" : "group rounded-xl border bg-card p-5 shadow-card transition-transform hover:-translate-y-0.5"}>
+            <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className={settings.compactCards ? "group rounded-xl border bg-card p-3 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-primary" : "group rounded-xl border bg-card p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-primary"}>
               <div className="flex items-center justify-between">
                 <h3 className="font-bold">{tab.label}</h3>
                 {demo ? <DemoBadge /> : <ArrowLeft className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-x-1" />}
