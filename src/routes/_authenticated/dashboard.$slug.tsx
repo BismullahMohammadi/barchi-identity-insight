@@ -51,7 +51,7 @@ function ReportPage({slug}:{slug:string}) {
           <div className="mt-4"><TotalReportExtras tabs={q.data.tabs} /></div>
         </details>
       )}
-      {grid ? <TabView key={slug} title={tab.label} grid={grid} /> : q.isLoading ? (
+      {grid ? <TabView key={slug} title={tab.title} grid={grid} /> : q.isLoading ? (
         <div className="h-64 animate-pulse rounded-xl bg-muted" />
       ) : q.error ? <p role="alert" className="text-sm text-destructive">{errorText(q.error)}</p> : <p className="text-sm text-muted-foreground">د راپور معلومات نه دي ترلاسه شوي.</p>}
     </div>
