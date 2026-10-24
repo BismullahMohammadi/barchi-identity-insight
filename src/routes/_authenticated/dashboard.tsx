@@ -1,12 +1,14 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, ShieldAlert, FileSpreadsheet, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, ShieldAlert, FileSpreadsheet, Settings, PanelRightOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { accessQuery } from "@/lib/queries";
 import { TABS } from "@/lib/tabs";
+import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
+import { useDashboardSettings } from "@/lib/dashboard-settings";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -67,6 +69,9 @@ function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
 
 function DashboardLayout() {
   const [open, setOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const settings = useDashboardSettings();
+  const showTools = settings.showTodo || settings.showAdvice;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const access = useQuery(accessQuery);
@@ -105,12 +110,31 @@ function DashboardLayout() {
           </div>
         </SheetContent>
       </Sheet>
+      {access.data?.allowed && showTools && (
+        <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
+          <SheetContent side="left" className="no-print flex h-full w-full max-w-md flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-[480px]">
+            <div className="shrink-0 border-b px-5 pb-4 pt-6">
+              <SheetTitle className="text-lg font-extrabold">دندې او مدیریتي مشوره</SheetTitle>
+              <p className="mt-1 text-xs text-muted-foreground">د مرکز د کارونو شخصي وسایل؛ د راپورونو لید نه پټوي.</p>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5">
+              <PinnedWidgets layout="stacked" />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
       <div className="print-full flex-1 min-w-0">
         <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur md:px-8">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen(true)} aria-label="مینو">
             <Menu />
           </Button>
           <div className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{access.data?.email ?? ""}</div>
+          {access.data?.allowed && showTools && (
+            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او مشوره پرانیزئ">
+              <PanelRightOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">دندې او مشوره</span>
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={signOut}>
             <LogOut /> وتل
           </Button>

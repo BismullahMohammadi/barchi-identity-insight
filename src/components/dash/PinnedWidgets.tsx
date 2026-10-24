@@ -73,14 +73,14 @@ function AdviceContent(){
  );
 }
 /** Native mouse drag-and-drop with an accessible keyboard/touch reorder button. */
-export function PinnedWidgets() {
+export function PinnedWidgets({ layout = "grid" }: { layout?: "grid" | "stacked" }) {
  const settings=useDashboardSettings();
  const {order}=useWorkspace();
  const [dragging,setDragging]=useState<WidgetId|null>(null);
  const visible=order.filter(id=>id==="todo"?settings.showTodo:settings.showAdvice);
  if(!visible.length)return null;
  return (
-  <section aria-label="شخصي پن شوي مدیریتي برخې" className="grid items-start gap-3 lg:grid-cols-2">
+  <section aria-label="شخصي پن شوي مدیریتي برخې" className={layout === "stacked" ? "flex flex-col gap-4" : "grid items-start gap-3 lg:grid-cols-2"}>
    {visible.map(id=>(
     <article key={id} onDragOver={event=>event.preventDefault()}
      onDrop={event=>{event.preventDefault();if(dragging){reorderWidgets(dragging,id);}setDragging(null);}}

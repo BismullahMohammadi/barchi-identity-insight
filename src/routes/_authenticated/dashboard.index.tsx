@@ -10,7 +10,6 @@ import { OVERVIEW_SLUGS, getTab } from "@/lib/tabs";
 import { periodRows, previousDayChange, type OverviewPeriod } from "@/lib/overview-period";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
-import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -98,8 +97,6 @@ function Overview() {
           <DemoBadge /> لاندې شمېرې نمونه دي، اصلي معلومات نه دي. کله چې شیټ په خوندي ډول وصل شي، اصلي شمېرې ښکاري.
         </p>
       )}
-
-      <PinnedWidgets />
 
       {settings.showDailyVisitors && (
         <section className="rounded-xl border bg-card p-4 shadow-card sm:p-5" aria-label="ورځني مراجعین">
