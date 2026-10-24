@@ -29,17 +29,36 @@ export function buildYesterdayAdvice(tabs:SourceTab[],yesterday:JDate):DailyAdvi
     const comparison=prev? "له "+formatJ(prev.date)+" سره پرتله":null;
     const delta=prev && prev.value>0?Math.round((count-prev.value)*100/prev.value):null;
     const control=tabs.find(t=>t.slug==="control");
-    let controlSummary="";
+    const distribution=tabs.find(t=>t.slug==="distribution");
+    let controlCount:number|null=null;
+    let distributionCount:number|null=null;
     if(control) {
-      try {
-        const controlTable=normalizeGrid(control.grid,control.title);
-        const verified=dayValue(controlTable,yesterday,6);
-        if(verified!==null) controlSummary=" د کنټرول په راپور کې "+verified.toLocaleString("fa-AF")+" ثبت شوي دي.";
-      } catch {/* A bad secondary schema must not suppress the main report. */}
+      try {controlCount=dayValue(normalizeGrid(control.grid,control.title),yesterday,6);}
+      catch {/* Keep advice based only on validated metrics. */}
     }
-    if(delta!==null && delta<=-20) return {date,title:"د فعالیت کموالی",message:"پرون "+count.toLocaleString("fa-AF")+" تذکرې پاس شوې؛ د مخکیني ثبت شوي راپور په پرتله "+Math.abs(delta)+"٪ کموالی دی. د کار جریان او ځنډونه وڅېړئ."+controlSummary,comparison,hasReport:true};
-    if(delta!==null && delta>=20) return {date,title:"د فعالیت ښه والی",message:"پرون "+count.toLocaleString("fa-AF")+" تذکرې پاس شوې؛ د مخکیني ثبت شوي راپور په پرتله "+delta+"٪ زیاتوالی دی. د پرمختګ لاملونه ثبت کړئ."+controlSummary,comparison,hasReport:true};
-    return {date,title:"د ورځې مدیریتي لنډیز",message:"پرون "+count.toLocaleString("fa-AF")+" تذکرې پاس شوې. د نن د کار د ښه تنظیم لپاره د کنټرول او توزیع پاتې موارد وارزوئ."+controlSummary,comparison,hasReport:true};
+    if(distribution) {
+      try {distributionCount=dayValue(normalizeGrid(distribution.grid,distribution.title),yesterday,3);}
+      catch {/* Do not infer missing quantities. */}
+    }
+    const details=["پاس شوې: "+count.toLocaleString("fa-AF")];
+    if(controlCount!==null)details.push("کنټرول: "+controlCount.toLocaleString("fa-AF"));
+    if(distributionCount!==null)details.push("توزیع: "+distributionCount.toLocaleString("fa-AF"));
+    const summary="د پرون ثبت شوي ارقام — "+details.join("؛ ")+".";
+
+    // Comparing control and passed only supports an investigation, not a claim of an error.
+    if(controlCount!==null && count!==controlCount){
+      return {date,title:"د راپورونو د تطبیق وړاندیز",message:summary+" د کنټرول او پاس شويو شمېرې "+Math.abs(count-controlCount)+" توپیر لري. د دواړو راپورونو د تعریف او ثبت وخت تایید کړئ، بیا یې په اړوند ټیم کې وڅېړئ.",comparison,hasReport:true};
+    }
+    if(delta!==null && delta<=-20){
+      return {date,title:"د فعالیت کموالی",message:summary+" د مخکیني ثبت شوي راپور په پرتله "+Math.abs(delta)+"٪ کموالی دی. د نن لپاره د ثبت، کنټرول او چاپ ځنډونه وګورئ او د ستونزې مسئول وټاکئ.",comparison,hasReport:true};
+    }
+    if(delta!==null && delta>=20){
+      return {date,title:"د فعالیت ښه والی",message:summary+" د مخکیني ثبت شوي راپور په پرتله "+delta+"٪ زیاتوالی دی. د ښه فعالیت لاملونه له ټیمونو سره شریک او د دوام لپاره یې ثبت کړئ.",comparison,hasReport:true};
+    }
+    if(count===0){
+      return {date,title:"د صفر فعالیت د علت ارزونه",message:summary+" که پرون رسمي رخصتي نه وه، د فعالیت د نه ثبتېدو علت معلوم کړئ. له شیټ څخه یوازې د صفر ثبتېدو پخلی کېږي.",comparison,hasReport:true};
+    }
+    return {date,title:"د نن لپاره مدیریتي وړاندیز",message:summary+" د نن لومړیتوب دې د پاتې دوسیو، د کنټرول د کیفیت او د راپورونو د پر وخت ثبت کتنه وي.",comparison,hasReport:true};
   } catch {
     return {date,title:"د راپور د تایید اړتیا",message:"د مجموعي راپور جوړښت له تایید شوې بڼې سره سمون نه لري؛ له تایید مخکې مشوره نه وړاندې کېږي.",comparison:null,hasReport:false};
   }
