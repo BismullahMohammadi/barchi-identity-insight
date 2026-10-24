@@ -46,7 +46,7 @@ function Overview() {
       try {
         const n = normalizeGrid(t.grid, t.title);
         const col = SHEET_COLUMNS[t.title]?.primaryCol ?? null;
-        const rows = periodRows(n, period, today);
+        const rows = periodRows(n, period, today, yesterday);
         const isDated = n.dateCol >= 0;
         // Missing rows do not equal a real reported zero.
         const total = col === null || (period !== "all" && (!isDated || rows.length === 0))
@@ -79,7 +79,9 @@ function Overview() {
         {([
           ["all", "ټول کال"],
           ["month", "روانه میاشت"],
+          ["previousMonth", "تېره میاشت"],
           ["today", "نن"],
+          ["yesterday", "تېره ورځ"],
         ] as const).map(([value, label]) => (
           <button key={value} type="button" onClick={() => setPeriod(value)}
             aria-pressed={period === value}
@@ -96,6 +98,8 @@ function Overview() {
           <DemoBadge /> لاندې شمېرې نمونه دي، اصلي معلومات نه دي. کله چې شیټ په خوندي ډول وصل شي، اصلي شمېرې ښکاري.
         </p>
       )}
+
+      <PinnedWidgets />
 
       {settings.showDailyVisitors && (
         <section className="rounded-xl border bg-card p-4 shadow-card sm:p-5" aria-label="ورځني مراجعین">
@@ -136,7 +140,6 @@ function Overview() {
         })}
       </div>
 
-      <PinnedWidgets />
     </div>
   );
 }
