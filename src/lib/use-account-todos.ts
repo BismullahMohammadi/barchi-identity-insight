@@ -26,10 +26,10 @@ export function useAccountTodos(){
  useEffect(()=>{
   if(!todos.isSuccess||underway.current||typeof window==="undefined")return;
   const items=getLegacyItems();
-  if(!items.length||window.sessionStorage.getItem(migratedFor)==="complete")return;
+  if(!items.length||window.localStorage.getItem(migratedFor)==="complete")return;
   underway.current=true;
   changeTodo({data:{action:"import",items}}).then(()=>{
-   window.sessionStorage.setItem(migratedFor,"complete");
+   window.localStorage.setItem(migratedFor,"complete");
    // Keep the old browser data as a recovery backup; never delete it on migration.
    client.invalidateQueries({queryKey:["owner-todos"]});
   }).catch(()=>setMigrationError(true)).finally(()=>{underway.current=false;});
