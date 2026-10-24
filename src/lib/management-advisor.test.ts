@@ -15,7 +15,7 @@ describe("integrated management advice",()=>{
   const advice=buildManagementAdvice([total(50),control(45)],[{title:"دنده",done:false}],day);
   expect(advice.title).toMatch(/تطبیق/);
   expect(advice.evidence.join(" ")).toMatch(/پاتې دندې/);
-  expect(advice.recommendation).toMatch(/5/);
+  expect(advice.recommendation).toMatch(/۵/);
  });
  it("does not fabricate daily reports from missing sources",()=>{
   const advice=buildManagementAdvice([],[{title:"دنده",done:false}],day);
