@@ -55,7 +55,7 @@ function TodoContent() {
 
 function AdviceContent(){
  const settings=useDashboardSettings();
- const query=useQuery(sheetQuery(["total","control"],settingsRefreshMs(settings)));
+ const query=useQuery(sheetQuery(["total","control","distribution"],settingsRefreshMs(settings)));
  const yesterday=yesterdayJalali();
  const advice=query.data?buildYesterdayAdvice(query.data.tabs,yesterday):null;
  return (
@@ -80,14 +80,14 @@ export function PinnedWidgets() {
  const visible=order.filter(id=>id==="todo"?settings.showTodo:settings.showAdvice);
  if(!visible.length)return null;
  return (
-  <section aria-label="شخصي پن شوي مدیریتي برخې" className="grid items-start gap-4 lg:grid-cols-2">
+  <section aria-label="شخصي پن شوي مدیریتي برخې" className="grid items-start gap-3 lg:grid-cols-2">
    {visible.map(id=>(
     <article key={id} onDragOver={event=>event.preventDefault()}
      onDrop={event=>{event.preventDefault();if(dragging){reorderWidgets(dragging,id);}setDragging(null);}}
      className={"min-w-0 rounded-2xl border bg-card p-4 shadow-card transition-all sm:p-5 "+(dragging===id?"opacity-60 ring-2 ring-primary/20":"")}>
      <div className="mb-4 flex items-center gap-2">
       <div className="rounded-lg bg-primary/10 p-2 text-primary">{id==="todo"?<ListTodo className="h-5 w-5"/>:<Lightbulb className="h-5 w-5"/>}</div>
-      <h2 className="flex-1 font-bold">{id==="todo"?"زما دندې":"د پرون مدیریتي مشوره"}</h2>
+      <h2 className="flex-1 font-bold">{id==="todo"?"زما دندې":"د پرون تحلیل او د نن مشوره"}</h2>
       {visible.length>1&&<button type="button" onClick={()=>reorderWidgets(id,visible.find(x=>x!==id)!)} title="ځای بدل کړئ" aria-label={label[id]+" ځای بدل کړئ"} className="rounded-md p-2 text-muted-foreground hover:bg-muted"><ArrowLeftRight className="h-4 w-4"/></button>}
       <div draggable onDragStart={event=>{event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",id);setDragging(id);}} onDragEnd={()=>setDragging(null)}
        title="د موږک په واسطه یې انتقال کړئ" aria-label={label[id]+" انتقال کړئ"} className="cursor-grab rounded-md p-2 text-muted-foreground hover:bg-muted active:cursor-grabbing">
