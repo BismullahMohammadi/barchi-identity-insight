@@ -13,7 +13,7 @@ function getLegacyItems():{legacyKey:string;title:string;done:boolean;createdAt:
   return state.todos.filter((item):item is {id:string;title:string;done:boolean;createdAt:number}=>{
    if(!item||typeof item!=="object")return false;
    const v=item as Record<string,unknown>;
-   return typeof v.id==="string"&&typeof v.title==="string"&&typeof v.done==="boolean"&&typeof v.createdAt==="number";
+   return typeof v['id']==="string"&&typeof v['title']==="string"&&typeof v['done']==="boolean"&&typeof v['createdAt']==="number";
   }).slice(0,100).map(x=>({legacyKey:x.id,title:x.title.slice(0,180),done:x.done,createdAt:x.createdAt})).filter(x=>x.title.trim());
  }catch{return [];}
 }
