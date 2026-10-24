@@ -22,4 +22,15 @@ describe("minimal overview period", () => {
   it("does not invent a delta if previous data are missing", () => {
     expect(previousDayChange({...table, dates: [null, today]}, 1, today, yesterday)).toBeNull();
   });
+  it("filters exact previous day",()=>{
+    expect(periodRows(table,"yesterday",today,yesterday)).toEqual([["1405/07/30",50]]);
+  });
+  it("crosses Jalali year boundaries for previous month",()=>{
+    expect(periodRange("previousMonth",{y:1405,m:1,d:3})).toEqual({
+      from:{y:1404,m:12,d:1},to:{y:1404,m:12,d:30}
+    });
+    expect(periodRange("previousMonth",{y:1405,m:8,d:3})).toEqual({
+      from:{y:1405,m:7,d:1},to:{y:1405,m:7,d:30}
+    });
+  });
 });
