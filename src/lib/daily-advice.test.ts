@@ -13,6 +13,6 @@ describe("previous day advice",()=>{
  });
  it("shows a cautious fallback when previous counts were zero",()=>{
   const x=buildYesterdayAdvice(make([["1405/07/28","0","0","0","0","0","0","0"],["1405/07/29","10","1000","50","0","9","0","0"]]),yesterday);
-  expect(x.hasReport).toBe(true);expect(x.title).toBe("د ورځې مدیریتي لنډیز");
+  expect(x.hasReport).toBe(true);expect(x.title).toBe("د نن لپاره مدیریتي وړاندیز");
  });
 });
