@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChartNoAxesColumn, CalendarDays } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
@@ -64,17 +64,19 @@ function Overview() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-8 sm:space-y-6">
-      <section className="relative overflow-hidden rounded-2xl bg-hero p-5 text-primary-foreground shadow-card md:p-7">
+      <section className="relative overflow-hidden rounded-2xl bg-hero p-5 text-primary-foreground shadow-card sm:p-6 md:p-7">
         <div className="absolute inset-0 pattern-dots" aria-hidden />
         <div className="relative">
-          <p className="text-sm text-sidebar-primary">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold md:text-3xl">د ۱۴۰۵ کال عمومي کتنه</h1>
+          <p className="text-sm font-semibold text-amber-200">د دشت برچي د الکترونیکي تذکرو مرکز</p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold md:text-3xl">د مرکز عمومي کتنه</h1>
+          <p className="mt-2 max-w-xl text-sm text-white/85">د فعالیتونو او عوایدو مهم شاخصونه، د هجري شمسي مودې له مخې.</p>
         </div>
       </section>
 
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
 
-      <div className="flex flex-wrap items-center gap-2" aria-label="د راپور موده">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2.5 shadow-card" role="group" aria-label="د راپور موده">
+        <CalendarDays aria-hidden="true" className="mx-2 h-4 w-4 shrink-0 text-muted-foreground" />
         {([
           ["all", "ټول کال"],
           ["month", "روانه میاشت"],
@@ -84,9 +86,7 @@ function Overview() {
         ] as const).map(([value, label]) => (
           <button key={value} type="button" onClick={() => setPeriod(value)}
             aria-pressed={period === value}
-            className={period === value
-              ? "rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground"
-              : "rounded-lg border bg-card px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"}>
+            className="dashboard-period-button">
             {label}
           </button>
         ))}
@@ -98,8 +98,13 @@ function Overview() {
         </p>
       )}
 
+      <div className="flex items-center gap-2 pt-1">
+        <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
+      </div>
+
       {settings.showDailyVisitors && (
-        <section className="rounded-xl border bg-card p-4 shadow-card sm:p-5" aria-label="ورځني مراجعین">
+        <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
@@ -116,17 +121,17 @@ function Overview() {
         </section>
       )}
 
-      <div className={settings.compactCards ? "grid gap-2 sm:grid-cols-2 xl:grid-cols-4" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"}>
+      <div className={settings.compactCards ? "grid gap-2 sm:grid-cols-2 xl:grid-cols-4" : "grid gap-3 sm:grid-cols-2 xl:grid-cols-4"}>
         {(cards ?? DEMO).map((c, i) => {
           const tab = getTab(c.slug)!;
           return (
-            <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className={settings.compactCards ? "group rounded-xl border bg-card p-3 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-primary" : "group rounded-xl border bg-card p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-primary"}>
+            <Link key={c.slug} to="/dashboard/$slug" params={{ slug: c.slug }} className={settings.compactCards ? "dashboard-kpi group p-3" : "dashboard-kpi group"}>
               <div className="flex items-center justify-between">
-                <h3 className="font-bold">{tab.label}</h3>
-                {demo ? <DemoBadge /> : <ArrowLeft className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-x-1" />}
+                <h3 className="text-sm font-bold text-muted-foreground">{tab.label}</h3>
+                {demo ? <DemoBadge /> : <ArrowLeft aria-hidden="true" className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-x-1" />}
               </div>
 
-              <p className="mt-3 text-3xl font-extrabold" style={{ color: COLORS[i] }}>
+              <p className="mt-3 break-words text-2xl font-extrabold tabular-nums sm:text-3xl" style={{ color: COLORS[i] }}>
                 {q.isLoading ? "…" : c.total == null ? "—" : fmt(c.total)}
               </p>
               {c.change !== null && (
