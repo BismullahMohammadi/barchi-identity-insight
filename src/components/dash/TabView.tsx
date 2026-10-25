@@ -64,7 +64,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
 
   return (
     <div className="space-y-4">
-      {!detailsOnly && <section className="flex flex-wrap items-end justify-between gap-4 rounded-xl border bg-card p-4 shadow-card">
+      {!detailsOnly && <section className="dashboard-panel flex flex-wrap items-end justify-between gap-4 p-4 sm:p-5">
         <div>
           <p className="text-sm text-muted-foreground">{primaryLabel ?? "د راپور قطارونه"}</p>
           <p className="mt-1 text-3xl font-extrabold tabular-nums">
@@ -85,9 +85,9 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
         )}
       </section>}
 
-      <section className="overflow-hidden rounded-xl border bg-card shadow-card">
+      <section className="dashboard-panel overflow-hidden">
         <button type="button" aria-expanded={expanded}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold hover:bg-muted/40"
+          className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           onClick={() => setExpanded(v => !v)}>
           <span>تفصیلي معلومات {expanded ? "" : "(د اړتیا پر مهال)"}</span>
           <ChevronDown aria-hidden className={expanded ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
@@ -97,7 +97,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
             <div className="no-print flex flex-wrap items-center gap-2">
               <div className="relative min-w-40 flex-1 sm:max-w-xs">
                 <Search aria-hidden className="absolute start-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input aria-label="په راپور کې پلټنه" placeholder="په جدول کې پلټنه" className="ps-8"
+                <Input aria-label="په راپور کې پلټنه" placeholder="په جدول کې پلټنه" className="min-h-11 ps-9"
                   value={search} onChange={event => { setSearch(event.target.value); setShown(PAGE_SIZE); }} />
               </div>
               <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filteredRows.length}>
@@ -107,15 +107,15 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
                 <Printer className="h-4 w-4" /> چاپ
               </Button>
             </div>
-            <div className="max-h-[450px] overflow-auto">
+            <div className="max-h-[460px] w-full overflow-auto rounded-lg border">
               <Table>
-                <TableHeader className="sticky top-0 bg-muted">
-                  <TableRow>{table.headers.map((name, i) => <TableHead key={i} className="whitespace-nowrap text-right">{name}</TableHead>)}</TableRow>
+                <TableHeader className="sticky top-0 z-10 bg-muted">
+                  <TableRow>{table.headers.map((name, i) => <TableHead key={i} className="min-w-24 whitespace-nowrap text-start font-semibold">{name}</TableHead>)}</TableRow>
                 </TableHeader>
                 <TableBody>
                   {shownRows.map((row: Cell[], i) => (
                     <TableRow key={i} className={isTotalRow(row) ? "bg-secondary font-bold" : ""}>
-                      {row.map((value, j) => <TableCell key={j} className="whitespace-nowrap">{typeof value === "number" ? fmt(value) : value ?? "—"}</TableCell>)}
+                      {row.map((value, j) => <TableCell key={j} className="whitespace-nowrap text-sm">{typeof value === "number" ? fmt(value) : value ?? "—"}</TableCell>)}
                     </TableRow>
                   ))}
                 </TableBody>
