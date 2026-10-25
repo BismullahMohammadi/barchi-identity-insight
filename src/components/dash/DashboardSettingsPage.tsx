@@ -14,12 +14,12 @@ export function DashboardSettingsPage() {
     saveDashboardSettings({ ...settings, [key]: value });
   }
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-extrabold"><Settings2 className="h-6 w-6" />تنظیمات</h1>
         <p className="text-sm text-muted-foreground">د ښودلو او تازه کېدو ساده تنظیمات.</p>
       </div>
-      <section className="space-y-4 rounded-xl border bg-card p-5">
+      <section className="dashboard-panel space-y-5 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-bold"><RefreshCw className="h-4 w-4" />د معلوماتو تازه کول</h2>
         <label htmlFor="refresh-rate" className="block text-sm">د اتومات تازه کېدو موده</label>
         <Select value={String(settings.refreshSeconds)} onValueChange={(value) => update("refreshSeconds", Number(value) as DashboardSettings["refreshSeconds"])}>
@@ -35,26 +35,26 @@ export function DashboardSettingsPage() {
           <RefreshCw className="h-4 w-4" /> اوس معلومات تازه کړئ
         </Button>
       </section>
-      <section className="space-y-4 rounded-xl border bg-card p-5">
+      <section className="dashboard-panel space-y-5 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-bold"><Monitor className="h-4 w-4" />د ښودلو تنظیمات</h2>
-        <div className="flex items-center justify-between gap-3">
-          <div><p className="text-sm font-semibold">زما دندې (To-Do)</p><p className="text-xs text-muted-foreground">د عمومي کتنې په سر کې یې ښکاره کړئ</p></div>
+        <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
+          <div><p className="text-sm font-semibold">زما دندې (To-Do)</p><p className="text-xs text-muted-foreground">په پورتنۍ «دندې او مشوره» برخه کې یې فعال کړئ</p></div>
           <Switch checked={settings.showTodo} onCheckedChange={v=>update("showTodo",v)} aria-label="زما دندې فعالې کړئ"/>
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <div><p className="text-sm font-semibold">د پرون مدیریتي مشوره</p><p className="text-xs text-muted-foreground">له موجود راپور څخه اتومات تحلیل</p></div>
+        <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
+          <div><p className="text-sm font-semibold">مدیریتي سلاکار</p><p className="text-xs text-muted-foreground">د راپورونو او پاتې دندو ګډ تحلیل</p></div>
           <Switch checked={settings.showAdvice} onCheckedChange={v=>update("showAdvice",v)} aria-label="د پرون مشوره فعاله کړئ"/>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
           <div><p className="text-sm font-semibold">ورځني مراجعین</p><p className="text-xs text-muted-foreground">د نوي معرفي شويو او ثبت نام ته معرفي شويو ګډ کارت</p></div>
           <Switch checked={settings.showDailyVisitors} onCheckedChange={(v) => update("showDailyVisitors",v)} aria-label="ورځني مراجعین ښکاره کړئ" />
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
           <div><p className="text-sm font-semibold">لنډ کارتونه</p><p className="text-xs text-muted-foreground">په عمومي کتنه کې لږ ځای نیسي</p></div>
           <Switch checked={settings.compactCards} onCheckedChange={(v) => update("compactCards",v)} aria-label="لنډ کارتونه فعال کړئ" />
         </div>
       </section>
-      <section className="space-y-3 rounded-xl border bg-card p-5">
+      <section className="dashboard-panel space-y-4 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />حساب او امنیت</h2>
         <p className="text-sm">ننوتلی حساب: <strong dir="ltr">{access.data?.email ?? "—"}</strong></p>
         <p className="text-sm">د مالک اجازه: <strong>{access.data?.allowed ? "فعاله" : "تایید نه ده"}</strong></p>
