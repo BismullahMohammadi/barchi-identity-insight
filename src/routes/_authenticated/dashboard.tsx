@@ -25,15 +25,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
-  const cls = "group flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
-  const active = { className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` };
+  const cls = "group flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
+  const active = { className: `${cls} border-sidebar-border bg-sidebar-accent text-sidebar-primary font-bold` };
   const groups = [
     { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
     { title: "مالي راپورونه", slugs: ["bank"] },
     { title: "نور راپورونه", slugs: ["annual"] },
   ];
   return (
-    <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-3">
+    <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
         <LayoutDashboard className="h-4 w-4 shrink-0" /> عمومي کتنه
       </Link>
@@ -57,7 +57,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
-  const cls = "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent";
+  const cls = "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   return (
     <Link to="/dashboard/$slug" params={{ slug: "settings" }} className={cls}
       activeProps={{ className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` }}
@@ -84,7 +84,7 @@ function DashboardLayout() {
   }
 
   const brand = (
-    <div className="mb-5 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-3 py-4">
+    <div className="mb-5 rounded-2xl border border-sidebar-border bg-sidebar-accent/35 px-4 py-5">
       <p className="text-xs font-semibold tracking-wide text-sidebar-primary">eNID · ۱۴۰۵</p>
       <h2 className="mt-1 font-display text-lg font-extrabold">دشت برچي مرکز</h2>
       <p className="mt-1 text-xs text-sidebar-foreground/65">د مدیریتي راپورونو سیستم</p>
@@ -92,8 +92,9 @@ function DashboardLayout() {
   );
 
   return (
-    <div className="min-h-screen md:flex">
-      <aside className="no-print hidden w-64 shrink-0 bg-sidebar p-4 text-sidebar-foreground md:block">
+    <div dir="rtl" lang="ps" className="min-h-screen md:flex">
+      <a href="#main-dashboard-content" className="sr-only fixed start-4 top-2 z-50 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only">اصلي منځپانګې ته لاړ شئ</a>
+      <aside className="no-print hidden w-64 shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground lg:block">
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
           <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav /></div>
@@ -101,7 +102,7 @@ function DashboardLayout() {
         </div>
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-72 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-sidebar p-5 text-sidebar-foreground">
+        <SheetContent side="right" className="w-[min(85vw,320px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-sidebar p-5 text-sidebar-foreground">
           <SheetTitle className="sr-only">مینو</SheetTitle>
           <div className="flex max-h-full flex-col">
             {brand}
@@ -115,7 +116,7 @@ function DashboardLayout() {
           <SheetContent side="left" className="no-print flex h-full w-full max-w-md flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-[480px]">
             <div className="shrink-0 border-b px-5 pb-4 pt-6">
               <SheetTitle className="text-lg font-extrabold">دندې او مدیریتي مشوره</SheetTitle>
-              <p className="mt-1 text-xs text-muted-foreground">د مرکز د کارونو شخصي وسایل؛ د راپورونو لید نه پټوي.</p>
+              <p className="mt-1 text-sm text-muted-foreground">ستاسو خوندي دندې او د راپورونو پر بنسټ مدیریتي مشوره</p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5">
               <PinnedWidgets layout="stacked" />
@@ -124,22 +125,25 @@ function DashboardLayout() {
         </Sheet>
       )}
       <div className="print-full flex-1 min-w-0">
-        <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur md:px-8">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen(true)} aria-label="مینو">
+        <header className="no-print sticky top-0 z-20 flex min-h-16 items-center gap-2 border-b bg-card/95 px-4 py-2.5 shadow-sm backdrop-blur sm:gap-3 md:px-8">
+          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
             <Menu />
           </Button>
-          <div className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{access.data?.email ?? ""}</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold leading-5">د مرکز مدیریتي سیسټم</p>
+            <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
+          </div>
           {access.data?.allowed && showTools && (
             <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او مشوره پرانیزئ">
-              <PanelRightOpen className="h-4 w-4" />
+              <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
               <span className="hidden sm:inline">دندې او مشوره</span>
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={signOut}>
+          <Button variant="ghost" size="sm" onClick={signOut} aria-label="له سیستم څخه وتل">
             <LogOut /> وتل
           </Button>
         </header>
-        <main className="px-4 py-5 sm:px-6 md:px-8 md:py-7">
+        <main id="main-dashboard-content" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
             <p className="text-muted-foreground">لاسرسی کتل کېږي…</p>
           ) : !access.data?.allowed ? (
