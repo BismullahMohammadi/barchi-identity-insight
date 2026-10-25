@@ -51,6 +51,7 @@
 
 :root {
   --radius: 0.75rem;
+  --space-content: clamp(1rem, 2.2vw, 2rem);
   --background: oklch(0.972 0.012 85);
   --foreground: oklch(0.24 0.035 210);
   --card: oklch(0.995 0.004 85);
@@ -104,7 +105,13 @@
   * {
     border-color: var(--color-border);
   }
+  html { scroll-behavior: smooth; }
+  [id="main-dashboard-content"] { scroll-margin-top: 5rem; }
+  :where(button, a, input, textarea, [role="switch"], [tabindex]):focus-visible { scroll-margin-top: 5.5rem; }
+  button, [role="button"] { touch-action: manipulation; }
   body {
+    line-height: 1.65;
+    min-width: 320px;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
@@ -131,3 +138,16 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Barchi design system: calm, data-led surfaces and accessible touch sizing. */
+@layer components {
+  .dashboard-panel { @apply rounded-2xl border border-border/85 bg-card shadow-card; }
+  .dashboard-panel-header { @apply flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3 sm:px-5; }
+  .dashboard-kpi { @apply relative min-w-0 overflow-hidden rounded-2xl border border-border/90 bg-card p-4 shadow-card transition-[box-shadow,border-color] duration-200 sm:p-5; }
+  .dashboard-kpi:hover { @apply border-primary/25 shadow-md; }
+  .dashboard-period-button { @apply min-h-11 cursor-pointer rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring; }
+  .dashboard-period-button[aria-pressed="true"] { @apply border-primary bg-primary text-primary-foreground; }
+  .dashboard-period-button[aria-pressed="false"] { @apply border-border bg-card text-foreground hover:bg-muted; }
+  .dashboard-subtle-note { @apply rounded-xl border border-border/80 bg-muted/35 px-4 py-3 text-sm leading-7 text-muted-foreground; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

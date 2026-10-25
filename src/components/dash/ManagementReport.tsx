@@ -27,7 +27,7 @@ function Stat({label,value,currency = false,tone = "default"}: {label:string;val
   const accent = {default:"border-s-border",teal:"border-s-primary",amber:"border-s-amber-500",blue:"border-s-sky-500"}[tone];
   const numberTone = {default:"text-foreground",teal:"text-primary",amber:"text-amber-700",blue:"text-sky-700"}[tone];
   return (
-    <div className={"min-w-0 rounded-xl border border-s-4 bg-card p-4 shadow-card "+accent}>
+    <div className={"dashboard-kpi border-s-4 "+accent}>
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={"mt-2 text-2xl font-extrabold tabular-nums "+numberTone}>{value === null ? "—" : format(value)}
         {currency && value !== null && <span className="ms-1 text-xs font-medium text-muted-foreground">AFN</span>}
@@ -37,10 +37,10 @@ function Stat({label,value,currency = false,tone = "default"}: {label:string;val
 }
 function MonthSelect({month,change}: {month:string;change:(s:string)=>void}) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border bg-card px-4 py-3 shadow-card">
       <span className="text-sm text-muted-foreground">موده</span>
       <Select value={month} onValueChange={change}>
-        <SelectTrigger aria-label="د راپور میاشت" className="w-40"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label="د راپور میاشت" className="min-h-11 w-44 rounded-xl"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">ټول کال</SelectItem>
           {JALALI_MONTHS.map((label,i)=><SelectItem key={label} value={String(i+1)}>{label}</SelectItem>)}
@@ -61,14 +61,14 @@ function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Ce
   const reported=records.filter(r=>r.value!==null);
   const max=Math.max(1,...reported.map(r=>r.value??0));
   return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-card" aria-label={identity?"د تثبیت هویت د کارمندانو فعالیت":"د کنټرول د ټیمونو فعالیت"}>
+    <section className="dashboard-panel overflow-hidden" aria-label={identity?"د تثبیت هویت د کارمندانو فعالیت":"د کنټرول د ټیمونو فعالیت"}>
       <div className="border-b px-4 py-3">
         <h2 className="font-bold">{identity?"د هر کارمند فعالیت":"د هر ټیم فعالیت"}</h2>
         <p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې ثبت شوې شمېرې · تش کالمونه صفر نه ګڼل کېږي</p>
       </div>
-      <div className="grid gap-2 p-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
         {records.map(row=> (
-          <div key={row.label} className="min-w-0 rounded-lg border bg-muted/20 p-3">
+          <div key={row.label} className="min-w-0 rounded-xl border bg-muted/20 p-4">
             <div className="flex items-start justify-between gap-3">
               <span className="min-w-0 break-words text-sm font-medium">{row.label}</span>
               <strong className={"shrink-0 tabular-nums "+(row.value===null?"text-muted-foreground":"text-primary")}>{row.value===null?"—":format(row.value)}</strong>
@@ -136,7 +136,7 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
       })).filter(row=>row.month) : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {kind!=="annual" && <MonthSelect month={month} change={setMonth}/>}
       <div className={cards.length===1?"grid grid-cols-1 gap-3 sm:max-w-sm":"grid grid-cols-2 gap-3 lg:grid-cols-4"}>
         {cards.map(card=><Stat key={card.label} {...card}/>)}
@@ -155,7 +155,7 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
         <p className="text-sm text-muted-foreground">د ټولو خدماتو مجموعه: <strong className="text-foreground">{format(metric(5)!)}</strong></p>
       )}
       {kind==="annual" && (
-        <section className="overflow-hidden rounded-xl border bg-card shadow-card">
+        <section className="dashboard-panel overflow-hidden">
           <h2 className="border-b px-4 py-3 font-bold">د میاشتو لنډیز</h2>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[400px] text-sm">
@@ -175,7 +175,7 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
           </div>
         </section>
       )}
-      {(kind==="total" || kind==="bank") && rows.length===0 && <p className="text-sm text-muted-foreground">د دې میاشتې لپاره راپور نشته.</p>}
+      {(kind==="total" || kind==="bank") && rows.length===0 && <p className="dashboard-subtle-note">د دې میاشتې لپاره راپور نشته.</p>}
       <TabView title={title} grid={grid} detailsOnly selectedMonth={month} onSelectedMonthChange={setMonth} />
     </div>
   );
