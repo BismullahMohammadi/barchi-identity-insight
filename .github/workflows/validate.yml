@@ -14,6 +14,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Verify UI/UX Pro Max skill
+        run: |
+          python3 .agents/skills/ui-ux-pro-max/scripts/search.py "dashboard keyboard navigation" --domain ux
+          python3 .agents/skills/ui-ux-pro-max/scripts/search.py "responsive dashboard table" --stack react
+          python3 .agents/skills/ui-ux-pro-max/scripts/search.py "government management dashboard" --design-system -p "Barchi Identity Insight"
       - name: Type check
         run: bunx tsc --noEmit
       - name: Unit tests
