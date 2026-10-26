@@ -11,6 +11,8 @@ export const TABS: TabDef[] = [
   { slug: "services", title: "خدمات", label: "خدمات", description: "خدماتي فعالیتونه" },
   { slug: "distribution", title: "توزیع", label: "توزیع", description: "توزیع شوې تذکرې" },
   { slug: "arrivals", title: "راسیدلې تذکرې", label: "د تذکرو انتقالات", description: "مرکز ته را رسېدلې او ناقصې تذکرې" },
+  // Source for the overview trend only: not reintroduced to the sidebar/navigation.
+  { slug: "weekly", title: "پاس شوي دوسیې (هفته وار)", label: "هفته وار فعالیت", description: "د پاس شويو، مثنی او تجدید اونیزې شمېرې" },
   { slug: "annual", title: "کالنی ګزارش", label: "کالنی ګزارش", description: "د ۱۴۰۵ کال لنډیز" },
 ];
 
