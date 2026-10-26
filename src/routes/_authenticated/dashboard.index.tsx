@@ -131,15 +131,6 @@ function Overview() {
         </p>
       )}
 
-      <div className="flex items-center gap-2 pt-1">
-        <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
-        <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
-      </div>
-      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
-        {mainCards.map(renderCard)}
-      </div>
-      <WeeklyActivityChart />
-
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
@@ -157,6 +148,17 @@ function Overview() {
           </div>
         </section>
       )}
+
+      <div className="flex items-center gap-2 pt-1">
+        <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
+        <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
+      </div>
+      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
+        {mainCards.map(renderCard)}
+      </div>
+      <WeeklyActivityChart />
+
+
 
 
     </div>
