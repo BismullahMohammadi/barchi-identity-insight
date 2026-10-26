@@ -38,12 +38,12 @@ export function DashboardSettingsPage() {
       <section className="dashboard-panel space-y-5 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-bold"><Monitor className="h-4 w-4" />د ښودلو تنظیمات</h2>
         <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-          <div><p className="text-sm font-semibold">زما دندې (To-Do)</p><p className="text-xs text-muted-foreground">په پورتنۍ «دندې او مشوره» برخه کې یې فعال کړئ</p></div>
+          <div><p className="text-sm font-semibold">زما دندې (To-Do)</p><p className="text-xs text-muted-foreground">په پورتنۍ «دندې او راپورونه» برخه کې یې فعال کړئ</p></div>
           <Switch checked={settings.showTodo} onCheckedChange={v=>update("showTodo",v)} aria-label="زما دندې فعالې کړئ"/>
         </div>
         <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
-          <div><p className="text-sm font-semibold">مدیریتي سلاکار</p><p className="text-xs text-muted-foreground">د راپورونو او پاتې دندو ګډ تحلیل</p></div>
-          <Switch checked={settings.showAdvice} onCheckedChange={v=>update("showAdvice",v)} aria-label="د پرون مشوره فعاله کړئ"/>
+          <div><p className="text-sm font-semibold">د راپورونو بشپړتیا</p><p className="text-xs text-muted-foreground">د پرون ورځې د راپورونو د ثبت حالت</p></div>
+          <Switch checked={settings.showReportHealth} onCheckedChange={v=>update("showReportHealth",v)} aria-label="د راپورونو بشپړتیا فعاله کړئ"/>
         </div>
         <div className="flex min-h-12 items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
           <div><p className="text-sm font-semibold">ورځني مراجعین</p><p className="text-xs text-muted-foreground">د نوي معرفي شويو او ثبت نام ته معرفي شويو ګډ کارت</p></div>
