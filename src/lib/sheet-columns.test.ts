@@ -29,7 +29,10 @@ describe("verified eNID tab mapping",()=>{
       ["۱۴۰۵/۰۱/۰۳","","","","","","","","75","8","83"]]);
     const n=normalizeGrid(g,"تثبت هویت");
     expect(n.numericCols).toContain(10);
-    expect(n.numericCols).toContain(9);\n    expect(n.numericCols).not.toContain(2);\n    expect(sumColumn(n.rows,8)).toBe(75);\n    expect(sumColumn(n.rows,9)).toBe(8);
+    expect(n.numericCols).toContain(9);
+    expect(n.numericCols).not.toContain(2);
+    expect(sumColumn(n.rows,8)).toBe(75);
+    expect(sumColumn(n.rows,9)).toBe(8);
     expect(sumColumn(n.rows,10)).toBe(83);
   });
   it("does not add bank subtotals to bank grand total",()=>{
