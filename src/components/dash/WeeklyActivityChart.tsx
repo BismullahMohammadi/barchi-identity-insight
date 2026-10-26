@@ -4,7 +4,8 @@ import { Activity, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { sheetQuery, errorText } from "@/lib/queries";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
-import { weeklyActivity, weeklyChange, type WeeklyPoint } from "@/lib/weekly-trend";
+import { weeklyActivity, weeklyChange, selectPreviousWeeks, type WeeklyPoint } from "@/lib/weekly-trend";
+import { todayJalali } from "@/lib/jalali";
 type Scope="4"|"8"|"12"|"all";
 const fmt=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:0});
 function WeeklyTooltip({active,payload}:{active?:boolean;payload?:Array<{payload?:WeeklyPoint}>}){
@@ -21,7 +22,8 @@ export function WeeklyActivityChart(){
  const q=useQuery(sheetQuery(["weekly"],settingsRefreshMs(settings)));
  const [scope,setScope]=useState<Scope>("8");
  const all=q.data?.tabs[0]?.grid?weeklyActivity(q.data.tabs[0].grid):[];
- const points=scope==="all"?all:all.slice(-Number(scope));
+ const today=todayJalali();
+ const points=scope==="all"?all:selectPreviousWeeks(all,today,Number(scope) as 4|8|12);
  const difference=weeklyChange(points);
  const latest=points.at(-1);
  return <section className="dashboard-panel overflow-hidden" aria-labelledby="weekly-activity-title">
@@ -32,7 +34,7 @@ export function WeeklyActivityChart(){
     </div>
     <div>
      <h2 id="weekly-activity-title" className="text-lg font-extrabold">د کار عمومي وضعیت</h2>
-     <p className="mt-0.5 text-xs leading-6 text-muted-foreground">هفته وار فعالیت · پاس شوي + مثنی + تجدید</p>
+     <p className="mt-0.5 text-xs leading-6 text-muted-foreground">هفته وار فعالیت · پاس شوي + مثنی + تجدید · د روانې اونۍ څخه مخکې بشپړې اونۍ</p>
     </div>
    </div>
    <div role="group" aria-label="د ګراف د اونیو شمېر" className="flex flex-wrap gap-1 rounded-xl bg-muted/55 p-1">
@@ -65,7 +67,7 @@ export function WeeklyActivityChart(){
      </AreaChart>
     </ResponsiveContainer>
    </div>
-   <p className="px-4 pb-4 text-xs leading-6 text-muted-foreground sm:px-5">د اصلي هفته وار Google Sheet ثبت شوې اونۍ ښودل کېږي؛ د رخصتیو یا نامکملو اونیو شمېرې نه اټکل کېږي. ګراف د ثبت شويو دوسیو د شمېر وضعیت ښيي، نه د کارمندانو د کیفیت درجه.</p>
+   <p className="px-4 pb-4 text-xs leading-6 text-muted-foreground sm:px-5">د ۴، ۸ او ۱۲ اونیو فلټرونه د نن ورځې څخه مخکې بشپړې شوې اونۍ ښيي؛ «ټول کال» ټول ثبت شوي ارقام ښيي. د اصلي هفته وار Google Sheet ثبت شوې اونۍ ښودل کېږي؛ د رخصتیو یا نامکملو اونیو شمېرې نه اټکل کېږي. ګراف د ثبت شويو دوسیو د شمېر وضعیت ښيي، نه د کارمندانو د کیفیت درجه.</p>
   </>}
  </section>;
 }
