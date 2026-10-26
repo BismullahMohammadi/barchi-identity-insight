@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { AlertCircle, ArrowLeftRight, Check, GripVertical, Lightbulb, ListTodo, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sheetQuery, errorText } from "@/lib/queries";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 import { yesterdayJalali } from "@/lib/jalali";
-import { buildManagementAdvice } from "@/lib/management-advisor";
+import { getReportHealth } from "@/lib/report-health";
 import { reorderWidgets, useWorkspace, type WidgetId } from "@/lib/workspace";
 import { useAccountTodos } from "@/lib/use-account-todos";
 
-const label:{[K in WidgetId]:string}={todo:"دندې",advice:"ورځنۍ مشوره"};
+const label:{[K in WidgetId]:string}={todo:"دندې",advice:"د راپورونو بشپړتیا"};
 function TodoContent() {
  const {todos,loading,loadError,writeError,migrationError,saving,add,toggle,remove,refresh}=useAccountTodos();
  const [draft,setDraft]=useState("");
@@ -53,48 +53,37 @@ function TodoContent() {
  );
 }
 
-function AdviceContent(){
+function ReportHealthContent(){
  const settings=useDashboardSettings();
- const query=useQuery(sheetQuery(["total","identity","control","distribution","bank","services","arrivals","annual"],settingsRefreshMs(settings)));
- const {todos,loading:todosLoading,loadError:todoError}=useAccountTodos();
+ const query=useQuery(sheetQuery(["total","identity","control","services","bank","distribution","arrivals","annual"],settingsRefreshMs(settings)));
  const yesterday=yesterdayJalali();
- const advice=query.data&&!todosLoading?buildManagementAdvice(query.data.tabs,todos,yesterday):null;
- const [showEvidence,setShowEvidence]=useState(false);
- return (
-  <div className="space-y-3">
-   <p className="text-xs text-muted-foreground">د مرکز ټولې برخې او دندې • د پرون {advice?.date??`${yesterday.y}/${String(yesterday.m).padStart(2,"0")}/${String(yesterday.d).padStart(2,"0")}`}</p>
-   {query.error&&<p role="alert" className="flex items-start gap-2 text-sm text-destructive"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0"/>{errorText(query.error)}</p>}
-   {!query.error&&(query.isLoading||todosLoading)&&<p className="text-sm text-muted-foreground">د راپورونو او کارونو ګډ تحلیل کېږي…</p>}
-   {todoError&&<p className="text-xs text-destructive">د شخصي دندو معلومات نه دي ترلاسه شوي. تحلیل کې یې برخه نشته.</p>}
-   {advice&&<div className="space-y-3 rounded-xl border bg-muted/30 p-3">
-    <div><p className="text-sm font-bold">{advice.title}</p><p className="mt-2 text-sm leading-7">{advice.recommendation}</p></div>
-    <div className="rounded-lg border-s-4 border-primary bg-background p-3">
-      <p className="text-xs font-bold text-primary">ستاسو لپاره یو عملي ګام</p>
-      <p className="mt-1 text-sm leading-7">{advice.action}</p>
-    </div>
-    <button type="button" aria-expanded={showEvidence} onClick={()=>setShowEvidence(v=>!v)}
-     className="text-xs font-semibold text-primary underline-offset-4 hover:underline">
-      {showEvidence?"د ارقامو تفصیل بند کړئ":"د تحلیل سرچینې او ارقام وګورئ"}
-    </button>
-    {showEvidence&&<div className="space-y-2 border-t pt-3 text-xs">
-      <p className="font-semibold">ثبت شوي ارقام</p>
-      {advice.evidence.length?advice.evidence.map(item=><p key={item}>{item}</p>):<p>د پرون تایید شوي ارقام نشته.</p>}
-      <p className="pt-1 font-semibold">کارول شوې سرچینې</p>
-      <p>{advice.coverage.join("، ")||"نشته"}</p>
-      {advice.missing.length>0&&<p className="text-amber-700">نیمګړي یا ناموجود: {advice.missing.join("، ")}</p>}
-    </div>}
-   </div>}
-   <p className="text-xs leading-6 text-muted-foreground">مشوره د مرکز د شته راپورونو او شخصي دندو له ګډ تحلیل څخه جوړیږي. دا مهال تحلیل د محلي قواعدو پر بنسټ دی؛ حقیقي AI ماډل او بهر ته د معلوماتو لېږل لا نه دي فعال شوي.</p>
-  </div>
- );
+ const rows=query.data?getReportHealth(query.data.tabs,yesterday):[];
+ const submitted=rows.filter(r=>r.state==="submitted").length;
+ const dailyCount=rows.filter(r=>r.state!=="monthly").length;
+ return <div className="space-y-3">
+  <p className="text-sm text-muted-foreground">د پرون {yesterday.y}/{String(yesterday.m).padStart(2,"0")}/{String(yesterday.d).padStart(2,"0")} د راپورونو د ثبت وضعیت</p>
+  {query.error&&<p role="alert" className="text-sm text-destructive">{errorText(query.error)}</p>}
+  {query.isLoading&&<p className="text-sm text-muted-foreground">د راپورونو حالت اخیستل کېږي…</p>}
+  {!query.isLoading&&!query.error&&<div className="rounded-xl border bg-muted/30 p-3">
+   <p className="text-xl font-extrabold tabular-nums">{submitted} <span className="text-sm font-normal text-muted-foreground">له {dailyCount} ورځنیو راپورونو ثبت شوي</span></p>
+   <div className="mt-3 space-y-2">
+    {rows.map(r=><div key={r.slug} className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm">
+      <span>{r.name}</span>
+      <span className={r.state==="submitted"?"font-semibold text-primary":r.state==="monthly"?"text-muted-foreground":"text-amber-700"}>
+       {r.state==="submitted"?"ثبت شوی":r.state==="monthly"?"میاشتنی":r.state==="invalid"?"د کالمونو ستونزه":"نه دی موندل شوی"}
+      </span>
+     </div>)}
+   </div>
+  </div>}
+  <p className="text-xs leading-6 text-muted-foreground">دا یوازې د راپور د ثبت حالت دی؛ د نشتوالي معنا د فعالیت صفر یا د کارمند تېروتنه نه ده.</p>
+ </div>;
 }
-
 /** Native mouse drag-and-drop with an accessible keyboard/touch reorder button. */
 export function PinnedWidgets({ layout = "grid" }: { layout?: "grid" | "stacked" }) {
  const settings=useDashboardSettings();
  const {order}=useWorkspace();
  const [dragging,setDragging]=useState<WidgetId|null>(null);
- const visible=order.filter(id=>id==="todo"?settings.showTodo:settings.showAdvice);
+ const visible=order.filter(id=>id==="todo"?settings.showTodo:settings.showReportHealth);
  if(!visible.length)return null;
  return (
   <section aria-label="شخصي پن شوي مدیریتي برخې" className={layout === "stacked" ? "flex flex-col gap-4" : "grid items-start gap-3 lg:grid-cols-2"}>
@@ -103,15 +92,15 @@ export function PinnedWidgets({ layout = "grid" }: { layout?: "grid" | "stacked"
      onDrop={event=>{event.preventDefault();if(dragging){reorderWidgets(dragging,id);}setDragging(null);}}
      className={"dashboard-panel min-w-0 p-4 transition-all sm:p-5 "+(dragging===id?"opacity-60 ring-2 ring-primary/20":"")}>
      <div className="mb-4 flex items-center gap-2">
-      <div className="rounded-lg bg-primary/10 p-2 text-primary">{id==="todo"?<ListTodo className="h-5 w-5"/>:<Lightbulb className="h-5 w-5"/>}</div>
-      <h2 className="flex-1 font-bold">{id==="todo"?"زما دندې":"زما مدیریتي سلاکار"}</h2>
+      <div className="rounded-lg bg-primary/10 p-2 text-primary">{id==="todo"?<ListTodo className="h-5 w-5"/>:<ClipboardCheck className="h-5 w-5"/>}</div>
+      <h2 className="flex-1 font-bold">{id==="todo"?"زما دندې":"د راپورونو بشپړتیا"}</h2>
       {visible.length>1&&<button type="button" onClick={()=>reorderWidgets(id,visible.find(x=>x!==id)!)} title="ځای بدل کړئ" aria-label={label[id]+" ځای بدل کړئ"} className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted"><ArrowLeftRight className="h-4 w-4"/></button>}
       <div draggable onDragStart={event=>{event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",id);setDragging(id);}} onDragEnd={()=>setDragging(null)}
        title="د موږک په واسطه یې انتقال کړئ" aria-label={label[id]+" انتقال کړئ"} className="flex h-11 w-11 cursor-grab items-center justify-center rounded-xl text-muted-foreground hover:bg-muted active:cursor-grabbing">
        <GripVertical className="h-5 w-5"/>
       </div>
      </div>
-     {id==="todo"?<TodoContent/>:<AdviceContent/>}
+     {id==="todo"?<TodoContent/>:<ReportHealthContent/>}
     </article>
    ))}
   </section>
