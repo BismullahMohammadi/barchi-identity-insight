@@ -13,7 +13,7 @@ export type SheetColumns = {
 };
 export const SHEET_COLUMNS: Record<string, SheetColumns> = {
   "مجموعی راپور": { headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6,7],primaryCol:3, expectedHeaders:{0:"نېټه",1:"تعرفې",2:"عواید",3:"پاس شوي",5:"توزیع"} },
-  "تثبت هویت": { headerRow:2,dateCol:0,labelCol:0,metricCols:[2,4,5,6,7,8,10],primaryCol:10,expectedHeaders:{0:"نېټه",9:"مجموعه",10:"جمله"} },
+  "تثبت هویت": { headerRow:2,dateCol:0,labelCol:0,metricCols:[8,9,10],primaryCol:10,expectedHeaders:{0:"نېټه",8:"کاغذي تذکرې مطابق",9:"تعین سن",10:"جمله"} },
   "عواید": { headerRow:3,dateCol:0,labelCol:0,metricCols:[3,5],primaryCol:5,expectedHeaders:{0:"نیټه",3:"تعروفو شمیر (بانکي او تعرفې)",5:"لاسته راغلي عواید"} },
   "بانکي عواید": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6],primaryCol:6,expectedHeaders:{0:"نېټه",1:"جدید او ثبت تولد",6:"مجموعه"}},
   "کنټرول": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6],primaryCol:6,expectedHeaders:{0:"نیټه",6:"مجموعه"}},

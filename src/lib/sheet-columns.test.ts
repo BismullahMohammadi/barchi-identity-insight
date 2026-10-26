@@ -24,12 +24,15 @@ describe("verified eNID tab mapping",()=>{
     expect(sumColumn(n.rows,2)).toBe(89500);
     expect(n.dates[0]).toEqual({y:1405,m:1,d:3});
   });
-  it("excludes identity worker and intermediate subtotal columns from main KPI",()=>{
-    const g=sheet("تثبت هویت",["نېټه","","ګل واری","","خلیل","ایوب زاده","شغله","صدیقه","موسی ایوب زاده","مجموعه","جمله"],[
-      ["۱۴۰۵/۰۱/۰۳","","","","","","","","","83","83"]]);
+  it("maps identity paper-document and age determination categories without empty worker columns",()=>{
+    const g=sheet("تثبت هویت",["نېټه","سید نثار","ګل واری","","خلیل","ایوب زاده","شغله","صدیقه","کاغذي تذکرې مطابق","تعین سن","جمله"],[
+      ["۱۴۰۵/۰۱/۰۳","","","","","","","","75","8","83"]]);
     const n=normalizeGrid(g,"تثبت هویت");
     expect(n.numericCols).toContain(10);
-    expect(n.numericCols).not.toContain(9);
+    expect(n.numericCols).toContain(9);
+    expect(n.numericCols).not.toContain(2);
+    expect(sumColumn(n.rows,8)).toBe(75);
+    expect(sumColumn(n.rows,9)).toBe(8);
     expect(sumColumn(n.rows,10)).toBe(83);
   });
   it("does not add bank subtotals to bank grand total",()=>{

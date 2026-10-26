@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { ArrowLeft, ChartNoAxesColumn, CalendarDays, ClipboardCheck, Files, RotateCcw, ShieldCheck, Landmark, PackageCheck } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ChartNoAxesColumn, CalendarDays, ClipboardCheck, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
-import { normalizeGrid, sumColumn } from "@/lib/normalize";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
-import { periodRows, previousDayChange, type OverviewPeriod } from "@/lib/overview-period";
+import { type OverviewPeriod } from "@/lib/overview-period";
+import { deriveOverviewFive, sourceMetric } from "@/lib/overview-five";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
@@ -24,11 +24,13 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
-type SummaryMetric={slug:string;label:string;value:number|null;change:number|null;icon:typeof Files;tone:string};
-const INITIAL:SummaryMetric[]=[
- {slug:"total",label:"پاس شوي",value:null,change:null,icon:Files,tone:"text-primary"},
- {slug:"services",label:"مثنی",value:null,change:null,icon:RotateCcw,tone:"text-sky-700"},
- {slug:"services",label:"تجدید",value:null,change:null,icon:ShieldCheck,tone:"text-amber-700"},
+type SummaryMetric = {slug:string;label:string;value:number|null;change:number|null;icon:typeof Files;tone:string;money?:boolean;description?:string};
+const PLACEHOLDERS:SummaryMetric[]=[
+ {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"text-primary",description:"پاس شوي + مثنی + تجدید"},
+ {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"text-primary",description:"یوازې پاس شوي"},
+ {slug:"total",label:"عواید",value:null,change:null,icon:Landmark,tone:"text-amber-700",money:true,description:"د مجموعي راپور عواید"},
+ {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"text-primary"},
+ {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"text-sky-700"},
 ];
 
 function Overview() {
@@ -41,41 +43,16 @@ function Overview() {
   const daily = useQuery(dailyFormsQuery(refreshMs));
   const coordination = useQuery(dailyCoordinationQuery(refreshMs));
 
-  const summary = useMemo(()=>{
-    if(!q.data)return null;
-    const get=(slug:string,col:number):{value:number|null;change:number|null}=>{
-      const source=q.data.tabs.find(t=>t.slug===slug);
-      if(!source)return {value:null,change:null};
-      try{
-        const table=normalizeGrid(source.grid,source.title);
-        const rows=periodRows(table,period,today,yesterday);
-        if(!table.numericCols.includes(col)||rows.length===0||!rows.some(row=>typeof row[col]==="number"))return {value:null,change:null};
-        const value=sumColumn(rows,col);
-        const change=period==="today"?previousDayChange(table,col,today,yesterday):null;
-        return {value,change};
-      }catch{return {value:null,change:null};}
-    };
-    return {
-      main:[
-        {...INITIAL[0]!,...get("total",3)},
-        {...INITIAL[1]!,...get("services",1)},
-        {...INITIAL[2]!,...get("services",2)},
-      ],
-      quality:get("control",6),
-      secondary:[
-       {slug:"identity",label:"تثبیت هویت",icon:ShieldCheck,tone:"text-primary",...get("identity",10)},
-       {slug:"bank",label:"بانکي عواید",icon:Landmark,tone:"text-amber-700",...get("bank",6)},
-       {slug:"distribution",label:"توزیع",icon:PackageCheck,tone:"text-sky-700",...get("distribution",3)},
-      ] as SummaryMetric[],
-    };
-  },[q.data,period,today.y,today.m,today.d,yesterday.y,yesterday.m,yesterday.d]);
-  const demo=!summary;
-  const mainCards=summary?.main??INITIAL;
-  const secondary=summary?.secondary??[
-    {slug:"identity",label:"تثبیت هویت",icon:ShieldCheck,tone:"text-primary",value:null,change:null},
-    {slug:"bank",label:"بانکي عواید",icon:Landmark,tone:"text-amber-700",value:null,change:null},
-    {slug:"distribution",label:"توزیع",icon:PackageCheck,tone:"text-sky-700",value:null,change:null},
-  ];
+  const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
+  const demo = !overview;
+  const mainCards:SummaryMetric[] = overview ? [
+    {...PLACEHOLDERS[0]!,...overview.individual},
+    {...PLACEHOLDERS[1]!,...overview.newCards},
+    {...PLACEHOLDERS[2]!,...overview.income},
+    {...PLACEHOLDERS[3]!,...overview.identity},
+    {...PLACEHOLDERS[4]!,...overview.distribution},
+  ] : PLACEHOLDERS;
+  const quality = q.data ? sourceMetric(q.data.tabs,"control",6,period,today,yesterday) : null;
   const renderCard=(item:SummaryMetric)=>(
     <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}} className={settings.compactCards?"dashboard-kpi group p-3":"dashboard-kpi group"}>
       <div className="flex items-center justify-between gap-3">
@@ -84,7 +61,8 @@ function Overview() {
         </span>
         <ArrowLeft aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
       </div>
-      <p className={"mt-3 text-2xl font-extrabold tabular-nums sm:text-3xl "+item.tone}>{q.isLoading?"…":item.value===null?"—":fmt(item.value)}{item.slug==="bank"&&item.value!==null&&<span className="ms-1 text-xs font-medium text-muted-foreground">AFN</span>}</p>
+      <p className={"mt-3 text-2xl font-extrabold tabular-nums sm:text-3xl "+item.tone}>{q.isLoading?"…":item.value===null?"—":fmt(item.value)}{item.money&&item.value!==null&&<span className="ms-1 text-xs font-medium text-muted-foreground">AFN</span>}</p>
+      {item.description&&<p className="mt-1 text-xs text-muted-foreground">{item.description}</p>}
       {item.change!==null&&<p className="mt-1 text-xs text-muted-foreground">د پرون پرتله: <strong>{item.change>0?"+":""}{item.change}%</strong></p>}
     </Link>
   );
@@ -127,23 +105,21 @@ function Overview() {
 
       <div className="flex items-center gap-2 pt-1">
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
-        <h2 className="text-lg font-extrabold">مجموعي فعالیت</h2>
+        <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {mainCards.map(renderCard)}
       </div>
       <section className="dashboard-panel p-4 sm:p-5" aria-label="د کیفیت کنټرول پاس دوسیې">
         <Link to="/dashboard/$slug" params={{slug:"control"}} className="group flex items-center justify-between gap-4">
           <div>
             <h2 className="flex items-center gap-2 text-base font-extrabold"><ClipboardCheck aria-hidden="true" className="h-5 w-5 text-primary"/>د کیفیت کنټرول پاس دوسیې</h2>
-            <p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې د کنټرول شیټ ثبت شوې مجموعه؛ چاپ ته لېږل شوې دوسیې</p>
+            <p className="mt-1 text-xs text-muted-foreground">د کنټرول د شیټ جلا مجموعه، د ټاکلې مودې مطابق</p>
           </div>
-          <strong className="shrink-0 text-2xl font-extrabold tabular-nums text-primary">{q.isLoading?"…":summary?.quality.value===null||!summary?"—":fmt(summary.quality.value)}</strong>
+          <strong className="shrink-0 text-2xl font-extrabold tabular-nums text-primary">{q.isLoading?"…":quality?.value===null||!quality?"—":fmt(quality.value)}</strong>
           <ArrowLeft aria-hidden="true" className="h-4 w-4 text-muted-foreground"/>
         </Link>
       </section>
-      <h2 className="pt-1 text-base font-extrabold">نور مهم شاخصونه</h2>
-      <div className="grid gap-3 sm:grid-cols-3">{secondary.map(renderCard)}</div>
 
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
