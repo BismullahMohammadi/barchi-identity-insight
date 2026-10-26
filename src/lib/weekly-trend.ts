@@ -1,4 +1,4 @@
-import { parseJalali, jKey, formatJ } from "./jalali";
+import { parseJalali, jKey, formatJ, type JDate } from "./jalali";
 import { parseNumber } from "./normalize";
 
 /** The dedicated weekly report uses A/B dates, C week no., D passed, E AFN, F duplicates, G renewals.
@@ -25,4 +25,17 @@ export function weeklyChange(points:WeeklyPoint[]):number|null{
  const latest=points.at(-1),prior=points.at(-2);
  if(!latest||!prior||prior.total===0)return null;
  return Math.round((latest.total-prior.total)*100/prior.total);
+}
+
+/** Count backwards from today (Kabul/Jalali), not from the final row of the year.
+ * A week is eligible only after its end date has passed, so the current
+ * unfinished week and any future rows are excluded from 4/8/12 filters. */
+export function selectPreviousWeeks(points:WeeklyPoint[],today:JDate,count:4|8|12):WeeklyPoint[]{
+ return points.filter(point=>{
+  const end=parseJalali(point.to);
+  return end!==null && jKey(end)<jKey(today);
+ }).sort((a,b)=>{
+  const aDate=parseJalali(a.to)!,bDate=parseJalali(b.to)!;
+  return jKey(aDate)-jKey(bDate);
+ }).slice(-count);
 }
