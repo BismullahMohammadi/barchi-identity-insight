@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, ShieldAlert, FileSpreadsheet, Settings, PanelRightOpen } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
+  const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,bank:Landmark,annual:CalendarRange};
   const cls = "group flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-border bg-sidebar-accent text-sidebar-primary font-bold` };
   const groups = [
@@ -46,7 +47,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
             return (
               <Link key={slug} to="/dashboard/$slug" params={{ slug }}
                 className={cls} activeProps={active} onClick={onNavigate}>
-                <FileSpreadsheet className="h-4 w-4 shrink-0 opacity-70" />
+                {(() => { const Icon = icons[slug] ?? Files; return <Icon aria-hidden="true" className="h-4 w-4 shrink-0 opacity-80" />; })()}
                 <span className="min-w-0 truncate">{tab.label}</span>
               </Link>
             );
@@ -71,7 +72,7 @@ function DashboardLayout() {
   const [open, setOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const settings = useDashboardSettings();
-  const showTools = settings.showTodo || settings.showAdvice;
+  const showTools = settings.showTodo || settings.showReportHealth;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const access = useQuery(accessQuery);
@@ -115,8 +116,8 @@ function DashboardLayout() {
         <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
           <SheetContent side="left" className="no-print flex h-full w-full max-w-md flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-[480px]">
             <div className="shrink-0 border-b px-5 pb-4 pt-6">
-              <SheetTitle className="text-lg font-extrabold">دندې او مدیریتي مشوره</SheetTitle>
-              <p className="mt-1 text-sm text-muted-foreground">ستاسو خوندي دندې او د راپورونو پر بنسټ مدیریتي مشوره</p>
+              <SheetTitle className="text-lg font-extrabold">دندې او د راپورونو بشپړتیا</SheetTitle>
+              <p className="mt-1 text-sm text-muted-foreground">خوندي دندې او د راپورونو د ثبت وضعیت</p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5">
               <PinnedWidgets layout="stacked" />
@@ -134,7 +135,7 @@ function DashboardLayout() {
             <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
           </div>
           {access.data?.allowed && showTools && (
-            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او مشوره پرانیزئ">
+            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ">
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
               <span className="hidden sm:inline">دندې او مشوره</span>
             </Button>
