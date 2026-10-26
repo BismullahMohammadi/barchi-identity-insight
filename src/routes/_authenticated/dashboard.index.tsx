@@ -8,6 +8,7 @@ import { todayJalali, yesterdayJalali } from "@/lib/jalali";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
 import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
+import { WeeklyActivityChart } from "@/components/dash/WeeklyActivityChart";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
@@ -137,6 +138,8 @@ function Overview() {
       <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
         {mainCards.map(renderCard)}
       </div>
+      <WeeklyActivityChart />
+
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
