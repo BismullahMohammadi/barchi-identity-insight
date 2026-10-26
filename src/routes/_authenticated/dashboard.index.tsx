@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, ChartNoAxesColumn, CalendarDays, ClipboardCheck, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
+import { ArrowUpLeft, ChartNoAxesColumn, CalendarDays, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
 import { type OverviewPeriod } from "@/lib/overview-period";
-import { deriveOverviewFive, sourceMetric } from "@/lib/overview-five";
+import { deriveOverviewFive } from "@/lib/overview-five";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
@@ -24,13 +24,13 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
-type SummaryMetric = {slug:string;label:string;value:number|null;change:number|null;icon:typeof Files;tone:string;money?:boolean;description?:string};
+type SummaryMetric = {slug:string;label:string;value:number|null;change:number|null;icon:typeof Files;tone:"teal"|"blue"|"amber"|"violet"|"emerald";money?:boolean;description?:string};
 const PLACEHOLDERS:SummaryMetric[]=[
- {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"text-primary",description:"پاس شوي + مثنی + تجدید"},
- {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"text-primary",description:"یوازې پاس شوي"},
- {slug:"total",label:"عواید",value:null,change:null,icon:Landmark,tone:"text-amber-700",money:true,description:"د مجموعي راپور عواید"},
- {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"text-primary"},
- {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"text-sky-700"},
+ {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
+ {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"blue",description:"یوازې پاس شوي"},
+ {slug:"total",label:"عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د مجموعي راپور عواید"},
+ {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"violet"},
+ {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
 function Overview() {
@@ -52,20 +52,47 @@ function Overview() {
     {...PLACEHOLDERS[3]!,...overview.identity},
     {...PLACEHOLDERS[4]!,...overview.distribution},
   ] : PLACEHOLDERS;
-  const quality = q.data ? sourceMetric(q.data.tabs,"control",6,period,today,yesterday) : null;
-  const renderCard=(item:SummaryMetric)=>(
-    <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}} className={settings.compactCards?"dashboard-kpi group p-3":"dashboard-kpi group"}>
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
-          <item.icon aria-hidden="true" className={"h-4 w-4 "+item.tone}/>{item.label}
-        </span>
-        <ArrowLeft aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <p className={"mt-3 text-2xl font-extrabold tabular-nums sm:text-3xl "+item.tone}>{q.isLoading?"…":item.value===null?"—":fmt(item.value)}{item.money&&item.value!==null&&<span className="ms-1 text-xs font-medium text-muted-foreground">AFN</span>}</p>
-      {item.description&&<p className="mt-1 text-xs text-muted-foreground">{item.description}</p>}
-      {item.change!==null&&<p className="mt-1 text-xs text-muted-foreground">د پرون پرتله: <strong>{item.change>0?"+":""}{item.change}%</strong></p>}
-    </Link>
-  );
+  const cardStyle = {
+    teal: {root:"dashboard-kpi-teal",icon:"bg-teal-700/10 text-teal-800",number:"text-teal-900"},
+    blue: {root:"dashboard-kpi-blue",icon:"bg-sky-700/10 text-sky-800",number:"text-sky-900"},
+    amber: {root:"dashboard-kpi-amber",icon:"bg-amber-700/10 text-amber-800",number:"text-amber-900"},
+    violet: {root:"dashboard-kpi-violet",icon:"bg-violet-700/10 text-violet-800",number:"text-violet-900"},
+    emerald: {root:"dashboard-kpi-emerald",icon:"bg-emerald-700/10 text-emerald-800",number:"text-emerald-900"},
+  } as const;
+  const renderCard = (item: SummaryMetric, index:number) => {
+    const colors = cardStyle[item.tone];
+    return (
+      <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
+        aria-label={item.label + (item.value===null?"؛ معلومات نشته":"؛ "+fmt(item.value))}
+        className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[172px] flex-col justify-between gap-4 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
+          (settings.compactCards?" p-3 sm:p-4":" p-4 sm:p-5")+(index===0?" sm:col-span-2 xl:col-span-2":"")}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10 "+colors.icon}>
+              <item.icon aria-hidden="true" className="h-5 w-5"/>
+            </span>
+            <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
+          </div>
+          <ArrowUpLeft aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground opacity-65 transition-transform duration-200 group-hover:-translate-x-1 group-hover:-translate-y-1"/>
+        </div>
+        <div>
+          <div className="flex flex-wrap items-baseline gap-2">
+            <p className={"break-all text-3xl font-black tabular-nums tracking-tight sm:text-4xl "+colors.number}>
+              {q.isLoading?"…":item.value===null?"—":fmt(item.value)}
+            </p>
+            {item.money&&item.value!==null&&<span className="text-xs font-bold text-muted-foreground">AFN</span>}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {item.description&&<p className="text-xs leading-5 text-muted-foreground">{item.description}</p>}
+            {item.change!==null&&<p className="rounded-md bg-card/70 px-2 py-1 text-xs font-semibold text-foreground">
+              د پرون پرتله: {item.change>0?"+":""}{item.change}%
+            </p>}
+            {!q.isLoading&&item.value===null&&<span className="text-xs text-muted-foreground">د ټاکلې مودې معلومات نشته</span>}
+          </div>
+        </div>
+      </Link>
+    );
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-8 sm:space-y-6">
@@ -107,20 +134,9 @@ function Overview() {
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
         <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
         {mainCards.map(renderCard)}
       </div>
-      <section className="dashboard-panel p-4 sm:p-5" aria-label="د کیفیت کنټرول پاس دوسیې">
-        <Link to="/dashboard/$slug" params={{slug:"control"}} className="group flex items-center justify-between gap-4">
-          <div>
-            <h2 className="flex items-center gap-2 text-base font-extrabold"><ClipboardCheck aria-hidden="true" className="h-5 w-5 text-primary"/>د کیفیت کنټرول پاس دوسیې</h2>
-            <p className="mt-1 text-xs text-muted-foreground">د کنټرول د شیټ جلا مجموعه، د ټاکلې مودې مطابق</p>
-          </div>
-          <strong className="shrink-0 text-2xl font-extrabold tabular-nums text-primary">{q.isLoading?"…":quality?.value===null||!quality?"—":fmt(quality.value)}</strong>
-          <ArrowLeft aria-hidden="true" className="h-4 w-4 text-muted-foreground"/>
-        </Link>
-      </section>
-
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
