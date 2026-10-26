@@ -57,9 +57,9 @@ function Overview() {
     };
     return {
       main:[
-        {...INITIAL[0],...get("total",3)},
-        {...INITIAL[1],...get("services",1)},
-        {...INITIAL[2],...get("services",2)},
+        {...INITIAL[0]!,...get("total",3)},
+        {...INITIAL[1]!,...get("services",1)},
+        {...INITIAL[2]!,...get("services",2)},
       ],
       quality:get("control",6),
       secondary:[
