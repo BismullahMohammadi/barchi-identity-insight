@@ -116,9 +116,12 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
     {label:"مثنی او تجدید",value:metric(4),currency:true},
     {label:"انفرادي مراجعین",value:metric(5)},
   );
-  if(kind==="identity" || kind==="control") cards.push(
-    {label:kind==="identity"?"مجموعي تثبیت هویت":"د کنټرول مجموعه",value:metric(kind==="identity"?10:6),tone:"teal"},
+  if(kind==="identity") cards.push(
+    {label:"کاغذي تذکرې مطابق",value:metric(8),tone:"blue"},
+    {label:"تعین سن",value:metric(9)},
+    {label:"مجموعي تثبیت هویت",value:metric(10),tone:"teal"},
   );
+  if(kind==="control") cards.push({label:"د کیفیت کنټرول پاس دوسیې",value:metric(6),tone:"teal"});
   if(kind==="annual") cards.push(
     {label:"مجموعي عواید",value:metric(14),currency:true},
     {label:"تثبیت هویت",value:metric(2)},
@@ -147,10 +150,8 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
           {activity.message && <p className="mt-1">{activity.message}</p>}
         </div>
       )}
-      {(kind==="identity"||kind==="control") && (
-        <TeamTable table={table} rows={rows}
-          columns={kind==="identity"?[2,4,5,6,7,8]:[1,2,3,4]} identity={kind==="identity"}/>
-      )}
+      {kind==="identity" && <p className="dashboard-subtle-note">د کارمندانو انفرادي شمېرې لا په شیټ کې نه دي ثبت شوې. پورته شاخصونه د «کاغذي تذکرې مطابق» او «تعین سن» رسمي ارقام دي.</p>}
+      {kind==="control" && <TeamTable table={table} rows={rows} columns={[1,2,3,4]} identity={false}/> }
       {kind==="services" && metric(5)!==null && (
         <p className="text-sm text-muted-foreground">د ټولو خدماتو مجموعه: <strong className="text-foreground">{format(metric(5)!)}</strong></p>
       )}
