@@ -7,9 +7,9 @@ import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type Nor
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { latestActivitySignal } from "@/lib/management-insight";
 
-type Kind = "total" | "identity" | "control" | "services" | "bank" | "annual";
+type Kind = "total" | "identity" | "control" | "services" | "bank" | "annual" | "archive-scan";
 const format = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
-const SPECIAL = new Set<Kind>(["total", "identity", "control", "services", "bank", "annual"]);
+const SPECIAL = new Set<Kind>(["total", "identity", "control", "services", "bank", "annual", "archive-scan"]);
 export function isManagementReport(slug: string): slug is Kind { return SPECIAL.has(slug as Kind); }
 
 function normalizeRows(grid: string[][], title: string, month: string) {
@@ -122,6 +122,11 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
     {label:"مجموعي تثبیت هویت",value:metric(10),tone:"teal"},
   );
   if(kind==="control") cards.push({label:"د کیفیت کنټرول پاس دوسیې",value:metric(6),tone:"teal"});
+  if(kind==="archive-scan") cards.push(
+    {label:"سکن شوې ورقې",value:metric(3),tone:"teal"},
+    {label:"کنټرول شوې ورقې",value:metric(6),tone:"blue"},
+    {label:"نا کنټرول شوې ورقې",value:metric(7),tone:"amber"},
+  );
   if(kind==="annual") cards.push(
     {label:"مجموعي عواید",value:metric(14),currency:true},
     {label:"تثبیت هویت",value:metric(2)},
@@ -152,6 +157,18 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
       )}
       {kind==="identity" && <p className="dashboard-subtle-note">د کارمندانو انفرادي شمېرې لا په شیټ کې نه دي ثبت شوې. پورته شاخصونه د «کاغذي تذکرې مطابق» او «تعین سن» رسمي ارقام دي.</p>}
       {kind==="control" && <TeamTable table={table} rows={rows} columns={[1,2,3,4]} identity={false}/> }
+      {kind==="archive-scan" && (
+        <section className="dashboard-panel space-y-3 p-4 sm:p-5">
+          <h2 className="font-bold">د کارمندانو ثبت شوی فعالیت</h2>
+          <p className="text-xs text-muted-foreground">د سکن او کنټرول جلا کالمونه؛ تش کالمونه صفر نه ګڼل کېږي.</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {([1,2,4,5] as const).map(col=><div key={col} className="rounded-xl border bg-muted/25 p-3">
+              <p className="text-sm text-muted-foreground">{col<3?"سکن":"کنټرول"} · {table.headers[col]}</p>
+              <p className="mt-2 text-2xl font-extrabold tabular-nums text-primary">{metric(col)===null?"—":format(metric(col)!)}</p>
+            </div>)}
+          </div>
+        </section>
+      )}
       {kind==="services" && metric(5)!==null && (
         <p className="text-sm text-muted-foreground">د ټولو خدماتو مجموعه: <strong className="text-foreground">{format(metric(5)!)}</strong></p>
       )}
