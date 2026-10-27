@@ -18,6 +18,7 @@ export const SHEET_COLUMNS: Record<string, SheetColumns> = {
   "بانکي عواید": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6],primaryCol:6,expectedHeaders:{0:"نېټه",1:"جدید او ثبت تولد",6:"مجموعه"}},
   "کنټرول": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6],primaryCol:6,expectedHeaders:{0:"نیټه",6:"مجموعه"}},
   "خدمات": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6],primaryCol:5,expectedHeaders:{0:"نیټه",5:"مجموعه",6:"عواید (مثنی، تجدید)"}},
+  "د آرشیف دوسیو سکن": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3,4,5,6,7],primaryCol:3,expectedHeaders:{0:"نیټه",1:"کریمي",2:"تابش",3:"مجموعه",4:"علیزاده",5:"افشار",6:"مجموعه",7:"نا کنترول شوي"}},
   "توزیع": {headerRow:3,dateCol:0,labelCol:0,metricCols:[1,2,3],primaryCol:3,expectedHeaders:{0:"نیټه",3:"مجموعه"}},
   "پاس شوي دوسیې (هفته وار)": {headerRow:2,dateCol:0,labelCol:0,metricCols:[3,4,5,6],primaryCol:3,expectedHeaders:{0:"له نېټې",1:"تر نېټې",2:"هفته",3:"جدید او ثبت تولد"}},
   "کالنی ګزارش": {headerRow:2,dateCol:-1,labelCol:1,metricCols:[2,4,5,6,7,8,9,10,11,12,13,14],primaryCol:14,expectedHeaders:{0:"ربعه",1:"میاشت",2:"تثبیت هویت",14:"مجموعي عواید"}},

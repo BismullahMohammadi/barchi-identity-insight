@@ -55,7 +55,7 @@ function TodoContent() {
 
 function ReportHealthContent(){
  const settings=useDashboardSettings();
- const query=useQuery(sheetQuery(["total","identity","control","services","bank","distribution","arrivals","annual"],settingsRefreshMs(settings)));
+ const query=useQuery(sheetQuery(["total","identity","control","services","bank","distribution","archive-scan","arrivals","annual"],settingsRefreshMs(settings)));
  const yesterday=yesterdayJalali();
  const rows=query.data?getReportHealth(query.data.tabs,yesterday):[];
  const submitted=rows.filter(r=>r.state==="submitted").length;
