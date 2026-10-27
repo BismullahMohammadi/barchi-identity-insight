@@ -5,7 +5,7 @@ export type HealthSource = {slug:string;title:string;grid:string[][]};
 export type ReportHealth = {slug:string;name:string;state:"submitted"|"missing"|"invalid"|"monthly";lastDate:string|null};
 const LABELS:Record<string,string>={
  total:"مجموعي راپور",identity:"تثبیت هویت",control:"کنټرول کیفیت",services:"خدمات",
- bank:"بانکي عواید",distribution:"توزیع",arrivals:"تذکرو انتقالات",annual:"کلنی راپور"
+ bank:"بانکي عواید",distribution:"توزیع","archive-scan":"د آرشیف دوسیو سکن",arrivals:"تذکرو انتقالات",annual:"کلنی راپور"
 };
 /** Indicates whether a dated source has at least one valid row for the requested day.
  * No inference that an unsubmitted report means zero output or poor performance. */
