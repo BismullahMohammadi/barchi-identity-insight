@@ -29,10 +29,8 @@ export function extractStateReport(grid:unknown[][],date:JDate):StateReport{
   return unavailable("د ریاست په راپور کې تشې خانې یا د فورمول تېروتنې شته؛ غلط راپور نه کاپي کېږي.","invalid");
  return {...base,status:"available",rows,message:"د ریاست د تېرې ورځې ګزارش د کاپي کولو لپاره چمتو دی."};
 }
-/** Single-column, values-only TSV in exactly the source row order.
- * Suitable for pasting into a pre-labelled column in a separate spreadsheet.
- * No headings, dates or department names are written to the clipboard. */
+/** Copy only figures as one vertical column, retaining source row order. */
 export function stateReportTsv(report:StateReport):string{
  if(report.status!=="available")return "";
- return report.rows.map(row=>row.value.replace(/[\\t\\r\\n]/g," ")).join("\\n");
+ return report.rows.map(row=>row.value.replace(/[\t\r\n]/g," ")).join("\n");
 }
