@@ -21,7 +21,7 @@ export function ScheduledReportNotice(){
   const key="barchi-10am-alert-"+report.report_date;
   try{if(window.localStorage.getItem(key)==="seen")return;
     window.localStorage.setItem(key,"seen");}catch{/* browser storage unavailable */}
-  toast.warning("د پرون راپورونه نیمګړي دي",{
+  toast.warning("د تېرې ورځې راپورونه نیمګړي دي",{
    description:"د "+report.missing_count+" کارمندانو راپورونه نه دي تایید شوي. WhatsApp ته د یادونې لېږلو اختیار شته.",
    duration:10_000,
   });
@@ -45,7 +45,7 @@ export function ScheduledReportNotice(){
     report.status==="complete"?<CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700"/>:
     <ShieldAlert aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"/>}
    <div>
-    <p className="text-sm font-bold">{report.status==="incomplete"?"د پرون راپورونه نیمګړي دي":
+    <p className="text-sm font-bold">{report.status==="incomplete"?"د تېرې ورځې راپورونه نیمګړي دي":
      report.status==="complete"?"د پرون ټول راپورونه بشپړ دي":"د راپورونو اتومات ارزونه بشپړه نه شوه"}</p>
     <p className="text-xs text-muted-foreground">نېټه: {report.report_date} · د ۱۰ بجو اتومات ارزونه
      {report.status==="incomplete"?" · "+report.missing_count+" پاتې راپورونه":""}</p>

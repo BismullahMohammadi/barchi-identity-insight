@@ -105,7 +105,7 @@ function Overview() {
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {item.description&&<p className="text-xs leading-5 text-muted-foreground">{item.description}</p>}
             {item.change!==null&&<p className="rounded-md bg-card/70 px-2 py-1 text-xs font-semibold text-foreground">
-              د پرون پرتله: {item.change>0?"+":""}{item.change}%
+              د تېرې ورځې په پرتله: {item.change>0?"+":""}{item.change}%
             </p>}
             {!q.isLoading&&item.value===null&&<span className="text-xs text-muted-foreground">د ټاکلې مودې معلومات نشته</span>}
           </div>
@@ -156,7 +156,7 @@ function Overview() {
           <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
             {([
               {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals},
-              {key:"registration" as const,title:"ثبت نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration},
+              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration},
             ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
               <button type="button" className="flex w-full items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={()=>setExpandedVisitor(current=>current===item.key?null:item.key)}
