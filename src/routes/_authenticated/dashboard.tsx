@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
+import { LayoutDashboard, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { accessQuery } from "@/lib/queries";
 import { TABS } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 import { ScheduledReportNotice } from "@/components/dash/ScheduledReportNotice";
+import { ProblemVisitorAlerts } from "@/components/dash/ProblemVisitorAlerts";
 import { useDashboardSettings } from "@/lib/dashboard-settings";
 import { useStaffCompletionMonitor } from "@/lib/staff-completion-alerts";
 
@@ -39,6 +40,9 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
         <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري بهیر
+      </Link>
+      <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
+        <AlertTriangle className="h-4 w-4 shrink-0" /> مشکلاتي مراجعین
       </Link>
       {groups.map((group) => (
         <div key={group.title} className="space-y-1">
@@ -163,6 +167,7 @@ function DashboardLayout() {
           </Button>
         </header>
         {access.data?.allowed && <ScheduledReportNotice />}
+        {access.data?.allowed && <ProblemVisitorAlerts />}
         <main id="main-dashboard-content" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
             <p className="text-muted-foreground">لاسرسی کتل کېږي…</p>
