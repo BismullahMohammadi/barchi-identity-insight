@@ -9,7 +9,9 @@ import { OVERVIEW_SLUGS } from "@/lib/tabs";
 import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
 import { WeeklyActivityChart } from "@/components/dash/WeeklyActivityChart";
-import { RecentReferralsCard } from "@/components/dash/RecentReferralsCard";
+import { recentReferralsQuery } from "@/lib/queries";
+import type { ReferralGroup } from "@/lib/recent-referrals";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
@@ -35,15 +37,31 @@ const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
+function DailyVisitorList({group,loading,error}:{group?:ReferralGroup;loading:boolean;error:unknown}) {
+ return <div className="mt-3 border-t border-border/70 pt-3">
+  {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
+   error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
+   !group?.people.length?<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>:
+   <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
+    <ol className="space-y-2">{group.people.slice(0,5).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
+     <p className="font-bold">{person.name}</p>
+     <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
+     <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
+    </li>)}</ol></>}
+ </div>;
+}
+
 function Overview() {
   const settings = useDashboardSettings();
   const [period, setPeriod] = useState<OverviewPeriod>("all");
+  const [expandedVisitor, setExpandedVisitor] = useState<"intake"|"registration"|null>(null);
   const today = todayJalali();
   const yesterday = yesterdayJalali();
   const refreshMs = settingsRefreshMs(settings);
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
   const daily = useQuery(dailyFormsQuery(refreshMs));
   const coordination = useQuery(dailyCoordinationQuery(refreshMs));
+  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors && expandedVisitor!==null});
 
   const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
   const demo = !overview;
@@ -135,22 +153,30 @@ function Overview() {
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
-              <p className="text-sm text-muted-foreground">نوي معرفي شوي مراجعین</p>
-              <p className="mt-1 text-2xl font-extrabold tabular-nums">{daily.isLoading ? "…" : daily.data?.ah2 ?? "—"}</p>
-              {daily.error && <p role="alert" className="mt-1 text-xs text-destructive">{errorText(daily.error)}</p>}
-            </div>
-            <div className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
-              <p className="text-sm text-muted-foreground">ثبت نام ته معرفي شوي مراجعین</p>
-              <p className="mt-1 text-2xl font-extrabold tabular-nums">{coordination.isLoading ? "…" : coordination.data?.count ?? "—"}</p>
-              {coordination.error && <p role="alert" className="mt-1 text-xs text-destructive">{errorText(coordination.error)}</p>}
-            </div>
+          <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
+            {([
+              {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals},
+              {key:"registration" as const,title:"ثبت نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration},
+            ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
+              <button type="button" className="flex w-full items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                onClick={()=>setExpandedVisitor(current=>current===item.key?null:item.key)}
+                aria-expanded={expandedVisitor===item.key} aria-controls={`daily-visitor-details-${item.key}`}>
+                <span><span className="block text-sm text-muted-foreground">{item.title}</span>
+                  <span className="mt-1 block text-2xl font-extrabold tabular-nums">{item.value}</span></span>
+                <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
+                  {expandedVisitor===item.key?"پټول":"وروستي ۵ کتل"}
+                  {expandedVisitor===item.key?<ChevronUp className="h-4 w-4"/>:<ChevronDown className="h-4 w-4"/>}
+                </span>
+              </button>
+              {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
+              {expandedVisitor===item.key&&<div id={`daily-visitor-details-${item.key}`}>
+                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error}/>
+              </div>}
+            </div>)}
           </div>
         </section>
       )}
 
-      <RecentReferralsCard />
 
       <div className="flex items-center gap-2 pt-1">
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
