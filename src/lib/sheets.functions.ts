@@ -158,5 +158,12 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
   const resp=await fetch(`${GATEWAY_URL}/spreadsheets/${STAFF_REPORT_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,{headers});
   if(!resp.ok)throw new Error(`STAFF_SHEETS_ERROR_${resp.status}`);
   const data=await resp.json() as {values?:unknown[][]};
-  return inspectStaffDay(data.values??[],yesterday,month);
+  const report=inspectStaffDay(data.values??[],yesterday,month);
+  const prevGregorian=new Date(Date.now()-86_400_000);
+  const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(prevGregorian);
+  // Do not accuse staff of missing their reports on a regular Friday closure.
+  if(weekday==="Fri" && report.submittedCount===0 && report.totalCount>0){
+   return {...report,status:"nonwork",missing:[],message:"پرون جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
+  }
+  return report;
  });
