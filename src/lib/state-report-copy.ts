@@ -29,9 +29,8 @@ export function extractStateReport(grid:unknown[][],date:JDate):StateReport{
   return unavailable("د ریاست په راپور کې تشې خانې یا د فورمول تېروتنې شته؛ غلط راپور نه کاپي کېږي.","invalid");
  return {...base,status:"available",rows,message:"د ریاست د تېرې ورځې ګزارش د کاپي کولو لپاره چمتو دی."};
 }
-/** Excel-friendly two-column TSV preserving the original source row order and labels. */
+/** Copy only figures as one vertical column, retaining source row order. */
 export function stateReportTsv(report:StateReport):string{
  if(report.status!=="available")return "";
- return [["بخشونه ("+report.month+" "+report.date+")","شمېر"],...report.rows.map(r=>[r.label,r.value])]
-  .map(row=>row.map(x=>x.replace(/[\t\r\n]/g," ")).join("\t")).join("\n");
+ return report.rows.map(row=>row.value.replace(/[\t\r\n]/g," ")).join("\n");
 }
