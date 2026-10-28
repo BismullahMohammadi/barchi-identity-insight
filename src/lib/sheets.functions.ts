@@ -3,7 +3,8 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
 import { SPREADSHEET_ID, TABS } from "./tabs";
-import { todayJalali } from "./jalali";
+import { todayJalali, yesterdayJalali } from "./jalali";
+import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import { selectDailyTab } from "./daily-forms";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
@@ -131,3 +132,38 @@ export const getDailyCoordination = createServerFn({ method: "GET" })
       fetchedAt:Date.now(),
     };
   });
+
+/** Additional private report: registration/distribution/post-distribution monthly employee workbook.
+ * The source is read-only. Each request checks the Afghan previous day, its month, and employee rows.
+ * Separate connection grants may be required for this second Google Spreadsheet.
+ */
+const STAFF_REPORT_SPREADSHEET_ID = "1Qp5mmA9dRqZ43CLMSMM5tc53rBjAxrTj_gyRp7OVoG8";
+export const getStaffDailyCompleteness = createServerFn({method:"GET"})
+ .middleware([requireSupabaseAuth])
+ .handler(async({context}):Promise<StaffCompleteness>=>{
+  setResponseHeader("Cache-Control","private, no-store");
+  if(!ownerAuthorized(context.claims))throw new Error("ACCESS_DENIED");
+  const lovableKey=process.env["LOVABLE_API_KEY"];
+  const sheetsKey=process.env["GOOGLE_SHEETS_API_KEY"];
+  if(!lovableKey||!sheetsKey)throw new Error("SHEETS_NOT_CONNECTED");
+  const headers={Authorization:`Bearer ${lovableKey}`,"X-Connection-Api-Key":sheetsKey};
+  const yesterday=yesterdayJalali();
+  const metadata=await fetch(`${GATEWAY_URL}/spreadsheets/${STAFF_REPORT_SPREADSHEET_ID}?fields=sheets(properties(title))`,{headers});
+  if(!metadata.ok)throw new Error(`STAFF_SHEETS_ERROR_${metadata.status}`);
+  const body=await metadata.json() as {sheets?:{properties?:{title?:string}}[]};
+  const titles=(body.sheets??[]).map(t=>t.properties?.title).filter((x):x is string=>typeof x==="string");
+  const month=findReportMonth(titles,yesterday.m);
+  if(!month)return inspectStaffDay([],yesterday,"");
+  const range=encodeURIComponent(`'${month.replace(/'/g,"''")}'!A1:AL100`);
+  const resp=await fetch(`${GATEWAY_URL}/spreadsheets/${STAFF_REPORT_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,{headers});
+  if(!resp.ok)throw new Error(`STAFF_SHEETS_ERROR_${resp.status}`);
+  const data=await resp.json() as {values?:unknown[][]};
+  const report=inspectStaffDay(data.values??[],yesterday,month);
+  const prevGregorian=new Date(Date.now()-86_400_000);
+  const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(prevGregorian);
+  // Do not accuse staff of missing their reports on a regular Friday closure.
+  if(weekday==="Fri" && report.submittedCount===0 && report.totalCount>0){
+   return {...report,status:"nonwork",missing:[],message:"پرون جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
+  }
+  return report;
+ });

@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination } from "./sheets.functions";
+import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
 
@@ -35,9 +35,20 @@ export const dailyCoordinationQuery = (refreshMs = REFRESH_MS) => queryOptions({
   retry: 1,
 });
 
+export const staffCompletenessQuery = (refreshMs=REFRESH_MS) => queryOptions({
+ queryKey:["staff-report-completeness"],
+ queryFn:()=>getStaffDailyCompleteness(),
+ refetchInterval:refreshMs,
+ refetchIntervalInBackground:false,
+ retry:1,
+ staleTime:5_000,
+});
+
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
   if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: ستاسو ایمیل د مالک په لیست کې نشته.";
+  if (m.includes("STAFF_SHEETS_ERROR_403") || m.includes("STAFF_SHEETS_ERROR_404")) return "د کارمندانو نوي Google Sheet ته د لوستلو اجازه نشته. د Lovable Google اتصال کې ورته لاسرسی ورکړئ.";
+  if (m.includes("STAFF_SHEETS_ERROR")) return "د کارمندانو میاشتنی راپور ونه لوستل شو.";
   if (m.includes("SHEETS_NOT_CONNECTED")) return "د ګوګل شیټ اړیکه نه ده جوړه شوې.";
   if (m.includes("COORDINATION_SHEETS_ERROR_403") || m.includes("COORDINATION_SHEETS_ERROR_404")) return "د هماهنګۍ Google Sheet ته د لوستلو اجازه نشته.";
   if (m.includes("COORDINATION_SHEETS_ERROR")) return "د ثبت نام هماهنګۍ ورځنی راپور ونه لوستل شو.";

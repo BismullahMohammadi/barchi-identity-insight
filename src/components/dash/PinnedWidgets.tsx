@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sheetQuery, errorText } from "@/lib/queries";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 import { yesterdayJalali } from "@/lib/jalali";
-import { getReportHealth } from "@/lib/report-health";
+import {enableReportSound,disableReportSound,isReportSoundEnabled,useStaffCompletionMonitor} from "@/lib/staff-completion-alerts";
 import { reorderWidgets, useWorkspace, type WidgetId } from "@/lib/workspace";
 import { useAccountTodos } from "@/lib/use-account-todos";
 
@@ -54,28 +54,46 @@ function TodoContent() {
 }
 
 function ReportHealthContent(){
- const settings=useDashboardSettings();
- const query=useQuery(sheetQuery(["total","identity","control","services","bank","distribution","archive-scan","arrivals","annual"],settingsRefreshMs(settings)));
- const yesterday=yesterdayJalali();
- const rows=query.data?getReportHealth(query.data.tabs,yesterday):[];
- const submitted=rows.filter(r=>r.state==="submitted").length;
- const dailyCount=rows.filter(r=>r.state!=="monthly").length;
+ const query=useStaffCompletionMonitor();
+ const [soundEnabled,setSoundEnabled]=useState(isReportSoundEnabled);
+ const [soundError,setSoundError]=useState("");
+ const report=query.data;
  return <div className="space-y-3">
-  <p className="text-sm text-muted-foreground">د پرون {yesterday.y}/{String(yesterday.m).padStart(2,"0")}/{String(yesterday.d).padStart(2,"0")} د راپورونو د ثبت وضعیت</p>
-  {query.error&&<p role="alert" className="text-sm text-destructive">{errorText(query.error)}</p>}
-  {query.isLoading&&<p className="text-sm text-muted-foreground">د راپورونو حالت اخیستل کېږي…</p>}
-  {!query.isLoading&&!query.error&&<div className="rounded-xl border bg-muted/30 p-3">
-   <p className="text-xl font-extrabold tabular-nums">{submitted} <span className="text-sm font-normal text-muted-foreground">له {dailyCount} ورځنیو راپورونو ثبت شوي</span></p>
-   <div className="mt-3 space-y-2">
-    {rows.map(r=><div key={r.slug} className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm">
-      <span>{r.name}</span>
-      <span className={r.state==="submitted"?"font-semibold text-primary":r.state==="monthly"?"text-muted-foreground":"text-amber-700"}>
-       {r.state==="submitted"?"ثبت شوی":r.state==="monthly"?"میاشتنی":r.state==="invalid"?"د کالمونو ستونزه":"نه دی موندل شوی"}
-      </span>
-     </div>)}
-   </div>
+  <div className="flex flex-wrap items-center justify-between gap-2">
+   <p className="text-xs text-muted-foreground">د ثبت نام، توزیع او وېش وروسته خدماتو د کارمندانو د پرون راپورونه</p>
+   <button type="button" className="flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-muted"
+    onClick={async()=>{
+      if(soundEnabled){disableReportSound();setSoundEnabled(false);return;}
+      const success=await enableReportSound();setSoundEnabled(success);
+      setSoundError(success?"":"براوزر غږ نه فعالوي؛ د پاڼې غږ ته اجازه ورکړئ.");
+    }}>
+     {soundEnabled?<Volume2 aria-hidden="true" className="h-4 w-4"/>:<VolumeX aria-hidden="true" className="h-4 w-4"/>}
+     {soundEnabled?"غږ فعال دی":"د بشپړېدو غږ فعال کړئ"}
+   </button>
+  </div>
+  {soundError&&<p role="alert" className="text-xs text-amber-700">{soundError}</p>}
+  {query.error&&<div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+   {errorText(query.error)}
+   <button type="button" className="ms-2 underline" onClick={()=>query.refetch()}>بیا هڅه وکړئ</button>
   </div>}
-  <p className="text-xs leading-6 text-muted-foreground">دا یوازې د راپور د ثبت حالت دی؛ د نشتوالي معنا د فعالیت صفر یا د کارمند تېروتنه نه ده.</p>
+  {query.isLoading&&<p role="status" className="text-sm text-muted-foreground">د پرون د کارمندانو راپورونه کتل کېږي…</p>}
+  {report&&<div className="space-y-3">
+   <div className={"rounded-xl border p-3 "+(report.status==="complete"?"border-emerald-600/25 bg-emerald-600/10":report.status==="incomplete"?"border-amber-600/25 bg-amber-600/10":"bg-muted/35")}>
+    <p className="text-sm font-extrabold">{report.status==="complete"?"ټول راپورونه بشپړ دي":report.status==="incomplete"?"د کارمندانو راپورونه نیمګړي دي":"د راپور تایید ممکن نه دی"}</p>
+    <p className="mt-1 text-xs leading-6">{report.message}</p>
+    <p className="mt-2 text-xs text-muted-foreground">نېټه: {report.date} · میاشت: {report.sheet||"نه ده موندل شوې"}</p>
+   </div>
+   {report.status!=="unavailable"&&<p className="text-sm font-semibold tabular-nums">{report.submittedCount} له {report.totalCount} کارمندانو راپورونه ثبت کړي</p>}
+   {report.missing.length>0&&<section aria-label="د نه رسېدلو راپورونو کارمندان" className="space-y-2">
+     <h3 className="text-sm font-bold text-amber-800">د راپور نه وړاندې کوونکي کارمندان</h3>
+     {report.missing.map(person=><div key={person.name} className="rounded-lg border bg-card p-3">
+      <p className="text-sm font-bold">{person.name}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{person.role} · {person.activities.join("، ")}</p>
+     </div>)}
+   </section>}
+   {report.status==="complete"&&<p role="status" className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm font-bold text-emerald-800"> <Check aria-hidden="true" className="me-2 inline h-4 w-4"/> د پرون ټول راپورونه بشپړ شول!</p>}
+  </div>}
+  <p className="text-xs leading-6 text-muted-foreground">صفر ثبت شوی راپور ګڼل کېږي؛ تشې خانې بیا ارزول کېږي. د خبرتیا غږ یوازې له کاروونکي د فعالولو وروسته کار کوي او د براوزر له غږیزو اجازو سره تړاو لري. معلومات یوازې له خوندي Google Sheets اتصال څخه لوستل کېږي.</p>
  </div>;
 }
 /** Native mouse drag-and-drop with an accessible keyboard/touch reorder button. */
