@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +74,15 @@ function DashboardLayout() {
   // Watch completion while authenticated even if the tools drawer is closed.
   useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
+  const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{
+    if(typeof window==="undefined")return false;
+    try{return window.localStorage.getItem("barchi-sidebar-collapsed")==="1";}catch{return false;}
+  });
+  const toggleSidebar=()=>setSidebarCollapsed(value=>{
+    const next=!value;
+    try{window.localStorage.setItem("barchi-sidebar-collapsed",next?"1":"0");}catch{/* browser storage may be disabled */}
+    return next;
+  });
   const [toolsOpen, setToolsOpen] = useState(false);
   const settings = useDashboardSettings();
   const showTools = settings.showTodo || settings.showReportHealth;
@@ -99,7 +108,7 @@ function DashboardLayout() {
   return (
     <div dir="rtl" lang="ps" className="min-h-screen md:flex">
       <a href="#main-dashboard-content" className="sr-only fixed start-4 top-2 z-50 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only">اصلي منځپانګې ته لاړ شئ</a>
-      <aside className="no-print hidden w-64 shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground lg:block">
+      <aside id="desktop-dashboard-sidebar" className={"no-print shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground "+(sidebarCollapsed?"hidden":"hidden w-64 lg:block")}>
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
           <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav /></div>
@@ -133,6 +142,11 @@ function DashboardLayout() {
         <header className="no-print sticky top-0 z-20 flex min-h-16 items-center gap-2 border-b bg-card/95 px-4 py-2.5 shadow-sm backdrop-blur sm:gap-3 md:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
             <Menu />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="hidden lg:inline-flex" onClick={toggleSidebar}
+            aria-label={sidebarCollapsed?"سایډ بار خلاص کړئ":"سایډ بار بند کړئ"}
+            aria-expanded={!sidebarCollapsed} aria-controls="desktop-dashboard-sidebar">
+            {sidebarCollapsed?<SidebarOpenIcon aria-hidden="true" className="h-5 w-5"/>:<PanelRightClose aria-hidden="true" className="h-5 w-5"/>}
           </Button>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold leading-5">د مرکز مدیریتي سیسټم</p>
