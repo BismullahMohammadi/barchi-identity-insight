@@ -9,6 +9,7 @@ import { OVERVIEW_SLUGS } from "@/lib/tabs";
 import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
 import { WeeklyActivityChart } from "@/components/dash/WeeklyActivityChart";
+import { RecentReferralsCard } from "@/components/dash/RecentReferralsCard";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 
@@ -148,6 +149,8 @@ function Overview() {
           </div>
         </section>
       )}
+
+      <RecentReferralsCard />
 
       <div className="flex items-center gap-2 pt-1">
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
