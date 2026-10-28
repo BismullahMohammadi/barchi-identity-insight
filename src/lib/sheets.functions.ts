@@ -5,6 +5,8 @@ import { isEmailAllowed } from "./access";
 import { SPREADSHEET_ID, TABS } from "./tabs";
 import { todayJalali, yesterdayJalali } from "./jalali";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
+import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
+import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab } from "./daily-forms";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
@@ -166,4 +168,41 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
    return {...report,status:"nonwork",missing:[],message:"پرون جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
   }
   return report;
+ });
+
+/** Second source for completion checking; independent of the registration report. */
+const INSIJAM_SPREADSHEET_ID="1W82u37NeQ4Og7rANME6i3jxj1aeCZhhvIj3YtmopQ2g";
+function authorizedSheetHeaders(claims:unknown):Record<string,string>{
+ if(!ownerAuthorized(claims))throw new Error("ACCESS_DENIED");
+ const key=process.env["LOVABLE_API_KEY"],sheets=process.env["GOOGLE_SHEETS_API_KEY"];
+ if(!key||!sheets)throw new Error("SHEETS_NOT_CONNECTED");
+ return {Authorization:`Bearer ${key}`,"X-Connection-Api-Key":sheets};
+}
+async function sheetsGet<T>(url:string,headers:Record<string,string>,errorCode:string):Promise<T>{
+ const response=await fetch(url,{headers});
+ if(!response.ok)throw new Error(`${errorCode}_${response.status}`);
+ return response.json() as Promise<T>;
+}
+export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
+ .handler(async({context}):Promise<StaffCompleteness>=>{
+  setResponseHeader("Cache-Control","private, no-store");
+  const headers=authorizedSheetHeaders(context.claims);
+  const yesterday=yesterdayJalali();
+  const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"INSIJAM_SHEETS_ERROR");
+  const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
+  const month=findInsijamMonth(titles,yesterday.m);
+  if(!month)return inspectInsijamDay([],yesterday,"");
+  const range=encodeURIComponent(`'${month.replace(/'/g,"''")}'!A1:AM90`);
+  const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"INSIJAM_SHEETS_ERROR");
+  return inspectInsijamDay(data.values??[],yesterday,month);
+ });
+/** Copy-only output from the pre-existing read-only State Office tab. */
+export const getStateReportForYesterday=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
+ .handler(async({context}):Promise<StateReport>=>{
+  setResponseHeader("Cache-Control","private, no-store");
+  const headers=authorizedSheetHeaders(context.claims);
+  const day=yesterdayJalali();
+  const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
+  const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"STATE_REPORT_ERROR");
+  return extractStateReport(data.values??[],day);
  });
