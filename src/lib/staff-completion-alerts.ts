@@ -1,7 +1,7 @@
 import {useEffect} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {toast} from "sonner";
-import {staffCompletenessQuery} from "./queries";
+import {staffCompletenessQuery,insijamCompletenessQuery,stateReportQuery} from "./queries";
 import {useDashboardSettings,settingsRefreshMs} from "./dashboard-settings";
 let audioContext:AudioContext|null=null;
 const SOUND_KEY="barchi-completeness-sound-v1";
@@ -40,19 +40,34 @@ export function disableReportSound(){
 export function useStaffCompletionMonitor(){
  const settings=useDashboardSettings();
  const enabled=settings.showReportHealth;
- const query=useQuery({...staffCompletenessQuery(settingsRefreshMs(settings)),enabled});
+ const refresh=settingsRefreshMs(settings);
+ const registration=useQuery({...staffCompletenessQuery(refresh),enabled});
+ const insijam=useQuery({...insijamCompletenessQuery(refresh),enabled});
+ const state=useQuery({...stateReportQuery(refresh),enabled});
+ const first=registration.data,second=insijam.data;
+ const allComplete=!!(first&&second&&first.status==="complete"&&second.status==="complete"&&first.totalCount>0&&second.totalCount>0&&first.date===second.date);
+ const summary=first&&second ? {
+  date:first.date,
+  complete:allComplete,
+  registration:first,
+  insijam:second,
+  stateReport:state.data??null
+ }:null;
  useEffect(()=>{
-  const report=query.data;
-  if(!report || report.status!=="complete" || report.totalCount===0 || typeof window==="undefined")return;
-  const key=ALERT_PREFIX+report.date+"-registration";
-  try{
-   if(window.localStorage.getItem(key)==="notified")return;
-   window.localStorage.setItem(key,"notified");
-  }catch{/* no persistent memory: still alert while mounted */}
-  toast.success("د پرون ټول کارمندانو راپورونه بشپړ شول!",{
-    description:report.date+" · "+report.totalCount+" کارمندان",duration:9000
+  if(!summary?.complete||typeof window==="undefined")return;
+  const key=ALERT_PREFIX+summary.date+"-both";
+  try{if(window.localStorage.getItem(key)==="notified")return;
+      window.localStorage.setItem(key,"notified");}
+  catch{/* When browser storage is blocked, still allow a visible notification. */}
+  toast.success("د دواړو مدیریتونو د پرون راپورونه بشپړ شول!",{
+   description:summary.date+" · د ریاست راپور د کاپي کولو لپاره وګورئ",duration:9000
   });
   if(isReportSoundEnabled())ring();
- },[query.data]);
- return query;
+ },[summary?.complete,summary?.date]);
+ return {
+  data:summary,
+  isLoading:registration.isLoading||insijam.isLoading||state.isLoading,
+  error:registration.error||insijam.error||state.error,
+  refetch:async()=>{await Promise.all([registration.refetch(),insijam.refetch(),state.refetch()]);},
+ };
 }
