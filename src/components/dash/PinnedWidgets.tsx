@@ -7,6 +7,8 @@ import { sheetQuery, errorText } from "@/lib/queries";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 import { yesterdayJalali } from "@/lib/jalali";
 import {enableReportSound,disableReportSound,isReportSoundEnabled,useStaffCompletionMonitor} from "@/lib/staff-completion-alerts";
+import {stateReportTsv,type StateReport} from "@/lib/state-report-copy";
+import {toast} from "sonner";
 import { reorderWidgets, useWorkspace, type WidgetId } from "@/lib/workspace";
 import { useAccountTodos } from "@/lib/use-account-todos";
 
@@ -53,6 +55,55 @@ function TodoContent() {
  );
 }
 
+function SectionCompleteness({title,report}:{title:string;report:{
+  sheet:string;status:string;submittedCount:number;totalCount:number;
+  missing:{name:string;role:string;activities:string[]}[];message:string;
+}}){
+ return <section className="space-y-2 rounded-xl border bg-card p-3">
+  <div className="flex flex-wrap items-center justify-between gap-2">
+   <h3 className="font-bold">{title}</h3>
+   <span className={report.status==="complete"?"text-emerald-700":report.status==="incomplete"?"text-amber-700":"text-muted-foreground"}>
+    {report.status==="complete"?"بشپړ":report.status==="incomplete"?"نیمګړی":"نه دی تایید شوی"}
+   </span>
+  </div>
+  <p className="text-xs text-muted-foreground">{report.sheet||"د میاشتې ټاب نه دی موندل شوی"} · {report.submittedCount} له {report.totalCount} کارمندانو</p>
+  {report.status==="unavailable"&&<p role="status" className="text-sm text-amber-700">{report.message}</p>}
+  {report.missing.map(person=><div key={person.name} className="rounded-lg border border-amber-200 bg-amber-50/50 p-2">
+   <p className="text-sm font-semibold">{person.name}</p>
+   <p className="mt-1 text-xs text-muted-foreground">{person.role} · {person.activities.join("، ")}</p>
+  </div>)}
+ </section>;
+}
+function StateReportCopy({report}:{report:StateReport}){
+ const [copied,setCopied]=useState(false);
+ const copy=async()=>{
+  if(report.status!=="available")return;
+  const tsv=stateReportTsv(report);
+  const escapeHtml=(s:string)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  const html="<table dir=\"rtl\" style=\"border-collapse:collapse;font-family:Arial,sans-serif\"><thead><tr><th>بخشونه ("+escapeHtml(report.month)+")</th><th>"+escapeHtml(report.date)+"</th></tr></thead><tbody>"+
+   report.rows.map(row=>"<tr><td style=\"border:1px solid #cbd5e1;padding:6px\">"+escapeHtml(row.label)+"</td><td style=\"border:1px solid #cbd5e1;padding:6px;text-align:center\">"+escapeHtml(row.value)+"</td></tr>").join("")+"</tbody></table>";
+  try{
+   if(typeof ClipboardItem!=="undefined"&&navigator.clipboard?.write){
+    const payload=new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([tsv],{type:"text/plain"})});
+    await navigator.clipboard.write([payload]);
+   }else await navigator.clipboard.writeText(tsv);
+   setCopied(true);toast.success("د ریاست د پرون ګزارش په منظم جدول کې کاپي شو.");
+  }catch{toast.error("کاپي ونه شوه؛ براوزر ته د Clipboard اجازه ورکړئ.");}
+ };
+ return <section className="space-y-3 rounded-xl border bg-card p-3">
+  <h3 className="font-bold">ریاست ته ګزارش — {report.date}</h3>
+  {report.status!=="available"
+   ? <p className="text-sm text-amber-700">{report.message}</p>
+   : <>
+    <div className="max-h-60 overflow-auto rounded-lg border">
+     <table className="w-full text-sm"><thead><tr className="bg-muted"><th className="p-2 text-start">برخه</th><th className="p-2 text-start">د پرون شمېر</th></tr></thead>
+      <tbody>{report.rows.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.label}</td><td className="p-2 tabular-nums">{r.value}</td></tr>)}</tbody></table>
+    </div>
+    <Button onClick={copy} className="w-full">{copied?"بیا کاپي کړئ":"د ریاست ګزارش کاپي کړئ"}</Button>
+    <p className="text-xs text-muted-foreground">اصلي قطارونه په هماغه ترتیب د Excel او Google Sheets لپاره د جدول په بڼه کاپي کېږي. اصلي شیټ نه بدلېږي.</p>
+   </>}
+ </section>;
+}
 function ReportHealthContent(){
  const query=useStaffCompletionMonitor();
  const [soundEnabled,setSoundEnabled]=useState(isReportSoundEnabled);
@@ -60,40 +111,33 @@ function ReportHealthContent(){
  const report=query.data;
  return <div className="space-y-3">
   <div className="flex flex-wrap items-center justify-between gap-2">
-   <p className="text-xs text-muted-foreground">د ثبت نام، توزیع او وېش وروسته خدماتو د کارمندانو د پرون راپورونه</p>
+   <p className="text-xs text-muted-foreground">د دواړو مدیریتونو د پرون راپورونه</p>
    <button type="button" className="flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-muted"
     onClick={async()=>{
-      if(soundEnabled){disableReportSound();setSoundEnabled(false);return;}
-      const success=await enableReportSound();setSoundEnabled(success);
-      setSoundError(success?"":"براوزر غږ نه فعالوي؛ د پاڼې غږ ته اجازه ورکړئ.");
+     if(soundEnabled){disableReportSound();setSoundEnabled(false);return;}
+     const ok=await enableReportSound();setSoundEnabled(ok);setSoundError(ok?"":"براوزر د غږ اجازه نه ورکوي.");
     }}>
-     {soundEnabled?<Volume2 aria-hidden="true" className="h-4 w-4"/>:<VolumeX aria-hidden="true" className="h-4 w-4"/>}
-     {soundEnabled?"غږ فعال دی":"د بشپړېدو غږ فعال کړئ"}
+    {soundEnabled?<Volume2 aria-hidden="true" className="h-4 w-4"/>:<VolumeX aria-hidden="true" className="h-4 w-4"/>}
+    {soundEnabled?"غږ فعال دی":"د بشپړېدو غږ فعال کړئ"}
    </button>
   </div>
   {soundError&&<p role="alert" className="text-xs text-amber-700">{soundError}</p>}
   {query.error&&<div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-   {errorText(query.error)}
-   <button type="button" className="ms-2 underline" onClick={()=>query.refetch()}>بیا هڅه وکړئ</button>
+    {errorText(query.error)}
+    <button type="button" className="ms-2 underline" onClick={()=>query.refetch()}>بیا هڅه وکړئ</button>
   </div>}
-  {query.isLoading&&<p role="status" className="text-sm text-muted-foreground">د پرون د کارمندانو راپورونه کتل کېږي…</p>}
-  {report&&<div className="space-y-3">
-   <div className={"rounded-xl border p-3 "+(report.status==="complete"?"border-emerald-600/25 bg-emerald-600/10":report.status==="incomplete"?"border-amber-600/25 bg-amber-600/10":"bg-muted/35")}>
-    <p className="text-sm font-extrabold">{report.status==="complete"?"ټول راپورونه بشپړ دي":report.status==="incomplete"?"د کارمندانو راپورونه نیمګړي دي":"د راپور تایید ممکن نه دی"}</p>
-    <p className="mt-1 text-xs leading-6">{report.message}</p>
-    <p className="mt-2 text-xs text-muted-foreground">نېټه: {report.date} · میاشت: {report.sheet||"نه ده موندل شوې"}</p>
-   </div>
-   {report.status!=="unavailable"&&<p className="text-sm font-semibold tabular-nums">{report.submittedCount} له {report.totalCount} کارمندانو راپورونه ثبت کړي</p>}
-   {report.missing.length>0&&<section aria-label="د نه رسېدلو راپورونو کارمندان" className="space-y-2">
-     <h3 className="text-sm font-bold text-amber-800">د راپور نه وړاندې کوونکي کارمندان</h3>
-     {report.missing.map(person=><div key={person.name} className="rounded-lg border bg-card p-3">
-      <p className="text-sm font-bold">{person.name}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{person.role} · {person.activities.join("، ")}</p>
-     </div>)}
-   </section>}
-   {report.status==="complete"&&<p role="status" className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm font-bold text-emerald-800"> <Check aria-hidden="true" className="me-2 inline h-4 w-4"/> د پرون ټول راپورونه بشپړ شول!</p>}
-  </div>}
-  <p className="text-xs leading-6 text-muted-foreground">صفر ثبت شوی راپور ګڼل کېږي؛ تشې خانې بیا ارزول کېږي. د خبرتیا غږ یوازې له کاروونکي د فعالولو وروسته کار کوي او د براوزر له غږیزو اجازو سره تړاو لري. معلومات یوازې له خوندي Google Sheets اتصال څخه لوستل کېږي.</p>
+  {query.isLoading&&<p role="status" className="text-sm text-muted-foreground">د دواړو شیټونو راپورونه ارزول کېږي…</p>}
+  {report&&<>
+    <div className={"rounded-xl border p-3 "+(report.complete?"border-emerald-600/25 bg-emerald-600/10":"border-amber-600/25 bg-amber-600/10")}>
+     <p className="text-sm font-extrabold">{report.complete?"دواړه مدیریتونه بشپړ دي":"د راپورونو بشپړتیا لا نه ده تایید شوې"}</p>
+     <p className="mt-1 text-xs text-muted-foreground">د پرون نېټه: {report.date}</p>
+    </div>
+    <SectionCompleteness title="د نوم‌لیکنې او وېش مدیریت" report={report.registration}/>
+    <SectionCompleteness title="د انسجام مدیریت" report={report.insijam}/>
+    {report.complete ? report.stateReport&&<StateReportCopy report={report.stateReport}/>:
+      <p className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">د ریاست ګزارش کاپي کول به یوازې د دواړو مدیریتونو د راپورونو له بشپړېدو وروسته فعال شي.</p>}
+  </>}
+  <p className="text-xs leading-6 text-muted-foreground">د انسجام له ارزونې ۷ او ۸ قطارونه او د جاوید ملکزاد راپور ایستل شوي. صفر ثبت دی؛ تشه خانه نارسېدلی راپور ګڼل کېږي. ټول معلومات یوازې لوستل کېږي.</p>
  </div>;
 }
 /** Native mouse drag-and-drop with an accessible keyboard/touch reorder button. */
