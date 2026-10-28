@@ -15,7 +15,7 @@ const PAGE_SIZE = 20;
  * Keep report pages actionable, not a second full Google Sheet.
  * Show the main verified metric first. Full rows/exports are optional.
  */
-export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange, dateRange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; dateRange?: DateFilter }) {
+export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange, dateRange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; dateRange?: DateFilter | undefined }) {
   const { table, mappingError } = useMemo(() => {
     try { return { table: normalizeGrid(grid, title), mappingError: null as string | null }; }
     catch (e) {
