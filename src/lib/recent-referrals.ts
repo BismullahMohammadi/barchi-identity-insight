@@ -21,7 +21,7 @@ function parseSectionDate(raw:unknown):JDate|null{
  return date;
 }
 /** Read the most recent nonfuture dated collection section, not arbitrary last worksheet rows. */
-export function newestCollectedPeople(grid:unknown[][],today:JDate):ReferralGroup{
+export function newestCollectedPeople(grid:unknown[][],today:JDate,limit=5):ReferralGroup{
  const groups:{date:JDate;people:RecentReferral[]}[]=[];
  let current:{date:JDate;people:RecentReferral[]}|null=null;
  for(const row of grid){
@@ -42,10 +42,10 @@ export function newestCollectedPeople(grid:unknown[][],today:JDate):ReferralGrou
  if(current)groups.push(current);
  const latest=groups.filter(g=>jKey(g.date)<=jKey(today)&&g.people.length)
    .sort((a,b)=>jKey(b.date)-jKey(a.date))[0];
- return {date:latest?formatJ(latest.date):null,people:latest?latest.people.slice(-5).reverse():[],source:null};
+ return {date:latest?formatJ(latest.date):null,people:latest?latest.people.slice(-limit).reverse():[],source:null};
 }
 /** The daily registration coordination tab has four independent A:C,D:F,G:I,J:L worker groups. */
-export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unknown[][]}|null,today:JDate):ReferralGroup{
+export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unknown[][]}|null,today:JDate,limit=5):ReferralGroup{
  const chosen=selectDailyTab(titles,today);
  if(!chosen||!load||jKey(load.date)!==jKey(chosen.date))
   return {date:null,people:[],source:null};
@@ -58,5 +58,5 @@ export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unk
    records.push({name,father,familyMembers});
   }
  }
- return {date:formatJ(chosen.date),people:records.slice(-5).reverse(),source:chosen.name};
+ return {date:formatJ(chosen.date),people:records.slice(-limit).reverse(),source:chosen.name};
 }
