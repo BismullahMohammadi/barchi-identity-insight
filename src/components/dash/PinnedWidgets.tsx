@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX, MessageCircle, Copy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { yesterdayJalali } from "@/lib/jalali";
 import {enableReportSound,disableReportSound,isReportSoundEnabled,useStaffCompletionMonitor} from "@/lib/staff-completion-alerts";
 import {stateReportTsv,type StateReport} from "@/lib/state-report-copy";
 import {toast} from "sonner";
+import {buildMissingReportsWhatsapp} from "@/lib/missing-reports-whatsapp";
 import { reorderWidgets, useWorkspace, type WidgetId } from "@/lib/workspace";
 import { useAccountTodos } from "@/lib/use-account-todos";
 
@@ -109,6 +110,9 @@ function ReportHealthContent(){
  const [soundEnabled,setSoundEnabled]=useState(isReportSoundEnabled);
  const [soundError,setSoundError]=useState("");
  const report=query.data;
+ const groupMessage=report?buildMissingReportsWhatsapp(report.registration,report.insijam):null;
+ const [showMessage,setShowMessage]=useState(false);
+ const [copyFallback,setCopyFallback]=useState("");
  return <div className="space-y-3">
   <div className="flex flex-wrap items-center justify-between gap-2">
    <p className="text-xs text-muted-foreground">د دواړو مدیریتونو د پرون راپورونه</p>
