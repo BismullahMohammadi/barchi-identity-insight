@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { JALALI_MONTHS } from "@/lib/jalali";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
-import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell } from "@/lib/normalize";
+import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell, type DateFilter } from "@/lib/normalize";
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 2 });
 const PAGE_SIZE = 20;
@@ -15,7 +15,7 @@ const PAGE_SIZE = 20;
  * Keep report pages actionable, not a second full Google Sheet.
  * Show the main verified metric first. Full rows/exports are optional.
  */
-export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void }) {
+export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange, dateRange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; dateRange?: DateFilter }) {
   const { table, mappingError } = useMemo(() => {
     try { return { table: normalizeGrid(grid, title), mappingError: null as string | null }; }
     catch (e) {
@@ -29,10 +29,10 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const [shown, setShown] = useState(PAGE_SIZE);
   const [expanded, setExpanded] = useState(false);
 
-  const range = useMemo(() => month === "all"
+  const range = useMemo(() => dateRange ?? (month === "all"
     ? { from: null, to: null }
-    : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } },
-  [month]);
+    : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } }),
+  [month,dateRange]);
   const { rows } = useMemo(() => filterByDate(table, range), [table, range]);
   const filteredRows = useMemo(() => {
     const q = search.trim().toLocaleLowerCase();
