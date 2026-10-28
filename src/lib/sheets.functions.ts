@@ -9,6 +9,9 @@ import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab } from "./daily-forms";
 import {newestCollectedPeople,newestRegisteredPeople,type RecentReferrals} from "./recent-referrals";
+import {findPotentialProblemMatches} from "./problem-visitor-matching";
+import type {ProblemVisitor} from "./problem-visitors.functions";
+import type {SupabaseClient} from "@supabase/supabase-js";
 import {MONTH_NAMES} from "./monthly-staff-completeness";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
@@ -235,5 +238,19 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   ]);
   const newReferrals=newestCollectedPeople(intakeData.values??[],today);
   const registration=newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today);
-  return {newReferrals:{...newReferrals,source:collection??null},registration,fetchedAt:Date.now()};
+  // Server-only full daily collections: no full person lists are returned to the browser.
+  const fullGroups={
+    newReferrals:newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY),
+    registration:newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today,Number.POSITIVE_INFINITY),
+    fetchedAt:Date.now()
+  };
+  const db=context.supabase as unknown as SupabaseClient;
+  const {data:watchList,error:watchError}=await db.from("problem_visitors")
+    .select("id,full_name,father_name,issue,status,created_at").eq("user_id",context.userId).eq("status","active").limit(500);
+  if(watchError) throw new Error("PROBLEM_VISITORS_READ_FAILED");
+  const matches=findPotentialProblemMatches(watchList as ProblemVisitor[],fullGroups);
+  return {
+    newReferrals:{...newReferrals,source:collection??null},registration,fetchedAt:Date.now(),
+    potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
+  };
  });
