@@ -9,6 +9,7 @@ import { accessQuery } from "@/lib/queries";
 import { TABS } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 import { useDashboardSettings } from "@/lib/dashboard-settings";
+import { useStaffCompletionMonitor } from "@/lib/staff-completion-alerts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -69,6 +70,8 @@ function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function DashboardLayout() {
+  // Watch completion while authenticated even if the tools drawer is closed.
+  useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const settings = useDashboardSettings();
