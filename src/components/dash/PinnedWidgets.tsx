@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX, MessageCircle, Copy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { yesterdayJalali } from "@/lib/jalali";
 import {enableReportSound,disableReportSound,isReportSoundEnabled,useStaffCompletionMonitor} from "@/lib/staff-completion-alerts";
 import {stateReportTsv,type StateReport} from "@/lib/state-report-copy";
 import {toast} from "sonner";
+import {buildMissingReportsWhatsapp} from "@/lib/missing-reports-whatsapp";
 import { reorderWidgets, useWorkspace, type WidgetId } from "@/lib/workspace";
 import { useAccountTodos } from "@/lib/use-account-todos";
 
@@ -109,6 +110,9 @@ function ReportHealthContent(){
  const [soundEnabled,setSoundEnabled]=useState(isReportSoundEnabled);
  const [soundError,setSoundError]=useState("");
  const report=query.data;
+ const groupMessage=report?buildMissingReportsWhatsapp(report.registration,report.insijam):null;
+ const [showMessage,setShowMessage]=useState(false);
+ const [copyFallback,setCopyFallback]=useState("");
  return <div className="space-y-3">
   <div className="flex flex-wrap items-center justify-between gap-2">
    <p className="text-xs text-muted-foreground">د دواړو مدیریتونو د پرون راپورونه</p>
@@ -134,6 +138,19 @@ function ReportHealthContent(){
     </div>
     <SectionCompleteness title="د نوم‌لیکنې او وېش مدیریت" report={report.registration}/>
     <SectionCompleteness title="د انسجام مدیریت" report={report.insijam}/>
+    {groupMessage&&<section className="space-y-3 rounded-xl border bg-card p-3" aria-label="د WhatsApp ګروپ ته د یادونې متن">
+      <div className="flex items-center gap-2"><MessageCircle aria-hidden="true" className="h-5 w-5 text-primary"/><h3 className="text-sm font-bold">د WhatsApp ګروپ یادونه</h3></div>
+      <p className="text-xs leading-6 text-muted-foreground">یوازې د نه تایید شویو راپورونو نومونه. پیغام په خپله نه لېږل کېږي.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" aria-expanded={showMessage} onClick={()=>setShowMessage(v=>!v)}>{showMessage?"متن پټ کړئ":"متن وګورئ"}</Button>
+        <Button size="sm" onClick={async()=>{
+          try {await navigator.clipboard.writeText(groupMessage);setCopyFallback("");toast.success("د WhatsApp پیغام کاپي شو.");}
+          catch {setCopyFallback(groupMessage);toast.error("د Clipboard اجازه نشته؛ متن په لاس کاپي کړئ.");}
+        }}><Copy aria-hidden="true" className="me-2 h-4 w-4"/>پیغام کاپي کړئ</Button>
+      </div>
+      {showMessage&&<pre dir="rtl" className="whitespace-pre-wrap rounded-lg border bg-muted/30 p-3 font-sans text-sm leading-7">{groupMessage}</pre>}
+      {copyFallback&&<textarea aria-label="د لاسي کاپي کولو پیغام" dir="rtl" readOnly value={copyFallback} onFocus={e=>e.currentTarget.select()} className="min-h-40 w-full rounded-lg border bg-background p-3 text-sm leading-7"/>}
+    </section>}
     {report.complete ? report.stateReport&&<StateReportCopy report={report.stateReport}/>:
       <p className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">د ریاست ګزارش کاپي کول به یوازې د دواړو مدیریتونو د راپورونو له بشپړېدو وروسته فعال شي.</p>}
   </>}

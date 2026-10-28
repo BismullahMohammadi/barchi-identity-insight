@@ -1,5 +1,5 @@
 import {describe,it,expect} from "vitest";
-import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
+import {findInsijamMonth,inspectInsijamDay,hasSubmittedInsijamValue} from "./insijam-completeness";
 const header=["شماره","اسم","ولد","وظیفه","تقسیم بندی ",1,2,3,4,5];
 const grid:unknown[][]=[
  ["اداره"],["شهرت کارمندان"],["گزارش ماه (عقرب)"],header,
@@ -30,5 +30,20 @@ describe("insijam monthly staff completeness",()=>{
   copy[12]![9]=0;
   const result=inspectInsijamDay(copy,{y:1405,m:8,d:5},"عقرب 1405");
   expect(result.status).toBe("complete");
+ });
+ it("recognizes money-formatted reports including Afghanis and does not treat blank as submitted",()=>{
+  expect(hasSubmittedInsijamValue("؋ 49,500")).toBe(true);
+  expect(hasSubmittedInsijamValue("؋ 6,000")).toBe(true);
+  expect(hasSubmittedInsijamValue("AFN 0")).toBe(true);
+  expect(hasSubmittedInsijamValue("جمعه")).toBe(false);
+  expect(hasSubmittedInsijamValue(null)).toBe(false);
+ });
+ it("includes monetary employee amounts in monthly report completeness",()=>{
+  const copy=grid.map(row=>[...row]);
+  copy.push([19,"احمد سروش","پدر","عواید (مبلغ)","عواید روند عادی",1,2,3,4,"؋ 49,500"]);
+  copy.push([20,"رمضان امینی","پدر","عواید (مبلغ)","عواید خدمات",1,2,3,4,"؋ 6,000"]);
+  const result=inspectInsijamDay(copy,{y:1405,m:8,d:5},"عقرب 1405");
+  expect(result.missing.map(x=>x.name)).not.toContain("احمد سروش");
+  expect(result.missing.map(x=>x.name)).not.toContain("رمضان امینی");
  });
 });

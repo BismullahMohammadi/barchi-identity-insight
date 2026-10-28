@@ -3,8 +3,15 @@ import {formatJ,toLatinDigits} from "./jalali";
 import {MONTH_NAMES,type StaffStatus,type StaffCompleteness} from "./monthly-staff-completeness";
 
 const txt=(v:unknown)=>v===null||v===undefined?"":String(v).trim();
-const val=(v:unknown)=>txt(v).replace(/[٬,]/g,"");
-function counted(v:unknown):boolean {const s=toLatinDigits(val(v));return s!==""&&Number.isFinite(Number(s));}
+/** Google Sheets formats monetary amounts as e.g. "؋ 49,500".
+ * An actual formatted amount, including zero, is a submitted report.
+ * Decorative strings, blank cells and spreadsheet errors are not. */
+export function hasSubmittedInsijamValue(value:unknown):boolean {
+ let s=toLatinDigits(txt(value)).replace(/[\u00a0\u202f\s]/g,"");
+ if(!s)return false;
+ s=s.replace(/^(?:؋|AFN)/i,"").replace(/(?:؋|AFN)$/i,"").replace(/[٬,]/g,"").replace(/٫/g,".");
+ return /^[+-]?\d+(?:\.\d+)?$/.test(s) && Number.isFinite(Number(s));
+}
 const excluded=(name:string)=>/جاوید\s*ملک\s*زاد/i.test(name.replace(/ي/g,"ی").replace(/ك/g,"ک"));
 export function findInsijamMonth(titles:string[],month:number):string|null {
  const word=MONTH_NAMES[month];
@@ -43,7 +50,7 @@ export function inspectInsijamDay(grid:unknown[][],date:JDate,sheet:string):Staf
   }
   if(!current||!activity||/^(جمع|مجموع|جمله)$/i.test(activity))return;
   current.activities.push(activity);
-  present.push(counted(row[dayCol]));
+  present.push(hasSubmittedInsijamValue(row[dayCol]));
  });
  flush();
  if(!staff.length)return unavailable("د انسجام د کارمندانو ثبت شوي قطارونه ونه موندل شول.");
