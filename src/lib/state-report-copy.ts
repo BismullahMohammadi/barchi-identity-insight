@@ -8,11 +8,11 @@ export function extractStateReport(grid:unknown[][],date:JDate):StateReport{
  const unavailable=(message:string,status:"missing"|"invalid"="missing"):StateReport=>({...base,status,rows:[],message});
  if(!grid.length)return unavailable("د ریاست ته ګزارش ټاب معلومات نشته.");
  // Source has distinct monthly sections. Each starts with an A-cell title and B..AF daily headings.
- const monthName=MONTH_NAMES[date.m];
+ const monthName=MONTH_NAMES[date.m]??"";
  const index=grid.findIndex(row=> {
   const title=toLatinDigits(txt(row[0])).replace(/\s+/g,"");
   return title.includes("بخشونه") && title.includes(monthName) &&
-   (title.includes(String(date.m))||title.includes(String(date.m).replace(/[0-9]/g,d=>"۰۱۲۳۴۵۶۷۸۹"[Number(d)])));
+   title.includes(String(date.m));
  });
  if(index<0)return unavailable("د دې میاشتې برخه په «ریاست ته ګزارش» کې نه ده موندل شوې.");
  const header=grid[index]??[];
