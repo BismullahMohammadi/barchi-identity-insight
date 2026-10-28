@@ -36,7 +36,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
-        <LayoutDashboard className="h-4 w-4 shrink-0" /> عمومي کتنه
+        <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري نبض
       </Link>
       {groups.map((group) => (
         <div key={group.title} className="space-y-1">

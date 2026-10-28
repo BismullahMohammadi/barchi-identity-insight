@@ -3,20 +3,21 @@ import { AlertTriangle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TabView } from "@/components/dash/TabView";
 import { JALALI_MONTHS } from "@/lib/jalali";
-import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable } from "@/lib/normalize";
+import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable, type DateFilter } from "@/lib/normalize";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { latestActivitySignal } from "@/lib/management-insight";
+import { ARCHIVE_PERIOD_OPTIONS, archivePeriodRange, archivePeriodCaption, type ArchivePeriod } from "@/lib/archive-period";
 
 type Kind = "total" | "identity" | "control" | "services" | "bank" | "annual" | "archive-scan";
 const format = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
 const SPECIAL = new Set<Kind>(["total", "identity", "control", "services", "bank", "annual", "archive-scan"]);
 export function isManagementReport(slug: string): slug is Kind { return SPECIAL.has(slug as Kind); }
 
-function normalizeRows(grid: string[][], title: string, month: string) {
+function normalizeRows(grid: string[][], title: string, month: string, dateRange?: DateFilter) {
   const table = normalizeGrid(grid, title);
-  const period = month === "all" || table.dateCol < 0
+  const period = dateRange ?? (month === "all" || table.dateCol < 0
     ? { from: null, to: null }
-    : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } };
+    : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } });
   return {table, rows: filterByDate(table, period).rows.filter(r => !isTotalRow(r))};
 }
 export function valueOf(rows: Cell[][], index: number, enabled: boolean): number | null {
@@ -48,6 +49,19 @@ function MonthSelect({month,change}: {month:string;change:(s:string)=>void}) {
       </Select>
     </div>
   );
+}
+function ArchivePeriodSelect({period,change,range}: {period:ArchivePeriod;change:(period:ArchivePeriod)=>void;range:DateFilter}) {
+ return <section className="dashboard-panel p-3 sm:p-4" aria-label="د آرشیف د راپور موده">
+  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+   <span className="text-sm font-bold">د راپور موده</span>
+   <span className="text-xs text-muted-foreground" aria-live="polite">{archivePeriodCaption(range)}</span>
+  </div>
+  <div className="flex flex-wrap gap-2" role="group" aria-label="د آرشیف وخت وټاکئ">
+   {ARCHIVE_PERIOD_OPTIONS.map(option=><button key={option.value} type="button"
+    aria-pressed={period===option.value} onClick={()=>change(option.value)}
+    className="dashboard-period-button">{option.label}</button>)}
+  </div>
+ </section>;
 }
 function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Cell[][];columns:number[];identity:boolean}) {
   // Do not hide staff merely because the original Google Sheet left their cells blank.
@@ -87,10 +101,12 @@ function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Ce
 
 export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid:string[][]}) {
   const [month,setMonth]=useState("all");
+  const [archivePeriod,setArchivePeriod]=useState<ArchivePeriod>("thisMonth");
+  const archiveRange=kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined;
   const parsed=useMemo(()=>{
-    try {return {data:normalizeRows(grid,title,month), error:null};}
+    try {return {data:normalizeRows(grid,title,month,kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined), error:null};}
     catch {return {data:null,error:"د Google Sheet د کالمونو جوړښت له ثبت شوې نقشې سره برابر نه دی."};}
-  },[grid,title,month]);
+  },[grid,title,month,kind,archivePeriod]);
   if (parsed.error || !parsed.data) {
     return <p role="alert" className="rounded-xl border p-4 text-sm text-destructive"><AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}</p>;
   }
@@ -145,7 +161,7 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
 
   return (
     <div className="space-y-5">
-      {kind!=="annual" && <MonthSelect month={month} change={setMonth}/>}
+      {kind==="archive-scan" ? <ArchivePeriodSelect period={archivePeriod} change={setArchivePeriod} range={archiveRange!}/> : kind!=="annual" && <MonthSelect month={month} change={setMonth}/>}
       <div className={cards.length===1?"grid grid-cols-1 gap-3 sm:max-w-sm":"grid grid-cols-2 gap-3 lg:grid-cols-4"}>
         {cards.map(card=><Stat key={card.label} {...card}/>)}
       </div>
@@ -193,8 +209,8 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
           </div>
         </section>
       )}
-      {(kind==="total" || kind==="bank") && rows.length===0 && <p className="dashboard-subtle-note">د دې میاشتې لپاره راپور نشته.</p>}
-      <TabView title={title} grid={grid} detailsOnly selectedMonth={month} onSelectedMonthChange={setMonth} />
+      {(kind==="total" || kind==="bank" || kind==="archive-scan") && rows.length===0 && <p className="dashboard-subtle-note">د دې میاشتې لپاره راپور نشته.</p>}
+      <TabView title={title} grid={grid} detailsOnly selectedMonth={month} onSelectedMonthChange={setMonth} dateRange={archiveRange} />
     </div>
   );
 }
