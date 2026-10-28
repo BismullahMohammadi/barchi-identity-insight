@@ -7,24 +7,21 @@ export function buildMissingReportsWhatsapp(registration:StaffCompleteness,insij
  if(!["complete","incomplete"].includes(registration.status)||!["complete","incomplete"].includes(insijam.status))return null;
  if(!registration.totalCount||!insijam.totalCount)return null;
  const sections=[
-  {name:"د نوم‌لیکنې، وېش او وېش وروسته خدمتونو مدیریت",items:registration.missing},
-  {name:"د انسجام مدیریت",items:insijam.missing},
+  {name:"نوم‌لیکنه او وېش / ثبت‌نام و توزیع",items:registration.missing},
+  {name:"انسجام / انسجام",items:insijam.missing},
  ].filter(x=>x.items.length>0);
  if(!sections.length)return null;
- const entries=sections.map(s=>{
-  const names=[...new Set(s.items.map(x=>x.name.trim()).filter(Boolean))];
-  return "*"+s.name+"*\n"+names.map((name,i)=>`${i+1}. ${name}`).join("\n");
+ const entries=sections.map(section=>{
+  const names=[...new Set(section.items.map(x=>x.name.trim()).filter(Boolean))];
+  return "*"+section.name+"*\n"+names.map((name,i)=>`${i+1}. ${name}`).join("\n");
  });
- return `السلام علیکم ورحمة الله وبرکاته!
+ return `*د ${registration.date} راپورونه / گزارش‌های ${registration.date}*
 
-*د ${registration.date} نېټې د ورځنیو راپورونو یادونه*
-
-د راپورونو د ثبت د وروستۍ کتنې له مخې، د لاندې همکارانو د یادې نېټې راپورونه لا په اړوندو شیټونو کې نه دي تایید شوي:
+*پښتو:* لاندې همکارانو، مهرباني وکړئ پاتې راپورونه ثبت کړئ؛ که مو ثبت کړي وي، خبر راکړئ.
+*دری:* همکاران ذیل لطفاً گزارش‌های باقی‌مانده را ثبت کنند؛ اگر ثبت کرده‌اند، اطلاع دهند.
 
 ${entries.join("\n\n")}
 
-له درنو همکارانو هیله کېږي چې خپل راپورونه وګوري، که لا نه وي ثبت شوي نو بشپړ یې کړي؛ او که مخکې یې ثبت کړي وي، مهرباني وکړئ خبر راکړئ چې معلومات بیا وکتل شي.
-
-له همکارۍ مو مننه.
-د مرکز مدیریت`;
+مننه / تشکر
+*د مرکز مدیریت / مدیریت مرکز*`;
 }
