@@ -1,0 +1,24 @@
+name: Check previous-day staff reports at 10 AM Kabul
+on:
+  schedule:
+    # Asia/Kabul is UTC+04:30 year-round. GitHub Actions cron is UTC.
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: scheduled-report-check
+  cancel-in-progress: false
+jobs:
+  check-reports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Run daily check (no WhatsApp automatic send)
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SCHEDULE_SUPABASE_URL: ${{ secrets.SCHEDULE_SUPABASE_URL }}
+          SCHEDULE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SCHEDULE_SUPABASE_SERVICE_ROLE_KEY }}
+        run: bun scripts/daily-report-check.ts

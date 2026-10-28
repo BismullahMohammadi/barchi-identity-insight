@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import {Copy,MessageCircle,Pencil,RotateCcw,Save} from "lucide-react";
+import {Copy,MessageCircle,Pencil,RotateCcw,Save,Send} from "lucide-react";
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
 import type {StaffCompleteness} from "@/lib/monthly-staff-completeness";
@@ -35,6 +35,10 @@ export function WhatsAppReminderEditor({registration,insijam}:Props){
    setEditingTemplate(false);
    toast.success("ټیمپلیټ خوندي شو.");
   }catch{setTemplateError("ټیمپلیټ ونه ساتل شو.");}
+ };
+ const share=()=>{
+  if(!generated||!messageDraft.trim())return;
+  window.open("https://wa.me/?text="+encodeURIComponent(messageDraft),"_blank","noopener,noreferrer");
  };
  const copy=async()=>{
   if(!generated||!messageDraft.trim())return;
@@ -75,7 +79,10 @@ export function WhatsAppReminderEditor({registration,insijam}:Props){
 
   {generated?<div className="space-y-2">
    <div className="flex flex-wrap gap-2">
-    <Button type="button" size="sm" onClick={copy} disabled={!messageDraft.trim()}>
+    <Button type="button" size="sm" onClick={share} disabled={!messageDraft.trim()}>
+     <Send aria-hidden="true" className="me-1 h-4 w-4"/>WhatsApp ته
+    </Button>
+    <Button type="button" variant="outline" size="sm" onClick={copy} disabled={!messageDraft.trim()}>
      <Copy aria-hidden="true" className="me-1 h-4 w-4"/>پیغام کاپي کړئ
     </Button>
     <Button type="button" variant="outline" size="sm" aria-expanded={editingMessage} onClick={()=>{
