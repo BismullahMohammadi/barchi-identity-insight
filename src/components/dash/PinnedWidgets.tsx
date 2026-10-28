@@ -79,30 +79,25 @@ function StateReportCopy({report}:{report:StateReport}){
  const [copied,setCopied]=useState(false);
  const copy=async()=>{
   if(report.status!=="available")return;
-  const tsv=stateReportTsv(report);
-  const escapeHtml=(s:string)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  const html="<table dir=\"rtl\" style=\"border-collapse:collapse;font-family:Arial,sans-serif\"><thead><tr><th>بخشونه ("+escapeHtml(report.month)+")</th><th>"+escapeHtml(report.date)+"</th></tr></thead><tbody>"+
-   report.rows.map(row=>"<tr><td style=\"border:1px solid #cbd5e1;padding:6px\">"+escapeHtml(row.label)+"</td><td style=\"border:1px solid #cbd5e1;padding:6px;text-align:center\">"+escapeHtml(row.value)+"</td></tr>").join("")+"</tbody></table>";
+  const values=stateReportTsv(report);
+  if(!values)return;
   try{
-   if(typeof ClipboardItem!=="undefined"&&navigator.clipboard?.write){
-    const payload=new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([tsv],{type:"text/plain"})});
-    await navigator.clipboard.write([payload]);
-   }else await navigator.clipboard.writeText(tsv);
-   setCopied(true);toast.success("د ریاست د پرون ګزارش په منظم جدول کې کاپي شو.");
-  }catch{toast.error("کاپي ونه شوه؛ براوزر ته د Clipboard اجازه ورکړئ.");}
+   // One value per row. Pasting into a spreadsheet fills exactly one column.
+   // Avoid HTML tables because some spreadsheets would also paste headers/labels.
+   await navigator.clipboard.writeText(values);
+   setCopied(true);
+   toast.success("یوازې ارقام کاپي شول.");
+  }catch{
+   toast.error("کاپي ونه شوه؛ د Clipboard اجازه ورکړئ.");
+  }
  };
  return <section className="space-y-3 rounded-xl border bg-card p-3">
-  <h3 className="font-bold">ریاست ته ګزارش — {report.date}</h3>
-  {report.status!=="available"
-   ? <p className="text-sm text-amber-700">{report.message}</p>
-   : <>
-    <div className="max-h-60 overflow-auto rounded-lg border">
-     <table className="w-full text-sm"><thead><tr className="bg-muted"><th className="p-2 text-start">برخه</th><th className="p-2 text-start">د پرون شمېر</th></tr></thead>
-      <tbody>{report.rows.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.label}</td><td className="p-2 tabular-nums">{r.value}</td></tr>)}</tbody></table>
-    </div>
-    <Button onClick={copy} className="w-full">{copied?"بیا کاپي کړئ":"د ریاست ګزارش کاپي کړئ"}</Button>
-    <p className="text-xs text-muted-foreground">اصلي قطارونه په هماغه ترتیب د Excel او Google Sheets لپاره د جدول په بڼه کاپي کېږي. اصلي شیټ نه بدلېږي.</p>
-   </>}
+  <h3 className="font-bold">ریاست ته ګزارش</h3>
+  {report.status!=="available" ? <p className="text-sm text-amber-700">{report.message}</p> :
+   copied ? <div role="status" className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-800">
+     <Check aria-hidden="true" className="h-4 w-4"/> ارقام کاپي شول، اوس یې په شیټ کې پیسټ کړئ.
+    </div> :
+    <Button type="button" onClick={copy} className="w-full">د ریاست د ګزارش ارقام کاپي کړئ</Button>}
  </section>;
 }
 function ReportHealthContent(){
