@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness } from "./sheets.functions";
+import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness,getInsijamDailyCompleteness,getStateReportForYesterday } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
 
@@ -44,9 +44,22 @@ export const staffCompletenessQuery = (refreshMs=REFRESH_MS) => queryOptions({
  staleTime:5_000,
 });
 
+export const insijamCompletenessQuery=(refreshMs=REFRESH_MS)=>queryOptions({
+ queryKey:["insijam-report-completeness"],
+ queryFn:()=>getInsijamDailyCompleteness(),
+ refetchInterval:refreshMs,refetchIntervalInBackground:false,retry:1,staleTime:5000,
+});
+export const stateReportQuery=(refreshMs=REFRESH_MS)=>queryOptions({
+ queryKey:["state-report-yesterday"],
+ queryFn:()=>getStateReportForYesterday(),
+ refetchInterval:refreshMs,refetchIntervalInBackground:false,retry:1,staleTime:5000,
+});
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
   if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: ستاسو ایمیل د مالک په لیست کې نشته.";
+  if (m.includes("INSIJAM_SHEETS_ERROR_403") || m.includes("INSIJAM_SHEETS_ERROR_404")) return "د انسجام نوي Google Sheet ته د لوستلو اجازه نه ده ورکړل شوې.";
+  if (m.includes("INSIJAM_SHEETS_ERROR")) return "د انسجام میاشتنی راپور ونه لوستل شو.";
+  if (m.includes("STATE_REPORT_ERROR")) return "د «ریاست ته ګزارش» اصلي ټاب ونه لوستل شو.";
   if (m.includes("STAFF_SHEETS_ERROR_403") || m.includes("STAFF_SHEETS_ERROR_404")) return "د کارمندانو نوي Google Sheet ته د لوستلو اجازه نشته. د Lovable Google اتصال کې ورته لاسرسی ورکړئ.";
   if (m.includes("STAFF_SHEETS_ERROR")) return "د کارمندانو میاشتنی راپور ونه لوستل شو.";
   if (m.includes("SHEETS_NOT_CONNECTED")) return "د ګوګل شیټ اړیکه نه ده جوړه شوې.";
