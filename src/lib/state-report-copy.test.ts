@@ -10,7 +10,9 @@ describe("State report copy",()=>{
   const report=extractStateReport(rows,{y:1405,m:8,d:5});
   expect(report.status).toBe("available");
   expect(report.rows.map(r=>r.value)).toEqual(["50","0","5"]);
-  expect(stateReportTsv(report)).toContain("چک اسناد\t50");
+  expect(stateReportTsv(report)).toBe(["50","0","5"].join("\n"));
+  expect(stateReportTsv(report)).not.toContain("چک اسناد");
+  expect(stateReportTsv(report)).not.toContain("1405/08/05");
  });
  it("does not copy error values",()=>{
   const copy=rows.map(r=>[...r]);copy[4]![5]="#NAME?";
