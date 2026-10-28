@@ -15,9 +15,9 @@ import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-setting
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
     meta: [
-      { title: "د مرکز کاري نبض — دشت برچي eNID ۱۴۰۵" },
+      { title: "د مرکز کاري بهیر — دشت برچي eNID ۱۴۰۵" },
       { name: "description", content: "د مرکز د ټولو برخو لنډیز." },
-      { property: "og:title", content: "د مرکز کاري نبض — دشت برچي eNID" },
+      { property: "og:title", content: "د مرکز کاري بهیر — دشت برچي eNID" },
       { property: "og:description", content: "د مرکز د ټولو برخو لنډیز." },
     ],
   }),
@@ -101,7 +101,7 @@ function Overview() {
         <div className="absolute inset-0 pattern-dots" aria-hidden />
         <div className="relative">
           <p className="text-sm font-semibold text-amber-200">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold md:text-3xl">د مرکز کاري نبض</h1>
+          <h1 className="mt-1 font-display text-2xl font-extrabold md:text-3xl">د مرکز کاري بهیر</h1>
           <p className="mt-2 max-w-xl text-sm text-white/85">د فعالیتونو، عوایدو او کاري پرمختګ روښانه مدیریتي انځور.</p>
         </div>
       </section>
