@@ -8,6 +8,8 @@ import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./mont
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab } from "./daily-forms";
+import {newestCollectedPeople,newestRegisteredPeople,type RecentReferrals} from "./recent-referrals";
+import {MONTH_NAMES} from "./monthly-staff-completeness";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
 function emailFromClaims(claims: unknown): string | null {
@@ -205,4 +207,33 @@ export const getStateReportForYesterday=createServerFn({method:"GET"}).middlewar
   const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"STATE_REPORT_ERROR");
   return extractStateReport(data.values??[],day);
+ });
+
+/** Only return the five latest personal records per group to authorized center management.
+ * The full spreadsheets and patient data are never exposed to the browser.
+ */
+export const getRecentReferrals=createServerFn({method:"GET"})
+ .middleware([requireSupabaseAuth])
+ .handler(async({context}):Promise<RecentReferrals>=>{
+  setResponseHeader("Cache-Control","private, no-store");
+  const headers=authorizedSheetHeaders(context.claims);
+  const today=todayJalali();
+  const meta=await Promise.all([
+   sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR"),
+   sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"COORDINATION_SHEETS_ERROR")
+  ]);
+  const intakeTitles=(meta[0].sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
+  const coordinationTitles=(meta[1].sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
+  const month=MONTH_NAMES[today.m]??"";
+  const collection=intakeTitles.find(title=>
+   title.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(title)&&
+   (title.includes(String(today.y))||title.includes("۱۴۰۵")));
+  const target=selectDailyTab(coordinationTitles,today);
+  const [intakeData,registrationData]=await Promise.all([
+   collection?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
+   target?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${target.name.replace(/'/g,"''")}'!A1:L300`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
+  ]);
+  const newReferrals=newestCollectedPeople(intakeData.values??[],today);
+  const registration=newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today);
+  return {newReferrals:{...newReferrals,source:collection??null},registration,fetchedAt:Date.now()};
  });

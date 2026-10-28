@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness,getInsijamDailyCompleteness,getStateReportForYesterday } from "./sheets.functions";
+import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness,getInsijamDailyCompleteness,getStateReportForYesterday,getRecentReferrals } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
 
@@ -35,6 +35,11 @@ export const dailyCoordinationQuery = (refreshMs = REFRESH_MS) => queryOptions({
   retry: 1,
 });
 
+export const recentReferralsQuery=(refreshMs=REFRESH_MS)=>queryOptions({
+ queryKey:["recent-referrals"],
+ queryFn:()=>getRecentReferrals(),
+ staleTime:30_000,refetchInterval:refreshMs,refetchIntervalInBackground:false,retry:1,
+});
 export const staffCompletenessQuery = (refreshMs=REFRESH_MS) => queryOptions({
  queryKey:["staff-report-completeness"],
  queryFn:()=>getStaffDailyCompleteness(),
