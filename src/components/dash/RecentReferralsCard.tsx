@@ -8,15 +8,6 @@ import type { ReferralGroup } from "@/lib/recent-referrals";
 
 type Section = "intake" | "registration";
 
-function initialVisibility(section: Section): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return window.localStorage.getItem(`barchi-referrals-${section}-visible`) !== "0";
-  } catch {
-    return true;
-  }
-}
-
 function People({ group }: { group: ReferralGroup }) {
   return (
     <div>
@@ -59,43 +50,33 @@ function ReferralCard({
   loading: boolean;
   error: Error | null;
 }) {
-  const [visible, setVisible] = useState(() => initialVisibility(section));
+  const [visible, setVisible] = useState(false);
   const Icon = section === "intake" ? UserRoundPlus : UsersRound;
   const contentId = `recent-referrals-${section}`;
 
   function toggle() {
-    setVisible((wasVisible) => {
-      const next = !wasVisible;
-      try {
-        window.localStorage.setItem(`barchi-referrals-${section}-visible`, next ? "1" : "0");
-      } catch {
-        // Storage is optional.
-      }
-      return next;
-    });
+    setVisible((current) => !current);
   }
 
   return (
     <section className="dashboard-panel min-w-0 w-full overflow-hidden p-4 sm:p-5" aria-label={title}>
-      <div className="flex min-h-10 items-center justify-between gap-2">
-        <h3 className="flex min-w-0 items-center gap-2 text-sm font-extrabold leading-6">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={visible}
+        aria-controls={contentId}
+        aria-label={visible ? `${title} پټ کړئ` : `${title} وروستي پنځه مراجعین ښکاره کړئ`}
+        className="flex w-full min-h-12 items-center justify-between gap-3 rounded-lg text-start outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <span className="flex min-w-0 items-center gap-2 text-sm font-extrabold leading-6">
           <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />
           {title}
-        </h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={toggle}
-          aria-label={visible ? `${title} پټ کړئ` : `${title} ښکاره کړئ`}
-          aria-expanded={visible}
-          aria-controls={contentId}
-          className="shrink-0 gap-1"
-        >
+        </span>
+        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
+          {visible ? "پټول" : "کتل"}
           {visible ? <ChevronUp aria-hidden="true" className="h-4 w-4" /> : <ChevronDown aria-hidden="true" className="h-4 w-4" />}
-          {visible ? "پټول" : "ښکاره کول"}
-        </Button>
-      </div>
+        </span>
+      </button>
       {visible && (
         <div id={contentId} className="mt-4 border-t border-border/60 pt-4">
           {loading ? (
@@ -117,7 +98,7 @@ function ReferralCard({
   );
 }
 
-/** Both private lists are visible together by default and can collapse independently. */
+/** Both headings are always visible; clicking either card independently reveals its five most recent people. */
 export function RecentReferralsCard() {
   const settings = useDashboardSettings();
   const q = useQuery(recentReferralsQuery(settingsRefreshMs(settings)));
