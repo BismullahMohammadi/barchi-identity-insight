@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getProblemVisitors, changeProblemVisitor } from "@/lib/problem-visitors.functions";
+import { ProblemVisitorAlerts } from "@/components/dash/ProblemVisitorAlerts";
 
 export function ProblemVisitorsPage() {
  const qc=useQueryClient();
@@ -16,6 +17,7 @@ export function ProblemVisitorsPage() {
  async function add(e:React.FormEvent){e.preventDefault();await mutation.mutateAsync({data:{action:"add",full_name:name,father_name:father,issue}});setName("");setFather("");setIssue("");}
  return <div className="space-y-5">
   <div><h1 className="text-2xl font-extrabold">مشکلاتي مراجعین</h1><p className="mt-1 text-sm text-muted-foreground">یوازې د مدیر لپاره خصوصي لېست؛ ثبتونه د احتمالي تطابق لپاره کارېږي.</p></div>
+  <ProblemVisitorAlerts />
   <form onSubmit={add} className="dashboard-panel grid gap-3 p-4 sm:p-5" aria-label="د مشکلاتي مراجع ثبت">
    <h2 className="font-bold">نوی مراجع ثبت کړئ</h2>
    <label className="grid gap-1 text-sm">نوم او تخلص<Input required maxLength={180} value={name} onChange={e=>setName(e.target.value)} /></label>
