@@ -9,6 +9,7 @@ import { accessQuery } from "@/lib/queries";
 import { TABS } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 import { ScheduledReportNotice } from "@/components/dash/ScheduledReportNotice";
+import { NewProblemVisitorNotice } from "@/components/dash/NewProblemVisitorNotice";
 import { useDashboardSettings } from "@/lib/dashboard-settings";
 import { useStaffCompletionMonitor } from "@/lib/staff-completion-alerts";
 
@@ -166,6 +167,7 @@ function DashboardLayout() {
           </Button>
         </header>
         {access.data?.allowed && <ScheduledReportNotice />}
+        {access.data?.allowed && <NewProblemVisitorNotice />}
         <main id="main-dashboard-content" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
             <p className="text-muted-foreground">لاسرسی کتل کېږي…</p>
