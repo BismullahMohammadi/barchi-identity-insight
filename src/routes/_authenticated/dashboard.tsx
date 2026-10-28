@@ -36,7 +36,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
-        <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري نبض
+        <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري بهیر
       </Link>
       {groups.map((group) => (
         <div key={group.title} className="space-y-1">
@@ -137,7 +137,7 @@ function DashboardLayout() {
           {access.data?.allowed && showTools && (
             <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ">
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
-              <span className="hidden sm:inline">دندې او مشوره</span>
+              <span className="hidden sm:inline">دندې او راپورونه</span>
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={signOut} aria-label="له سیستم څخه وتل">
@@ -147,6 +147,13 @@ function DashboardLayout() {
         <main id="main-dashboard-content" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
             <p className="text-muted-foreground">لاسرسی کتل کېږي…</p>
+          ) : access.isError ? (
+            <div role="alert" className="mx-auto max-w-lg rounded-2xl border border-amber-500/35 bg-card p-6 text-center shadow-card">
+              <ShieldAlert className="mx-auto h-9 w-9 text-amber-600" aria-hidden="true" />
+              <h1 className="mt-4 text-lg font-bold">د ننوتلو د تایید ستونزه</h1>
+              <p className="mt-2 text-sm text-muted-foreground">ستاسو د حساب اجازه اوس د سرور له لارې نه شي تاییدېدای. دا د لاسرسي د رد کېدو معنا نه لري. د انټرنټ اړیکه او د سیستم تنظیمات وګورئ.</p>
+              <Button className="mt-5" onClick={() => access.refetch()} disabled={access.isFetching}>بیا هڅه وکړئ</Button>
+            </div>
           ) : !access.data?.allowed ? (
             <div className="mx-auto max-w-lg rounded-2xl border bg-card p-8 text-center shadow-card">
               <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
