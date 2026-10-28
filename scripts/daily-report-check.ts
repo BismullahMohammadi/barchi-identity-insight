@@ -1,0 +1,91 @@
+import {createSign} from "node:crypto";
+import {yesterdayJalali,formatJ} from "../src/lib/jalali";
+import {findReportMonth,inspectStaffDay,type StaffCompleteness} from "../src/lib/monthly-staff-completeness";
+import {findInsijamMonth,inspectInsijamDay} from "../src/lib/insijam-completeness";
+
+type Credentials={client_email:string;private_key:string;token_uri?:string};
+const REQUIRED=["GOOGLE_SERVICE_ACCOUNT_JSON","SCHEDULE_SUPABASE_URL","SCHEDULE_SUPABASE_SERVICE_ROLE_KEY"] as const;
+function required(name:string):string {
+ const value=process.env[name];
+ if(!value)throw new Error("Missing required deployment secret: "+name);
+ return value;
+}
+function encode(input:unknown):string{return Buffer.from(JSON.stringify(input)).toString("base64url");}
+async function googleToken():Promise<string>{
+ const raw=required("GOOGLE_SERVICE_ACCOUNT_JSON");
+ const credential=JSON.parse(raw) as Credentials;
+ if(!credential.client_email||!credential.private_key)throw new Error("Service account missing email or key");
+ const endpoint=credential.token_uri??"https://oauth2.googleapis.com/token";
+ const now=Math.floor(Date.now()/1000);
+ const payload=encode({iss:credential.client_email,scope:"https://www.googleapis.com/auth/spreadsheets.readonly",aud:endpoint,iat:now,exp:now+3600});
+ const data=encode({alg:"RS256",typ:"JWT"})+"."+payload;
+ const signer=createSign("RSA-SHA256");signer.update(data);signer.end();
+ const jwt=data+"."+signer.sign(credential.private_key).toString("base64url");
+ const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},
+  body:new URLSearchParams({grant_type:"urn:ietf:params:oauth:grant-type:jwt-bearer",assertion:jwt})});
+ if(!response.ok)throw new Error("Google service account token unavailable: "+response.status);
+ const body=await response.json() as {access_token?:string};
+ if(!body.access_token)throw new Error("Google access token absent");
+ return body.access_token;
+}
+const REGISTRATION="1Qp5mmA9dRqZ43CLMSMM5tc53rBjAxrTj_gyRp7OVoG8";
+const INSIJAM="1W82u37NeQ4Og7rANME6i3jxj1aeCZhhvIj3YtmopQ2g";
+async function getJSON<T>(url:string,token:string):Promise<T>{
+ const response=await fetch(url,{headers:{Authorization:"Bearer "+token}});
+ if(!response.ok)throw new Error("Google spreadsheet read failed: "+response.status);
+ return response.json() as Promise<T>;
+}
+async function monthlyReport(id:string,month:number,token:string,kind:"registration"|"insijam"):Promise<StaffCompleteness>{
+ const meta=await getJSON<{sheets?:{properties?:{title?:string}}[]}>(
+  `https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets(properties(title))`,token);
+ const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((v):v is string=>!!v);
+ const title=kind==="registration"?findReportMonth(titles,month):findInsijamMonth(titles,month);
+ const day=yesterdayJalali();
+ if(!title)return kind==="registration"?inspectStaffDay([],day,""):inspectInsijamDay([],day,"");
+ const range=encodeURIComponent(`'${title.replace(/'/g,"''")}'!A1:${kind==="registration"?"AL100":"AM90"}`);
+ const result=await getJSON<{values?:unknown[][]}>(
+  `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,token);
+ return kind==="registration"?inspectStaffDay(result.values??[],day,title):inspectInsijamDay(result.values??[],day,title);
+}
+function sanitize(report:StaffCompleteness){
+ return {date:report.date,sheet:report.sheet,status:report.status,
+  submittedCount:report.submittedCount,totalCount:report.totalCount,
+  missing:report.missing.map(x=>({name:x.name,role:x.role,activities:x.activities,submitted:false}))};
+}
+async function persist(row:Record<string,unknown>){
+ const base=required("SCHEDULE_SUPABASE_URL").replace(/\/$/,"");
+ const key=required("SCHEDULE_SUPABASE_SERVICE_ROLE_KEY");
+ const response=await fetch(base+"/rest/v1/daily_report_checks?on_conflict=report_date",{
+  method:"POST",headers:{"apikey":key,Authorization:"Bearer "+key,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},
+  body:JSON.stringify(row),
+ });
+ if(!response.ok)throw new Error("Scheduled report status storage failed: "+response.status);
+}
+async function main(){
+ for(const name of REQUIRED)required(name);
+ const day=yesterdayJalali(),date=formatJ(day);
+ const friday=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Kabul",weekday:"short"}).format(new Date(Date.now()-86400000))==="Fri";
+ if(friday){
+  await persist({report_date:date,status:"nonwork",missing_count:0,registration:null,insijam:null,error_text:null,checked_at:new Date().toISOString()});
+  console.log("Scheduled check: Friday, no reminder.");return;
+ }
+ try{
+  const token=await googleToken();
+  const [registration,insijam]=await Promise.all([
+   monthlyReport(REGISTRATION,day.m,token,"registration"),
+   monthlyReport(INSIJAM,day.m,token,"insijam"),
+  ]);
+  const valid=["complete","incomplete"].includes(registration.status)&&["complete","incomplete"].includes(insijam.status)&&registration.totalCount>0&&insijam.totalCount>0;
+  const missing=valid?registration.missing.length+insijam.missing.length:0;
+  await persist({report_date:date,status:!valid?"unavailable":missing?"incomplete":"complete",
+   registration:valid?sanitize(registration):null,insijam:valid?sanitize(insijam):null,
+   missing_count:missing,error_text:valid?null:"One or more report layouts unavailable",checked_at:new Date().toISOString()});
+  console.log("Scheduled check complete; status "+(!valid?"unavailable":missing?"incomplete":"complete")+".");
+ }catch(error){
+  // Do not mark staff missing if either Google Sheets source failed.
+  await persist({report_date:date,status:"unavailable",missing_count:0,registration:null,insijam:null,
+   error_text:error instanceof Error?error.message.slice(0,160):"Unknown error",checked_at:new Date().toISOString()});
+  throw error;
+ }
+}
+await main();
