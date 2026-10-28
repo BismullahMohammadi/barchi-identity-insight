@@ -4,7 +4,8 @@ import { AlertTriangle, Bell, BellOff, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { recentReferralsQuery } from "@/lib/queries";
 
-type Match = NonNullable<Awaited<ReturnType<ReturnType<typeof recentReferralsQuery>["queryFn"]>>["potentialMatches"]>[number];
+import type { RecentReferrals } from "@/lib/recent-referrals";
+type Match = NonNullable<RecentReferrals["potentialMatches"]>[number];
 const SEEN_KEY = "barchi-problem-alert-seen-v1";
 const SOUND_KEY = "barchi-problem-alert-sound-v1";
 
