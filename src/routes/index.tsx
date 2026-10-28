@@ -24,24 +24,52 @@ function Landing() {
   const navigate = useNavigate();
   const [signedIn, setSignedIn] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    let mounted = true;
+    supabase.auth.getUser().then(({data,error}) => {
+      if (!mounted) return;
+      if (error) setLoginError("د حساب د تایید خدمت ته اړیکه ونه شوه. د انټرنټ یا Supabase اتصال وګورئ.");
+      else setSignedIn(!!data.user);
+    }).catch(() => { if (mounted) setLoginError("د حساب د تایید اتصال ناکام شو. بیا هڅه وکړئ."); });
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
+      if (!mounted) return;
+      if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="TOKEN_REFRESHED"){
+        setSignedIn(!!session?.user);
+        if(session?.user) setLoginError(null);
+      }
+    });
+    return () => { mounted=false; subscription.unsubscribe(); };
   }, []);
 
   async function signIn() {
+    setLoginError(null);
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-      extraParams: { prompt: "select_account" },
-    });
-    if (result.error) {
-      toast.error("ننوتل ناکام شول، بیا هڅه وکړئ.");
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+        extraParams: { prompt: "select_account" },
+      });
+      if (result.error) {
+        setLoginError("د Google ننوتل ناکام شول. د Google حساب، د OAuth اجازه او د سیستم اتصال وګورئ.");
+        toast.error("ننوتل ناکام شول؛ د خطا تفصیل په پاڼه کې وګورئ.");
+        return;
+      }
+      if (result.redirected) return;
+      const {data,error}=await supabase.auth.getUser();
+      if(error||!data.user) {
+        setLoginError("Google حساب تایید شو، خو خوندي Session ونه ساتل شو. د براوزر Cookies/Storage او Supabase تنظیمات وګورئ.");
+        return;
+      }
+      setSignedIn(true);
+      navigate({to:"/dashboard"});
+    } catch {
+      setLoginError("د ننوتلو خدمت ته اړیکه ونه شوه. انټرنټ وګورئ او بیا هڅه وکړئ.");
+      toast.error("د ننوتلو اتصال ناکام شو.");
+    } finally {
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
   }
 
   return (
@@ -58,12 +86,13 @@ function Landing() {
         <p className="mt-6 max-w-xl text-lg opacity-85">
           د تثبت هویت، عوایدو، کنټرول، خدماتو او توزیع ژوندي شمېرې — مستقیم د راپور شیټ څخه، یوازې د لوستلو لپاره.
         </p>
+        {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300/40 bg-black/20 px-4 py-3 text-sm leading-7 text-white">{loginError}</div>}
         <div className="mt-10 flex flex-wrap gap-3">
           {signedIn ? (
             <Button asChild variant="hero" size="lg"><Link to="/dashboard">ډشبورډ ته لاړ شئ</Link></Button>
           ) : (
             <Button variant="hero" size="lg" onClick={signIn} disabled={busy}>
-              د ګوګل له لارې ننوتل
+              {busy ? "د ننوتلو هڅه روانه ده…" : "د ګوګل له لارې ننوتل"}
             </Button>
           )}
         </div>
