@@ -69,7 +69,7 @@ export function errorText(err: unknown): string {
   if (m.includes("STAFF_SHEETS_ERROR")) return "د کارمندانو میاشتنی راپور ونه لوستل شو.";
   if (m.includes("SHEETS_NOT_CONNECTED")) return "د ګوګل شیټ اړیکه نه ده جوړه شوې.";
   if (m.includes("COORDINATION_SHEETS_ERROR_403") || m.includes("COORDINATION_SHEETS_ERROR_404")) return "د هماهنګۍ Google Sheet ته د لوستلو اجازه نشته.";
-  if (m.includes("COORDINATION_SHEETS_ERROR")) return "د ثبت نام هماهنګۍ ورځنی راپور ونه لوستل شو.";
+  if (m.includes("COORDINATION_SHEETS_ERROR")) return "د ثبت‌نام د همغږۍ ورځنی راپور ونه لوستل شو.";
   if (m.includes("FORMS_SHEETS_ERROR_403") || m.includes("FORMS_SHEETS_ERROR_404")) return "دویم Google Sheet ته د لوستلو اجازه نشته.";
   if (m.includes("FORMS_SHEETS_ERROR")) return "د ورځنیو فورمونو شیټ لوستل ناکام شول.";
   if (m.includes("SHEETS_ERROR_429")) return "د ګوګل محدودیت؛ لږ وروسته به بیا هڅه وشي.";
