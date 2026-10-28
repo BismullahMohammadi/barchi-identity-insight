@@ -2,7 +2,7 @@ import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
 import {selectDailyTab} from "./daily-forms";
 export type RecentReferral={name:string;father:string;familyMembers:number|null};
 export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null};
-export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;fetchedAt:number};
+export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;fetchedAt:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
 
 function clean(x:unknown):string{return String(x??"").replace(/\s+/g," ").trim();}
 function count(x:unknown):number|null{
