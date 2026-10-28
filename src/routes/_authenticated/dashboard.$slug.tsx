@@ -7,14 +7,15 @@ import { getTab } from "@/lib/tabs";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
+import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
-    if (params.slug !== "settings" && !getTab(params.slug)) throw notFound();
+    if (params.slug !== "settings" && params.slug !== "problem-visitors" && !getTab(params.slug)) throw notFound();
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${params.slug === "settings" ? "تنظیمات" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
     return {
       meta: [
         { title },
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 function TabPage() {
   const { slug } = Route.useParams();
   if (slug === "settings") return <DashboardSettingsPage />;
+  if (slug === "problem-visitors") return <ProblemVisitorsPage />;
   return <ReportPage slug={slug} />;
 }
 
