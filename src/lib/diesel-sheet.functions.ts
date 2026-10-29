@@ -44,8 +44,8 @@ export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([req
  if(!isEmailAllowed(claims?.email??null,process.env["OWNER_EMAILS"]))throw new Error("ACCESS_DENIED");
  const lovable=process.env["LOVABLE_API_KEY"],key=process.env["GOOGLE_SHEETS_API_KEY"];
  if(!lovable||!key)throw new Error("SHEETS_NOT_CONNECTED");
- const range=encodeURIComponent("'مصرف دیزل'!A1:I50");
- const url=`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`;
+ const range=encodeURIComponent("'مصرف دیزل'!A1:I41");
+ const url=`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS`;
  const res=await fetch(url,{headers:{Authorization:`Bearer ${lovable}`,"X-Connection-Api-Key":key}});
  if(!res.ok)throw new Error("DIESEL_SHEET_ERROR_"+res.status);
  const json=await res.json() as {values?:unknown[][]};
