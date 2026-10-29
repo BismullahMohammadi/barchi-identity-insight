@@ -154,7 +154,7 @@ function Overview() {
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
           <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2" aria-label="ټیمونو ته د ورځې معرفي شوي مراجعین">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold">ټیمونو ته ورځني معرفي شوي مراجعین</p><span className="text-[11px] text-muted-foreground">{recent.data?.registration.date??"د وروستۍ ورځې راپور"}</span></div>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold">ټیمونو ته د ورځې معرفي شوي د فامیل غړي</p><span className="text-[11px] text-muted-foreground">{recent.data?.registration.date??"د وروستۍ ورځې راپور"}</span></div>
             {recent.isLoading?<p className="text-xs text-muted-foreground">رااخیستل کېږي…</p>:recent.error?<p className="text-xs text-destructive">د ټیمونو شمېرې ونه لوستل شوې.</p>:recent.data?.registration.date?
             <div className="grid grid-cols-4 gap-1.5">
              {(["درېیم","څلورم","پنځم","شپږم"] as const).map((label,i)=><div key={label} className="rounded-md bg-background px-1.5 py-2 text-center">

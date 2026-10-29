@@ -61,12 +61,13 @@ export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unk
  return {date:formatJ(chosen.date),people:records.slice(-limit).reverse(),source:chosen.name};
 }
 
-/** Count complete person rows in each of the four daily registration team columns, not just the last five. */
+/** Sum family-member counts for each daily registration team, not person rows. */
 export function registrationTeamCounts(grid:unknown[][]):[number,number,number,number]{
  const totals:[number,number,number,number]=[0,0,0,0];
  for(const row of grid.slice(5)){
   [0,3,6,9].forEach((offset,index)=>{
-   if(clean(row[offset])&&clean(row[offset+1])&&count(row[offset+2])!==null)totals[index]=(totals[index]??0)+1;
+   const members=count(row[offset+2]);
+   if(clean(row[offset])&&clean(row[offset+1])&&members!==null)totals[index]=(totals[index]??0)+members;
   });
  }
  return totals;
