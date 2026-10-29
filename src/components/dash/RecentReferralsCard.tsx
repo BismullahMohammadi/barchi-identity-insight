@@ -22,7 +22,7 @@ function People({ group }: { group: ReferralGroup }) {
         <ol className="space-y-2">
           {group.people.slice(0, 5).map((person, index) => (
             <li key={index} className="rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5">
-              <p className="break-words text-sm font-bold text-foreground">{person.name}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="break-words text-sm font-bold text-foreground">{person.name}</p>{person.team && <span className="shrink-0 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 د پلار نوم: <span className="text-foreground">{person.father}</span>
               </p>
