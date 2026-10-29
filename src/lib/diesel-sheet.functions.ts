@@ -10,7 +10,8 @@ export type MonthlyDieselRecord={
   document:string;previousHours:number|null;
 };
 export type DieselDelivery={code:string;sequence:string;date:string;liters:number;unitPrice:number|null;totalAmount:number|null;document:string;remaining:string;note:string;isCarryover:boolean};
-export type MonthlyDieselReport={records:MonthlyDieselRecord[];deliveries:DieselDelivery[];fetchedAt:number;source:"مصرف دیزل"};
+export type DieselReconciliation={sheetHours:number|null;sheetConsumed:number|null;sheetDelivered:number|null;sheetDifference:number|null;physicalStock:number|null;physicalStockDate:string|null;deliveryAmountError:boolean};
+export type MonthlyDieselReport={records:MonthlyDieselRecord[];deliveries:DieselDelivery[];reconciliation:DieselReconciliation;fetchedAt:number;source:"مصرف دیزل"};
 const numeric=(value:unknown):number|null=>{
  const text=String(value??"").replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,٬\s]/g,"");
  if(!text)return null;const n=Number(text);return Number.isFinite(n)&&n>=0?n:null;
@@ -38,6 +39,18 @@ export function parseDieselDeliveries(rows:unknown[][]):DieselDelivery[]{
   isCarryover:String(row[2]??"").trim()==="1404"||String(row[8]??"").includes("1404 کال پاتې")
  }));
 }
+export function parseDieselReconciliation(rows:unknown[][]):DieselReconciliation{
+ const consumptionRow=rows.find(row=>String(row[1]??"").trim()==="مجموعه");
+ const deliveredRow=rows.find(row=>String(row[1]??"").trim()==="جمله");
+ const differenceRow=rows.find(row=>String(row[1]??"").includes("په اداره باندې پاتې"));
+ const physical=rows.flatMap(row=>row.map(cell=>String(cell??""))).find(x=>x.includes("موجودي ترسره شوه")&&x.includes("لیتره"))??"";
+ const physicalValue=physical.match(/(\\d+(?:[.٫]\\d+)?)\\s*لیتره/);
+ const physicalDate=physical.match(/14\\d{2}\\s*\\/\\s*\\d{1,2}\\s*\\/\\s*\\d{1,2}/);
+ return {sheetHours:numeric(consumptionRow?.[4]),sheetConsumed:numeric(consumptionRow?.[6]),
+  sheetDelivered:numeric(deliveredRow?.[3]),sheetDifference:typeof differenceRow?.[4]==="number"?differenceRow[4] as number:null,
+  physicalStock:physicalValue?numeric(physicalValue[1]?.replace("٫",".")):null,
+  physicalStockDate:physicalDate?.[0]??null,deliveryAmountError:rows.some(row=>row.some(cell=>String(cell)==="#VALUE!"))};
+}
 export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context}):Promise<MonthlyDieselReport>=>{
  setResponseHeader("Cache-Control","private, no-store");
  const claims=context.claims as {email?:string}|null;
@@ -49,5 +62,5 @@ export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([req
  const res=await fetch(url,{headers:{Authorization:`Bearer ${lovable}`,"X-Connection-Api-Key":key}});
  if(!res.ok)throw new Error("DIESEL_SHEET_ERROR_"+res.status);
  const json=await res.json() as {values?:unknown[][]};
- return {source:"مصرف دیزل",records:parseDieselSheet(json.values??[]),deliveries:parseDieselDeliveries(json.values??[]),fetchedAt:Date.now()};
+ return {source:"مصرف دیزل",records:parseDieselSheet(json.values??[]),deliveries:parseDieselDeliveries(json.values??[]),reconciliation:parseDieselReconciliation(json.values??[]),fetchedAt:Date.now()};
 });
