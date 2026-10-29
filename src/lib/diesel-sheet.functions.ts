@@ -9,13 +9,14 @@ export type MonthlyDieselRecord={
   hours:number|null;litersPerHour:number|null;consumedLiters:number|null;
   document:string;previousHours:number|null;
 };
-export type MonthlyDieselReport={records:MonthlyDieselRecord[];fetchedAt:number;source:"مصرف دیزل"};
+export type DieselDelivery={code:string;sequence:string;date:string;liters:number;unitPrice:number|null;totalAmount:number|null;document:string;remaining:string;note:string;isCarryover:boolean};
+export type MonthlyDieselReport={records:MonthlyDieselRecord[];deliveries:DieselDelivery[];fetchedAt:number;source:"مصرف دیزل"};
 const numeric=(value:unknown):number|null=>{
  const text=String(value??"").replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,٬\s]/g,"");
  if(!text)return null;const n=Number(text);return Number.isFinite(n)&&n>=0?n:null;
 };
 export function parseDieselSheet(rows:unknown[][]):MonthlyDieselRecord[]{
- return rows.slice(4).filter(row=>/^14\d{2}--\d{2}$/.test(String(row[0]??"").trim())&&String(row[3]??"").trim()!=="")
+ return rows.slice(4).filter(row=>/^14\d{2}--\d{2}$/.test(String(row[0]??"").trim())&&/^(حمل|ثور|جوزا|سرطان|اسد|سنبله|میزان|عقرب|قوس|جدی|دلو|حوت)$/.test(String(row[3]??"").trim()))
  .map(row=>{
   const hours=numeric(row[4]),rate=numeric(row[5]),rawConsumption=numeric(row[6]);
   // Future prefilled zeroes without hours or rate are placeholders, not verified consumption.
@@ -23,6 +24,19 @@ export function parseDieselSheet(rows:unknown[][]):MonthlyDieselRecord[]{
   return {code:String(row[0]).trim(),startDate:String(row[1]??"").trim(),endDate:String(row[2]??"").trim(),month:String(row[3]).trim(),
    hours,litersPerHour:rate,consumedLiters,document:String(row[7]??"").trim(),previousHours:numeric(row[8])};
  });
+}
+export function parseDieselDeliveries(rows:unknown[][]):DieselDelivery[]{
+ const headerIndex=rows.findIndex(row=>String(row[1]??"").trim()==="ګڼه"&&String(row[3]??"").includes("ډیزل"));
+ if(headerIndex<0)return [];
+ return rows.slice(headerIndex+1).filter(row=>{
+  const sequence=String(row[1]??"").trim();
+  return /^\\d+$/.test(sequence)&&numeric(row[3])!==null&&Number(numeric(row[3]))>0;
+ }).map(row=>({
+  code:String(row[0]??"").trim(),sequence:String(row[1]??"").trim(),date:String(row[2]??"").trim(),
+  liters:numeric(row[3])!,unitPrice:numeric(row[4]),totalAmount:numeric(row[5]),
+  document:String(row[6]??"").trim(),remaining:String(row[7]??"").trim(),note:String(row[8]??"").trim(),
+  isCarryover:String(row[2]??"").trim()==="1404"||String(row[8]??"").includes("1404 کال پاتې")
+ }));
 }
 export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context}):Promise<MonthlyDieselReport>=>{
  setResponseHeader("Cache-Control","private, no-store");
@@ -35,5 +49,5 @@ export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([req
  const res=await fetch(url,{headers:{Authorization:`Bearer ${lovable}`,"X-Connection-Api-Key":key}});
  if(!res.ok)throw new Error("DIESEL_SHEET_ERROR_"+res.status);
  const json=await res.json() as {values?:unknown[][]};
- return {source:"مصرف دیزل",records:parseDieselSheet(json.values??[]),fetchedAt:Date.now()};
+ return {source:"مصرف دیزل",records:parseDieselSheet(json.values??[]),deliveries:parseDieselDeliveries(json.values??[]),fetchedAt:Date.now()};
 });
