@@ -37,14 +37,15 @@ const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
-function DailyVisitorList({group,loading,error}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown}) {
+function DailyVisitorList({group,loading,error,fetchedAt,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;fetchedAt?:number|undefined;showFetchTime?:boolean}) {
+ const fetchTime = fetchedAt ? new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(fetchedAt)) : null;
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
    !group?.people.length?<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>:
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
     <ol className="space-y-2">{group.people.slice(0,5).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
-     <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
+     <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&fetchTime&&<span className="text-xs text-muted-foreground">د ترلاسه کولو وخت: {fetchTime}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
      <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
     </li>)}</ol></>}
@@ -179,7 +180,7 @@ function Overview() {
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
               {expandedVisitor===item.key&&<div id={`daily-visitor-details-${item.key}`}>
-                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error}/>
+                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} fetchedAt={recent.data?.fetchedAt} showFetchTime={item.key==="intake"}/>
               </div>}
             </div>)}
           </div>
