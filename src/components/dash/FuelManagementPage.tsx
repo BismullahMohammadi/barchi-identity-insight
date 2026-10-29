@@ -27,6 +27,9 @@ export function FuelManagementPage(){
  const [error,setError]=useState("");
  const mutation=useMutation({mutationFn:addFuelEntry,onSuccess:async()=>{setLiters("");setHours("");setNote("");setReference("");setSupplier("");setError("");await qc.invalidateQueries({queryKey:["fuel-entries"]});},onError:(err)=>setError(String(err).includes("INSUFFICIENT_FUEL")?"د مصرف لپاره کافي تېل نشته.":"ثبت ناکام شو؛ د ډیټابېس اړیکه او معلومات وګورئ.")});
  const dieselRecords=diesel.data?.records??[];
+ const deliveries=diesel.data?.deliveries??[];
+ const deliveredLiters=deliveries.filter(d=>!d.isCarryover).reduce((sum,d)=>sum+d.liters,0);
+ const carriedLiters=deliveries.filter(d=>d.isCarryover).reduce((sum,d)=>sum+d.liters,0);
  const dieselTotal=dieselRecords.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
  const dieselHours=dieselRecords.reduce((sum,r)=>sum+(r.hours??0),0);
  const rows=q.data??[];
@@ -53,7 +56,7 @@ export function FuelManagementPage(){
     <Button variant="outline" size="sm" onClick={()=>{void q.refetch();void diesel.refetch();}} disabled={q.isFetching||diesel.isFetching}><RefreshCw className={"h-4 w-4 "+(q.isFetching||diesel.isFetching?"animate-spin":"")}/>ټول تازه کړئ</Button></div>
   </header>
   <nav className="grid grid-cols-2 gap-2 rounded-xl border bg-card p-2 sm:grid-cols-4" aria-label="د تېلو د مدیریت برخې">
-   {([{id:"overview",label:"عمومي کتنه",Icon:BarChart3},{id:"sheet",label:"میاشتنی راپور",Icon:ClipboardList},{id:"register",label:"نوی ثبت",Icon:Plus},{id:"history",label:"تاریخچه",Icon:History}] as const).map(tab=>
+   {([{id:"overview",label:"عمومي کتنه",Icon:BarChart3},{id:"sheet",label:"مصرف او راوړل",Icon:ClipboardList},{id:"register",label:"نوی ثبت",Icon:Plus},{id:"history",label:"تاریخچه",Icon:History}] as const).map(tab=>
     <button key={tab.id} type="button" aria-current={view===tab.id?"page":undefined} onClick={()=>setView(tab.id)}
      className={"flex min-h-12 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-primary "+(view===tab.id?"bg-primary text-primary-foreground shadow-sm":"text-muted-foreground hover:bg-muted")}>
      <tab.Icon className="h-4 w-4"/>{tab.label}</button>)}
@@ -94,6 +97,25 @@ export function FuelManagementPage(){
       <td className="max-w-[220px] break-words text-xs">{r.document||"—"}</td>
      </tr>)}</tbody></table></div>
     <p className="text-xs leading-6 text-muted-foreground">دا ارقام له Google Sheets څخه جلا راځي او د لاندې لاسي ترلاسه کولو/مصرف ثبتونو له موجودۍ سره نه جمع کېږي، څو مصرف دوه ځله حساب نه شي. د راتلونکو میاشتو بې‌ساعتونو صفرونه «لا نه دي ثبت شوي» ګڼل کېږي.</p></>}
+  </section>
+  <section className="dashboard-panel space-y-4 p-4 sm:p-5" aria-label="د راوړل شویو ډیزلو راپور">
+   <div><h2 className="text-lg font-extrabold">راوړل شوي ډیزل</h2>
+    <p className="mt-1 text-xs text-muted-foreground">د «مصرف دیزل» ټیب د راوړل شویو ډیزلو د محاسبې جدول — یوازې لوستل کېږي</p></div>
+   {diesel.isLoading?<p className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:diesel.error?<p className="text-sm text-destructive">د راوړل شویو ډیزلو معلومات ونه لوستل شول.</p>:<>
+    <div className="grid grid-cols-2 gap-3">
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د ۱۴۰۵ ثبت شوي راوړل شوي</p><p className="mt-1 text-xl font-extrabold">{fmt(deliveredLiters)} لیتره</p></div>
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">له ۱۴۰۴ کال پاتې ثبت</p><p className="mt-1 text-xl font-extrabold">{fmt(carriedLiters)} لیتره</p></div>
+    </div>
+    <div className="overflow-x-auto"><table className="w-full min-w-[750px] border-collapse text-sm">
+     <thead><tr className="border-b text-xs text-muted-foreground"><th className="py-2 text-start">ګڼه</th><th className="text-start">نېټه</th><th className="text-start">ډیزل (لیتره)</th><th className="text-start">د فی لیتر بیه</th><th className="text-start">مجموعي مبلغ</th><th className="text-start">سند</th><th className="text-start">یادښت</th></tr></thead>
+     <tbody>{deliveries.map(d=><tr key={d.code+"-"+d.sequence} className="border-b border-border/50 align-top">
+      <td className="py-2">{d.sequence}</td><td>{d.date||"—"}</td><td className="font-bold">{fmt(d.liters)}</td>
+      <td>{d.unitPrice===null?"نامعلوم":fmt(d.unitPrice)}</td><td>{d.totalAmount===null?"نه دی محاسبه شوی":fmt(d.totalAmount)}</td>
+      <td className="max-w-44 break-words text-xs">{d.document||"—"}</td>
+      <td className="max-w-60 break-words text-xs">{[d.isCarryover?"د ۱۴۰۴ کال پاتې ډیزل":null,d.note,d.remaining].filter(Boolean).join(" — ")||"—"}</td>
+     </tr>)}</tbody></table></div>
+    <p className="text-xs leading-6 text-muted-foreground">دا جدول د Google Sheets اصلي ارقام او یادښتونه ښيي. نیمګړې بیې او غلط فورمولونه د صفر په توګه نه محاسبه کېږي. راوړل شوي لیترونه د لاسي موجودۍ حساب ته په اتومات ډول نه انتقالېږي؛ د توکو د تسلیمۍ او واقعي موجودۍ تایید جلا اړتیا لري.</p>
+   </>}
   </section></>}
   {view==="register"&&<div className="mx-auto max-w-2xl"><form onSubmit={submit} className="dashboard-panel space-y-3 p-4 sm:p-5">
     <h2 className="text-lg font-bold">د تېلو نوی ثبت</h2>
