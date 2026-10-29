@@ -8,7 +8,7 @@ import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./mont
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab } from "./daily-forms";
-import {newestCollectedPeople,newestRegisteredPeople,type RecentReferrals} from "./recent-referrals";
+import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
 import type {ProblemVisitor} from "./problem-visitors.functions";
 import type {SupabaseClient} from "@supabase/supabase-js";
@@ -250,7 +250,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   if(watchError) throw new Error("PROBLEM_VISITORS_READ_FAILED");
   const matches=findPotentialProblemMatches(watchList as ProblemVisitor[],fullGroups);
   return {
-    newReferrals:{...newReferrals,source:collection??null},registration,fetchedAt:Date.now(),
+    newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationData.values??[]),fetchedAt:Date.now(),
     potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
   };
  });
