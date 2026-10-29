@@ -37,7 +37,7 @@ const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
-function DailyVisitorList({group,loading,error,fetchedAt,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;fetchedAt?:number;showFetchTime?:boolean}) {
+function DailyVisitorList({group,loading,error,fetchedAt,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;fetchedAt?:number|undefined;showFetchTime?:boolean}) {
  const fetchTime = fetchedAt ? new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(fetchedAt)) : null;
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
