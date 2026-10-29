@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpLeft, ChartNoAxesColumn, CalendarDays, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
@@ -37,15 +37,14 @@ const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
-function DailyVisitorList({group,loading,error,fetchedAt,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;fetchedAt?:number|undefined;showFetchTime?:boolean}) {
- const fetchTime = fetchedAt ? new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(fetchedAt)) : null;
+function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean}) {
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
    !group?.people.length?<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>:
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
     <ol className="space-y-2">{group.people.slice(0,5).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
-     <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&fetchTime&&<span className="text-xs text-muted-foreground">د ترلاسه کولو وخت: {fetchTime}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
+     <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
      <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
     </li>)}</ol></>}
@@ -63,6 +62,25 @@ function Overview() {
   const daily = useQuery(dailyFormsQuery(refreshMs));
   const coordination = useQuery(dailyCoordinationQuery(refreshMs));
   const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors});
+  const [firstSeenTimes,setFirstSeenTimes]=useState<Record<string,string>>({});
+  useEffect(()=>{
+    const people=recent.data?.newReferrals.people;
+    if(!people?.length)return;
+    // Keep first observation per stable Sheet record, not each refresh timestamp.
+    try {
+      const storageKey="barchi-intake-first-seen-v1";
+      const stored=JSON.parse(window.localStorage.getItem(storageKey)??"{}") as Record<string,string>;
+      const next={...stored};
+      let changed=false;
+      const time=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date());
+      for(const person of people){
+        if(person.recordKey&&!next[person.recordKey]){next[person.recordKey]=time;changed=true;}
+      }
+      if(changed)window.localStorage.setItem(storageKey,JSON.stringify(next));
+      setFirstSeenTimes(next);
+    }catch { /* Private browser storage may be disabled. */ }
+  },[recent.data?.newReferrals]);
+
 
   const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
   const demo = !overview;
@@ -180,7 +198,7 @@ function Overview() {
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
               {expandedVisitor===item.key&&<div id={`daily-visitor-details-${item.key}`}>
-                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} fetchedAt={recent.data?.fetchedAt} showFetchTime={item.key==="intake"}/>
+                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"}/>
               </div>}
             </div>)}
           </div>
