@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fuel, Plus, RefreshCw, Download } from "lucide-react";
+import { Fuel, Plus, RefreshCw, Download, BarChart3, ClipboardList, History, Info, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ export function FuelManagementPage(){
  const q=useQuery({queryKey:["fuel-entries"],queryFn:()=>getFuelEntries(),refetchInterval:60000});
  const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
  const [kind,setKind]=useState<FuelEntry["kind"]>("received");
+ const [view,setView]=useState<"overview"|"sheet"|"register"|"history">("overview");
  const [date,setDate]=useState(dateNow);
  const [liters,setLiters]=useState("");
  const [reference,setReference]=useState("");
@@ -45,7 +46,33 @@ export function FuelManagementPage(){
   const a=document.createElement("a");a.href=url;a.download="fuel-ledger.csv";a.click();URL.revokeObjectURL(url);
  }
  return <div className="mx-auto max-w-6xl space-y-5 pb-8">
-  <header><h1 className="flex items-center gap-2 text-2xl font-extrabold"><Fuel className="h-7 w-7 text-primary"/>د تېلو او ډیزلو مدیریت</h1><p className="mt-1 text-sm text-muted-foreground">د مرکز د جنراتور تېل، مصرف او موجودي په لیترو کې</p></header>
+  <header className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
+   <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-primary">د مرکز د جنراتور حسابداري</p>
+    <h1 className="mt-1 flex items-center gap-2 text-2xl font-extrabold"><Fuel className="h-7 w-7 text-primary"/>د تېلو او ډیزلو مدیریت</h1>
+    <p className="mt-2 text-sm leading-6 text-muted-foreground">د موجودۍ حساب، میاشتنی مصرف، نوي ثبتونه او د عملیاتو تاریخچه په جلا برخو کې.</p></div>
+    <Button variant="outline" size="sm" onClick={()=>{void q.refetch();void diesel.refetch();}} disabled={q.isFetching||diesel.isFetching}><RefreshCw className={"h-4 w-4 "+(q.isFetching||diesel.isFetching?"animate-spin":"")}/>ټول تازه کړئ</Button></div>
+  </header>
+  <nav className="grid grid-cols-2 gap-2 rounded-xl border bg-card p-2 sm:grid-cols-4" aria-label="د تېلو د مدیریت برخې">
+   {([{id:"overview",label:"عمومي کتنه",Icon:BarChart3},{id:"sheet",label:"میاشتنی راپور",Icon:ClipboardList},{id:"register",label:"نوی ثبت",Icon:Plus},{id:"history",label:"تاریخچه",Icon:History}] as const).map(tab=>
+    <button key={tab.id} type="button" aria-current={view===tab.id?"page":undefined} onClick={()=>setView(tab.id)}
+     className={"flex min-h-12 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-primary "+(view===tab.id?"bg-primary text-primary-foreground shadow-sm":"text-muted-foreground hover:bg-muted")}>
+     <tab.Icon className="h-4 w-4"/>{tab.label}</button>)}
+  </nav>
+  {view==="overview"&&<section className="space-y-4" aria-label="د موجودۍ عمومي کتنه">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+     {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["اوسنۍ موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
+      <div key={label} className="dashboard-panel p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
+      <p className="mt-3 text-2xl font-black tabular-nums">{q.isLoading?"…":fmt(value)} <span className="text-xs font-semibold">لیتره</span></p></div>)}
+    </div>
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-7"><Info className="ml-2 inline h-4 w-4 text-primary"/>
+    موجودي یوازې د دې سیستم له ثبت شویو ترلاسه کولو او مصرفونو محاسبه کېږي. د Google Sheets تاریخي میاشتني مصرف پکې نه شاملېږي.
+    که د لومړنۍ موجودۍ ثبت نه وي شوی، ښودل شوې موجودي د مرکز واقعي ذخیره نه ګڼل کېږي.</div>
+    <div className="grid gap-3 sm:grid-cols-2">
+     <button onClick={()=>setView("sheet")} className="dashboard-panel p-5 text-start hover:bg-muted/50"><p className="font-bold">د Google Sheets میاشتنی راپور</p><p className="mt-2 text-xl font-black">{diesel.isLoading?"…":fmt(dieselTotal)} لیتره</p><p className="mt-1 text-xs text-muted-foreground">ثبت شوی میاشتنی مصرف · د تفصیل لپاره کلیک وکړئ</p></button>
+     <button onClick={()=>setView("register")} className="dashboard-panel p-5 text-start hover:bg-muted/50"><p className="font-bold">د تېلو نوی ثبت</p><p className="mt-2 text-sm text-muted-foreground">رسید، مصرف یا لومړنۍ موجودي اضافه کړئ</p></button>
+    </div>
+   </section>}
+  {view==="sheet"&&<>
   <section className="dashboard-panel space-y-4 p-4 sm:p-5" aria-label="د Google Sheets د ډیزلو راپور">
    <div className="flex flex-wrap items-center justify-between gap-2">
     <div><h2 className="text-lg font-extrabold">د Google Sheets میاشتنی مصرف</h2>
@@ -67,12 +94,8 @@ export function FuelManagementPage(){
       <td className="max-w-[220px] break-words text-xs">{r.document||"—"}</td>
      </tr>)}</tbody></table></div>
     <p className="text-xs leading-6 text-muted-foreground">دا ارقام له Google Sheets څخه جلا راځي او د لاندې لاسي ترلاسه کولو/مصرف ثبتونو له موجودۍ سره نه جمع کېږي، څو مصرف دوه ځله حساب نه شي. د راتلونکو میاشتو بې‌ساعتونو صفرونه «لا نه دي ثبت شوي» ګڼل کېږي.</p></>}
-  </section>
-  <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-   {[["ترلاسه شوي او لومړني تېل",received],["ټول مصرف",used],["اوسنۍ موجودي",balance],["د ټاکلې مودې مصرف",monthOut]].map(([label,value])=><div key={String(label)} className="dashboard-panel p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-black tabular-nums">{fmt(Number(value))} <span className="text-xs font-medium">لیتره</span></p></div>)}
-  </div>
-  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_1.1fr]">
-   <form onSubmit={submit} className="dashboard-panel space-y-3 p-4 sm:p-5">
+  </section></>}
+  {view==="register"&&<div className="mx-auto max-w-2xl"><form onSubmit={submit} className="dashboard-panel space-y-3 p-4 sm:p-5">
     <h2 className="text-lg font-bold">د تېلو نوی ثبت</h2>
     <div><label className="mb-1 block text-sm">د ثبت ډول</label><Select value={kind} onValueChange={v=>setKind(v as FuelEntry["kind"])}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="opening">لومړنۍ موجودي</SelectItem><SelectItem value="received">ترلاسه شوي تېل</SelectItem><SelectItem value="used">مصرف شوي تېل</SelectItem></SelectContent></Select></div>
     <div className="grid grid-cols-2 gap-3">
@@ -88,8 +111,8 @@ export function FuelManagementPage(){
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     <Button type="submit" disabled={mutation.isPending} className="w-full"><Plus className="h-4 w-4"/>{mutation.isPending?"ثبتېږي…":"ثبتول"}</Button>
     <p className="text-xs text-muted-foreground">ثبتونه د حساب ورکونې لپاره له حذف او بدلون پرته ساتل کېږي. د اصلاح لپاره د مقابل ثبت طریقه وکاروئ.</p>
-   </form>
-   <section className="dashboard-panel min-w-0 space-y-3 p-4 sm:p-5">
+   </form></div>}
+   {view==="history"&&<section className="dashboard-panel min-w-0 space-y-3 p-4 sm:p-5">
     <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-bold">د تېلو حساب او تاریخچه</h2><div className="flex gap-2"><Button variant="outline" size="sm" onClick={()=>q.refetch()} disabled={q.isFetching}><RefreshCw className="h-4 w-4"/>تازه</Button><Button variant="outline" size="sm" onClick={exportCsv} disabled={!filtered.length}><Download className="h-4 w-4"/>CSV</Button></div></div>
     <div className="flex items-center gap-3"><label htmlFor="fuel-month" className="text-sm">د راپور موده</label><select id="fuel-month" value={month} onChange={e=>setMonth(e.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="all">ټول ثبتونه</option>{options.map(m=><option key={m} value={m}>{m}</option>)}</select></div>
     <p className="text-xs text-muted-foreground">په ټاکلې موده کې ترلاسه شوي: {fmt(monthIn)} لیتره؛ مصرف: {fmt(monthOut)} لیتره</p>
@@ -101,7 +124,6 @@ export function FuelManagementPage(){
      {x.generator_hours!==null&&<p className="text-xs">د جنراتور ساعتونه: {fmt(x.generator_hours)}</p>}
      {x.note&&<p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{x.note}</p>}
     </article>)}</div>}
-   </section>
-  </div>
+   </section>}
  </div>;
 }
