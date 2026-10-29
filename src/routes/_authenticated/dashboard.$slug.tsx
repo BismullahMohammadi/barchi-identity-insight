@@ -8,14 +8,15 @@ import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-setting
 import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
 import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
+import { FuelManagementPage } from "@/components/dash/FuelManagementPage";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
-    if (params.slug !== "settings" && params.slug !== "problem-visitors" && !getTab(params.slug)) throw notFound();
+    if (params.slug !== "settings" && params.slug !== "problem-visitors" && params.slug !== "fuel-management" && !getTab(params.slug)) throw notFound();
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : params.slug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
     return {
       meta: [
         { title },
@@ -32,6 +33,7 @@ function TabPage() {
   const { slug } = Route.useParams();
   if (slug === "settings") return <DashboardSettingsPage />;
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;
+  if (slug === "fuel-management") return <FuelManagementPage />;
   return <ReportPage slug={slug} />;
 }
 
