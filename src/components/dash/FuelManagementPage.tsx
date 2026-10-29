@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFuelEntries, addFuelEntry, type FuelEntry } from "@/lib/fuel.functions";
+import { getDieselSheetReport } from "@/lib/diesel-sheet.functions";
 
 const dateNow=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kabul",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const fmt=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
@@ -13,6 +14,7 @@ const types:Record<FuelEntry["kind"],string>={opening:"لومړنۍ موجودي
 export function FuelManagementPage(){
  const qc=useQueryClient();
  const q=useQuery({queryKey:["fuel-entries"],queryFn:()=>getFuelEntries(),refetchInterval:60000});
+ const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
  const [kind,setKind]=useState<FuelEntry["kind"]>("received");
  const [date,setDate]=useState(dateNow);
  const [liters,setLiters]=useState("");
@@ -23,6 +25,9 @@ export function FuelManagementPage(){
  const [month,setMonth]=useState("all");
  const [error,setError]=useState("");
  const mutation=useMutation({mutationFn:addFuelEntry,onSuccess:async()=>{setLiters("");setHours("");setNote("");setReference("");setSupplier("");setError("");await qc.invalidateQueries({queryKey:["fuel-entries"]});},onError:(err)=>setError(String(err).includes("INSUFFICIENT_FUEL")?"د مصرف لپاره کافي تېل نشته.":"ثبت ناکام شو؛ د ډیټابېس اړیکه او معلومات وګورئ.")});
+ const dieselRecords=diesel.data?.records??[];
+ const dieselTotal=dieselRecords.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
+ const dieselHours=dieselRecords.reduce((sum,r)=>sum+(r.hours??0),0);
  const rows=q.data??[];
  const balance=rows.reduce((sum,x)=>sum+(x.kind==="used"?-x.liters:x.liters),0);
  const received=rows.filter(x=>x.kind!=="used").reduce((sum,x)=>sum+x.liters,0);
@@ -41,6 +46,28 @@ export function FuelManagementPage(){
  }
  return <div className="mx-auto max-w-6xl space-y-5 pb-8">
   <header><h1 className="flex items-center gap-2 text-2xl font-extrabold"><Fuel className="h-7 w-7 text-primary"/>د تېلو او ډیزلو مدیریت</h1><p className="mt-1 text-sm text-muted-foreground">د مرکز د جنراتور تېل، مصرف او موجودي په لیترو کې</p></header>
+  <section className="dashboard-panel space-y-4 p-4 sm:p-5" aria-label="د Google Sheets د ډیزلو راپور">
+   <div className="flex flex-wrap items-center justify-between gap-2">
+    <div><h2 className="text-lg font-extrabold">د Google Sheets میاشتنی مصرف</h2>
+     <p className="mt-1 text-xs text-muted-foreground">سرچینه: «مصرف دیزل» — د ۱۴۰۵ کال راپور؛ یوازې لوستل کېږي</p></div>
+    <Button type="button" size="sm" variant="outline" onClick={()=>diesel.refetch()} disabled={diesel.isFetching}>
+     <RefreshCw className={"h-4 w-4 "+(diesel.isFetching?"animate-spin":"")}/>تازه کول</Button>
+   </div>
+   {diesel.isLoading?<p className="text-sm text-muted-foreground">د Google Sheets معلومات رااخیستل کېږي…</p>:
+    diesel.error?<p role="alert" className="text-sm text-destructive">د «مصرف دیزل» د ټیب معلومات ونه لوستل شول؛ د Google Sheets اتصال وګورئ.</p>:
+    <><div className="grid grid-cols-2 gap-3">
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">ثبت شوی ټول مصرف</p><p className="mt-1 text-xl font-extrabold">{fmt(dieselTotal)} لیتره</p></div>
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د جنراتور ټول کاري ساعتونه</p><p className="mt-1 text-xl font-extrabold">{fmt(dieselHours)} ساعتونه</p></div>
+    </div>
+    <div className="overflow-x-auto"><table className="w-full min-w-[540px] border-collapse text-sm">
+     <thead><tr className="border-b text-start text-xs text-muted-foreground"><th className="py-2 text-start">میاشت</th><th className="py-2 text-start">ساعتونه</th><th className="py-2 text-start">لیتر / ساعت</th><th className="py-2 text-start">مصرف (لیتره)</th><th className="py-2 text-start">د سند معلومات</th></tr></thead>
+     <tbody>{dieselRecords.map(r=><tr key={r.code} className="border-b border-border/50">
+      <td className="py-2">{r.month}</td><td>{r.hours===null?"—":fmt(r.hours)}</td><td>{r.litersPerHour===null?"—":fmt(r.litersPerHour)}</td>
+      <td className="font-bold">{r.consumedLiters===null?"لا نه دی ثبت شوی":fmt(r.consumedLiters)}</td>
+      <td className="max-w-[220px] break-words text-xs">{r.document||"—"}</td>
+     </tr>)}</tbody></table></div>
+    <p className="text-xs leading-6 text-muted-foreground">دا ارقام له Google Sheets څخه جلا راځي او د لاندې لاسي ترلاسه کولو/مصرف ثبتونو له موجودۍ سره نه جمع کېږي، څو مصرف دوه ځله حساب نه شي. د راتلونکو میاشتو بې‌ساعتونو صفرونه «لا نه دي ثبت شوي» ګڼل کېږي.</p></>}
+  </section>
   <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
    {[["ترلاسه شوي او لومړني تېل",received],["ټول مصرف",used],["اوسنۍ موجودي",balance],["د ټاکلې مودې مصرف",monthOut]].map(([label,value])=><div key={String(label)} className="dashboard-panel p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-black tabular-nums">{fmt(Number(value))} <span className="text-xs font-medium">لیتره</span></p></div>)}
   </div>
