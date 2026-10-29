@@ -1,0 +1,15 @@
+name: Build check
+on:
+  push:
+    branches: [fix-lovable-build-check, main]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bunx tsc --noEmit

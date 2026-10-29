@@ -37,7 +37,7 @@ const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
-function DailyVisitorList({group,loading,error}:{group?:ReferralGroup;loading:boolean;error:unknown}) {
+function DailyVisitorList({group,loading,error}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown}) {
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
