@@ -2,7 +2,7 @@ import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
 import {selectDailyTab} from "./daily-forms";
 export type RecentReferral={name:string;father:string;familyMembers:number|null;team?:string|undefined};
 export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null};
-export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;fetchedAt:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
+export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;teamCounts?:[number,number,number,number];fetchedAt:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
 
 function clean(x:unknown):string{return String(x??"").replace(/\s+/g," ").trim();}
 function count(x:unknown):number|null{
@@ -59,4 +59,15 @@ export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unk
   }
  }
  return {date:formatJ(chosen.date),people:records.slice(-limit).reverse(),source:chosen.name};
+}
+
+/** Count complete person rows in each of the four daily registration team columns, not just the last five. */
+export function registrationTeamCounts(grid:unknown[][]):[number,number,number,number]{
+ const totals:[number,number,number,number]=[0,0,0,0];
+ for(const row of grid.slice(5)){
+  [0,3,6,9].forEach((offset,index)=>{
+   if(clean(row[offset])&&clean(row[offset+1])&&count(row[offset+2])!==null)totals[index]=(totals[index]??0)+1;
+  });
+ }
+ return totals;
 }

@@ -61,7 +61,7 @@ function Overview() {
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
   const daily = useQuery(dailyFormsQuery(refreshMs));
   const coordination = useQuery(dailyCoordinationQuery(refreshMs));
-  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors && expandedVisitor!==null});
+  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors});
 
   const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
   const demo = !overview;
@@ -153,6 +153,15 @@ function Overview() {
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
+          <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2" aria-label="ټیمونو ته د ورځې معرفي شوي مراجعین">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold">ټیمونو ته ورځني معرفي شوي مراجعین</p><span className="text-[11px] text-muted-foreground">{recent.data?.registration.date??"د وروستۍ ورځې راپور"}</span></div>
+            {recent.isLoading?<p className="text-xs text-muted-foreground">رااخیستل کېږي…</p>:recent.error?<p className="text-xs text-destructive">د ټیمونو شمېرې ونه لوستل شوې.</p>:recent.data?.registration.date?
+            <div className="grid grid-cols-4 gap-1.5">
+             {(["درېیم","څلورم","پنځم","شپږم"] as const).map((label,i)=><div key={label} className="rounded-md bg-background px-1.5 py-2 text-center">
+              <p className="text-[11px] text-muted-foreground">{label}</p><p className="text-lg font-black tabular-nums">{recent.data?.teamCounts?.[i]??"—"}</p>
+             </div>)}
+            </div>:<p className="text-xs text-muted-foreground">د نن ورځې د ټیمونو راپور نشته.</p>}
+          </div>
           <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
             {([
               {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals},
