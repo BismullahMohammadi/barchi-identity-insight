@@ -66,7 +66,7 @@ export function registrationTeamCounts(grid:unknown[][]):[number,number,number,n
  const totals:[number,number,number,number]=[0,0,0,0];
  for(const row of grid.slice(5)){
   [0,3,6,9].forEach((offset,index)=>{
-   if(clean(row[offset])&&clean(row[offset+1])&&count(row[offset+2])!==null)totals[index]++;
+   if(clean(row[offset])&&clean(row[offset+1])&&count(row[offset+2])!==null)totals[index]=(totals[index]??0)+1;
   });
  }
  return totals;
