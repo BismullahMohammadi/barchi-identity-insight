@@ -31,7 +31,7 @@ export function parseDieselDeliveries(rows:unknown[][]):DieselDelivery[]{
  if(headerIndex<0)return [];
  return rows.slice(headerIndex+1).filter(row=>{
   const sequence=String(row[1]??"").trim();
-  return /^\\d+$/.test(sequence)&&numeric(row[3])!==null&&Number(numeric(row[3]))>0;
+  return /^[0-9]+$/.test(sequence)&&numeric(row[3])!==null&&Number(numeric(row[3]))>0;
  }).map(row=>({
   code:String(row[0]??"").trim(),sequence:String(row[1]??"").trim(),date:String(row[2]??"").trim(),
   liters:numeric(row[3])!,unitPrice:numeric(row[4]),totalAmount:numeric(row[5]),
