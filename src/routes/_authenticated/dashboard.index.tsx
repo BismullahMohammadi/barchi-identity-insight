@@ -44,7 +44,7 @@ function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=fals
    !group?.people.length?<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>:
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
     <ol className="space-y-2">{group.people.slice(0,5).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
-     <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&fetchTime&&<span className="text-xs text-muted-foreground">د ترلاسه کولو وخت: {fetchTime}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
+     <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
      <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
     </li>)}</ol></>}
