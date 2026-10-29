@@ -45,8 +45,8 @@ export function parseDieselReconciliation(rows:unknown[][]):DieselReconciliation
  const differenceRow=rows.find(row=>String(row[1]??"").includes("په اداره باندې پاتې"));
  const physical=rows.flatMap(row=>row.map(cell=>String(cell??""))).find(x=>x.includes("موجودي ترسره شوه")&&x.includes("لیتره"))??"";
  const physicalValue=physical.match(/(\\d+(?:[.٫]\\d+)?)\\s*لیتره/);
- const physicalDate=physical.match(/14\\d{2}\\s*\\/\\s*\\d{1,2}\\s*\\/\\s*\\d{1,2}/);
- return {sheetHours:numeric(consumptionRow?.[4]),sheetConsumed:numeric(consumptionRow?.[6]),
+ const physicalValue=physical.match(/([0-9]+(?:[.٫][0-9]+)?)\s*لیتره/);
+ const physicalDate=physical.match(/14[0-9]{2}\s*\/\s*[0-9]{1,2}\s*\/\s*[0-9]{1,2}/);
   sheetDelivered:numeric(deliveredRow?.[3]),sheetDifference:typeof differenceRow?.[4]==="number"?differenceRow[4] as number:null,
   physicalStock:physicalValue?numeric(physicalValue[1]?.replace("٫",".")):null,
   physicalStockDate:physicalDate?.[0]??null,deliveryAmountError:rows.some(row=>row.some(cell=>String(cell)==="#VALUE!"))};
