@@ -62,6 +62,22 @@ export function FuelManagementPage(){
      <tab.Icon className="h-4 w-4"/>{tab.label}</button>)}
   </nav>
   {view==="overview"&&<section className="space-y-4" aria-label="د موجودۍ عمومي کتنه">
+    <div className="dashboard-panel space-y-4 p-4 sm:p-5">
+     <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="text-lg font-extrabold">د Google Sheets د ډیزلو حساب</h2><p className="mt-1 text-xs text-muted-foreground">د «مصرف دیزل» اصلي ثبتونه — د ۱۴۰۵ کال</p></div>
+      <Button variant="outline" size="sm" onClick={()=>setView("sheet")}>مفصل راپور</Button></div>
+     {diesel.isLoading?<p className="text-sm text-muted-foreground">د شیټ محاسبات رااخیستل کېږي…</p>:diesel.error?<p role="alert" className="text-sm text-destructive">د Google Sheets معلومات ونه لوستل شول. اتصال وګورئ یا بیا تازه کړئ.</p>:
+     <><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+       {([["د ۱۴۰۵ راوړل شوي",deliveredLiters],["د ۱۴۰۴ پاتې",carriedLiters],["ټول ثبت شوي",diesel.data?.reconciliation.sheetDelivered??deliveredLiters+carriedLiters],["ټول مصرف",diesel.data?.reconciliation.sheetConsumed??dieselTotal]] as const).map(([label,value])=>
+        <div key={label} className="rounded-xl border bg-muted/30 p-3 sm:p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-xl font-black tabular-nums">{fmt(value)} <span className="text-xs">لیتره</span></p></div>)}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">حسابي توپیر (راوړل − مصرف)</p><p className="mt-2 text-xl font-black tabular-nums">{fmt((diesel.data?.reconciliation.sheetDelivered??deliveredLiters+carriedLiters)-(diesel.data?.reconciliation.sheetConsumed??dieselTotal))} لیتره</p></div>
+       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">د جنراتور ساعتونه</p><p className="mt-2 text-xl font-black tabular-nums">{fmt(diesel.data?.reconciliation.sheetHours??dieselHours)} ساعتونه</p></div>
+       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">وروستۍ مستنده فزیکي شمېرنه</p><p className="mt-2 text-xl font-black tabular-nums">{diesel.data?.reconciliation.physicalStock==null?"—":fmt(diesel.data.reconciliation.physicalStock)+" لیتره"}</p><p className="mt-1 text-xs text-muted-foreground">{diesel.data?.reconciliation.physicalStockDate??"نېټه نه ده ثبت شوې"}</p></div>
+      </div>
+      <p className="text-xs leading-6 text-muted-foreground">حسابي توپیر د موجوده ټانک اندازه نه ده. د فزیکي شمېرنې عدد هم یوازې د هغې ثبت شوې نېټې پورې تړاو لري؛ د لاندې لاسي ثبتونو له حساب سره نه یوځای کېږي.</p>
+     </>}
+    </div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
      {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["اوسنۍ موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
       <div key={label} className="dashboard-panel p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
