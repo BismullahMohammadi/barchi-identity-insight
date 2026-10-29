@@ -44,6 +44,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const mainTotal = canSum && validRows.length > 0 ? sumColumn(validRows, primary) : null;
   const primaryLabel = canSum ? table.headers[primary] : null;
   const shownRows = filteredRows.slice(0, shown);
+  const distributionTotals = title === "توزیع" && validRows.length ? {regular:sumColumn(validRows,1),services:sumColumn(validRows,2)} : null;
 
   function exportCsv() {
     const blob = new Blob([toCsv(table.headers, filteredRows)], { type: "text/csv;charset=utf-8" });
@@ -83,6 +84,11 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
             </Select>
           </div>
         )}
+      </section>}
+
+      {distributionTotals && <section className="grid grid-cols-2 gap-3" aria-label="عادي او خدماتي توزیع">
+        <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">عادي توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums">{fmt(distributionTotals.regular)}</p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
+        <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">د خدماتو توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums">{fmt(distributionTotals.services)}</p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
       </section>}
 
       <section className="dashboard-panel overflow-hidden">
