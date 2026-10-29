@@ -16,7 +16,7 @@ const numeric=(value:unknown):number|null=>{
  if(!text)return null;const n=Number(text);return Number.isFinite(n)&&n>=0?n:null;
 };
 export function parseDieselSheet(rows:unknown[][]):MonthlyDieselRecord[]{
- return rows.slice(4).filter(row=>/^14\d{2}--\d{2}$/.test(String(row[0]??"").trim())&&String(row[3]??"").trim()!=="")
+ return rows.slice(4).filter(row=>/^14\d{2}--\d{2}$/.test(String(row[0]??"").trim())&&/^(حمل|ثور|جوزا|سرطان|اسد|سنبله|میزان|عقرب|قوس|جدی|دلو|حوت)$/.test(String(row[3]??"").trim()))
  .map(row=>{
   const hours=numeric(row[4]),rate=numeric(row[5]),rawConsumption=numeric(row[6]);
   // Future prefilled zeroes without hours or rate are placeholders, not verified consumption.
