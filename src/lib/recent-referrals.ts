@@ -1,6 +1,6 @@
 import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
 import {selectDailyTab} from "./daily-forms";
-export type RecentReferral={name:string;father:string;familyMembers:number|null};
+export type RecentReferral={name:string;father:string;familyMembers:number|null;team?:string};
 export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null};
 export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;fetchedAt:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
 
@@ -55,7 +55,7 @@ export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unk
   for(const offset of [0,3,6,9]){
    const name=clean(row[offset]),father=clean(row[offset+1]),familyMembers=count(row[offset+2]);
    if(!name||!father||familyMembers===null)continue;
-   records.push({name,father,familyMembers});
+   records.push({name,father,familyMembers,team:({0:"درېیم ټیم",3:"څلورم ټیم",6:"پنځم ټیم",9:"شپږم ټیم"} as Record<number,string>)[offset]});
   }
  }
  return {date:formatJ(chosen.date),people:records.slice(-limit).reverse(),source:chosen.name};
