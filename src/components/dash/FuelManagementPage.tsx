@@ -101,6 +101,19 @@ export function FuelManagementPage(){
   <section className="dashboard-panel space-y-4 p-4 sm:p-5" aria-label="د راوړل شویو ډیزلو راپور">
    <div><h2 className="text-lg font-extrabold">راوړل شوي ډیزل</h2>
     <p className="mt-1 text-xs text-muted-foreground">د «مصرف دیزل» ټیب د راوړل شویو ډیزلو د محاسبې جدول — یوازې لوستل کېږي</p></div>
+   {diesel.data?.reconciliation&&<div className="rounded-xl border border-amber-500/30 bg-amber-50/50 p-4 text-sm dark:bg-amber-900/10">
+    <h3 className="mb-2 font-bold">د شیټ د تصفیې او موجودۍ تفصیل</h3>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+     <p>د شیټ مجموعي ساعتونه: <strong>{diesel.data.reconciliation.sheetHours===null?"—":fmt(diesel.data.reconciliation.sheetHours)}</strong></p>
+     <p>د شیټ ټول مصرف: <strong>{diesel.data.reconciliation.sheetConsumed===null?"—":fmt(diesel.data.reconciliation.sheetConsumed)} لیتره</strong></p>
+     <p>د شیټ ټول راوړل شوي او پاتې: <strong>{diesel.data.reconciliation.sheetDelivered===null?"—":fmt(diesel.data.reconciliation.sheetDelivered)} لیتره</strong></p>
+     <p>د شیټ حسابي توپیر: <strong>{diesel.data.reconciliation.sheetDifference===null?"—":fmt(diesel.data.reconciliation.sheetDifference)} لیتره</strong></p>
+     <p>د فزیکي شمېرنې ثبت: <strong>{diesel.data.reconciliation.physicalStock===null?"—":fmt(diesel.data.reconciliation.physicalStock)} لیتره</strong></p>
+     <p>د شمېرنې نېټه: <strong>{diesel.data.reconciliation.physicalStockDate??"—"}</strong></p>
+    </div>
+    {diesel.data.reconciliation.deliveryAmountError&&<p className="mt-3 text-xs text-amber-800 dark:text-amber-300">په شیټ کې د یوه راوړل شوي ډیزل د مبلغ فورمول #VALUE! خطا لري؛ هغه مبلغ نامعلوم ښودل کېږي.</p>}
+    <p className="mt-2 text-xs text-muted-foreground">حسابي توپیر او د فزیکي شمېرنې ثبت دوه جلا معلومات دي. د وروستۍ موجودۍ په توګه یې مه کاروئ.</p>
+   </div>}
    {diesel.isLoading?<p className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:diesel.error?<p className="text-sm text-destructive">د راوړل شویو ډیزلو معلومات ونه لوستل شول.</p>:<>
     <div className="grid grid-cols-2 gap-3">
      <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د ۱۴۰۵ ثبت شوي راوړل شوي</p><p className="mt-1 text-xl font-extrabold">{fmt(deliveredLiters)} لیتره</p></div>
