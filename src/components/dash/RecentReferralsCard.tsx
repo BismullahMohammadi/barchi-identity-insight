@@ -46,7 +46,7 @@ function ReferralCard({
 }: {
   section: Section;
   title: string;
-  group?: ReferralGroup;
+  group?: ReferralGroup | undefined;
   loading: boolean;
   error: Error | null;
 }) {
