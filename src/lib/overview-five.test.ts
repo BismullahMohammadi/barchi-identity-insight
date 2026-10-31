@@ -9,6 +9,11 @@ const total={slug:"total",title:"مجموعی راپور",grid:[
  ["۱۴۰۵/۰۱/۰۲","0","AFN 0","0","0","0","AFN 0","AFN 0"],
  ["۱۴۰۵/۰۱/۰۳","64","AFN 32,000","65","-500","71","AFN 0","AFN 15,000"],
 ]};
+const bank={slug:"bank",title:"بانکي عواید",grid:[
+ ["بانکي عواید"],[],[],["نېټه","جدید او ثبت تولد","مثنی","تجدید","مثنی او تجدید","انفرادی تعداد","مجموعه"],
+ ["۱۴۰۵/۰۱/۰۲","0","0","0","0","0","0"],
+ ["۱۴۰۵/۰۱/۰۳","32000","15000","0","15000","64","47000"],
+]};
 const services={slug:"services",title:"خدمات",grid:[
  ["د خدماتو راپور"],[],[],["نیټه","مثنی","تجدید","ثبت تولد","ثبت ازدواج","مجموعه","عواید (مثنی، تجدید)"],
  ["۱۴۰۵/۰۱/۰۳","5","10","2","0","17","AFN 15,000"],
@@ -31,10 +36,10 @@ describe("Overview five KPI source mapping",()=>{
   expect(table.rows[0]?.[10]).toBe(83);
  });
  it("computes individual total as passed plus duplicate plus renewal",()=>{
-  const values=deriveOverviewFive([total,services,identity,distribution],"today",today,yesterday);
+  const values=deriveOverviewFive([total,bank,services,identity,distribution],"today",today,yesterday);
   expect(values.individual.value).toBe(80);
   expect(values.newCards.value).toBe(65);
-  expect(values.income.value).toBe(32000);
+  expect(values.income.value).toBe(47000);
   expect(values.identity.value).toBe(83);
   expect(values.distribution.value).toBe(71);
  });
