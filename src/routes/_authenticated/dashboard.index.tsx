@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowUpLeft, ChartNoAxesColumn, CalendarDays, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
+import { ArrowUpLeft, ChartNoAxesColumn, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
