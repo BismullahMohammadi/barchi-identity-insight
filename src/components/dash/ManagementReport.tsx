@@ -1,3 +1,4 @@
+import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import { useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,7 +31,7 @@ function Stat({label,value,currency = false,tone = "default"}: {label:string;val
   return (
     <div className={"dashboard-kpi border-s-4 "+accent}>
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className={"mt-2 text-2xl font-extrabold tabular-nums "+numberTone}>{value === null ? "—" : format(value)}
+      <p className={"mt-2 text-2xl font-extrabold tabular-nums "+numberTone}>{value === null ? "—" : <AnimatedNumber value={value}/>}
         {currency && value !== null && <span className="ms-1 text-xs font-medium text-muted-foreground">AFN</span>}
       </p>
     </div>
