@@ -55,7 +55,7 @@ function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=fals
 function Overview() {
   const settings = useDashboardSettings();
   const [period, setPeriod] = useState<OverviewPeriod>("all");
-  const [expandedVisitor, setExpandedVisitor] = useState<"intake"|"registration"|null>(null);
+  const [expandedVisitors, setExpandedVisitors] = useState<Record<"intake"|"registration",boolean>>({intake:false,registration:false});
   const today = todayJalali();
   const yesterday = yesterdayJalali();
   const refreshMs = settingsRefreshMs(settings);
@@ -189,17 +189,17 @@ function Overview() {
               {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration},
             ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
               <button type="button" className="flex w-full items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                onClick={()=>setExpandedVisitor(current=>current===item.key?null:item.key)}
-                aria-expanded={expandedVisitor===item.key} aria-controls={`daily-visitor-details-${item.key}`}>
+                onClick={()=>setExpandedVisitors(current=>{const nextOpen=!current[item.key];return window.matchMedia("(min-width: 1024px)").matches?{...current,[item.key]:nextOpen}:{intake:item.key==="intake"&&nextOpen,registration:item.key==="registration"&&nextOpen};})}
+                aria-expanded={expandedVisitors[item.key]} aria-controls={`daily-visitor-details-${item.key}`}>
                 <span><span className="block text-sm text-muted-foreground">{item.title}</span>
                   <span className="mt-1 block text-2xl font-extrabold tabular-nums">{item.value}</span></span>
                 <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
-                  {expandedVisitor===item.key?"پټول":"وروستي ۵ کتل"}
-                  {expandedVisitor===item.key?<ChevronUp className="h-4 w-4"/>:<ChevronDown className="h-4 w-4"/>}
+                  {expandedVisitors[item.key]?"پټول":"وروستي ۵ کتل"}
+                  {expandedVisitors[item.key]?<ChevronUp className="h-4 w-4"/>:<ChevronDown className="h-4 w-4"/>}
                 </span>
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
-              {expandedVisitor===item.key&&<div id={`daily-visitor-details-${item.key}`}>
+              {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
                 <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"}/>
               </div>}
             </div>)}
