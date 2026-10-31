@@ -32,9 +32,9 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const cls = "group flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-border bg-sidebar-accent text-sidebar-primary font-bold` };
   const groups = [
-    { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "archive-scan", "arrivals"] },
+    { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
     { title: "مالي راپورونه", slugs: ["bank"] },
-    { title: "نور راپورونه", slugs: ["annual"] },
+    { title: "نور راپورونه", slugs: ["archive-scan", "annual"] },
   ];
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
