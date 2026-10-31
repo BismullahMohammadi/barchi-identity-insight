@@ -79,7 +79,7 @@ function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
 
 function DashboardLayout() {
   // Watch completion while authenticated even if the tools drawer is closed.
-  useStaffCompletionMonitor();
+  const completion = useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{
     if(typeof window==="undefined")return false;
@@ -93,6 +93,8 @@ function DashboardLayout() {
   const [toolsOpen, setToolsOpen] = useState(false);
   const settings = useDashboardSettings();
   const showTools = settings.showTodo || settings.showReportHealth;
+  const reportsReady = settings.showReportHealth && !!completion.data && !completion.error && !completion.isLoading;
+  const reportsComplete = reportsReady && completion.data?.complete === true;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const access = useQuery(accessQuery);
@@ -146,7 +148,7 @@ function DashboardLayout() {
         </Sheet>
       )}
       <div className="print-full flex-1 min-w-0">
-        <header className="no-print sticky top-0 z-20 flex min-h-16 items-center gap-2 border-b bg-card/95 px-4 py-2.5 shadow-sm backdrop-blur sm:gap-3 md:px-8">
+        <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
             <Menu />
           </Button>
@@ -160,7 +162,7 @@ function DashboardLayout() {
             <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
           </div>
           {access.data?.allowed && showTools && (
-            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ">
+            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white dark:bg-emerald-700 dark:hover:bg-emerald-600":"border-red-600 bg-red-600 text-white hover:bg-red-700 hover:text-white dark:bg-red-700 dark:hover:bg-red-600"):"")}>
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
               <span className="hidden sm:inline">دندې او راپورونه</span>
             </Button>
