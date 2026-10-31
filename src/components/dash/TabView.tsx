@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { JALALI_MONTHS } from "@/lib/jalali";
+import { holidayStatus, holidayLabel } from "@/lib/holidays";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell, type DateFilter } from "@/lib/normalize";
 
@@ -120,8 +121,8 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
                 </TableHeader>
                 <TableBody>
                   {shownRows.map((row: Cell[], i) => (
-                    <TableRow key={i} className={isTotalRow(row) ? "bg-secondary font-bold" : ""}>
-                      {row.map((value, j) => <TableCell key={j} className="whitespace-nowrap text-sm">{typeof value === "number" ? fmt(value) : value ?? "—"}</TableCell>)}
+                    <TableRow key={i} className={isTotalRow(row) ? "bg-secondary font-bold" : holidayStatus(row,table.dateCol) ? "bg-amber-500/10" : ""}>
+                      {row.map((value, j) => <TableCell key={j} className="whitespace-nowrap text-sm">{typeof value === "number" ? fmt(value) : value ?? "—"}{j===table.dateCol&&holidayLabel(holidayStatus(row,table.dateCol))&&<span className="ms-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-800 dark:text-amber-300">{holidayLabel(holidayStatus(row,table.dateCol))}</span>}</TableCell>)}
                     </TableRow>
                   ))}
                 </TableBody>
