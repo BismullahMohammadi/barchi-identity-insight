@@ -182,9 +182,9 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
   const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(prevGregorian);
   // Do not accuse staff of missing their reports on a regular Friday closure.
   if(isFridayJalali(yesterday) && report.submittedCount===0 && report.totalCount>0){
-   return {...report,status:"nonwork",missing:[],message:"پرون جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
+   return {...report,status:"nonwork",missing:[],message:"تېره ورځ جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
   }
-  return isSaturday?{...report,message:`د پنجشنبې (${report.date}) د راپورونو ارزونه: ${report.message.replaceAll("پرون","پنجشنبه")}`} :report;
+  return isSaturday?{...report,message:`د پنجشنبې (${report.date}) د راپورونو ارزونه: ${report.message.replaceAll("د تېرې ورځې","د پنجشنبې ورځې")}`} :report;
  });
 
 /** Second source for completion checking; independent of the registration report. */
