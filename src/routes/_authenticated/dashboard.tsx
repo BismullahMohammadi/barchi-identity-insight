@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
@@ -79,6 +79,9 @@ function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
 
 function DashboardLayout() {
   // Watch completion while authenticated even if the tools drawer is closed.
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const currentSlug = pathname.split("/").filter(Boolean).at(-1);
+  const pageTitle = currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
   const completion = useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{
@@ -150,7 +153,7 @@ function DashboardLayout() {
       <div className="print-full flex-1 min-w-0">
         <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
-            <Menu />
+            <Menu aria-hidden="true" />
           </Button>
           <Button type="button" variant="ghost" size="icon" className="hidden lg:inline-flex" onClick={toggleSidebar}
             aria-label={sidebarCollapsed?"سایډ بار خلاص کړئ":"سایډ بار بند کړئ"}
@@ -158,24 +161,25 @@ function DashboardLayout() {
             {sidebarCollapsed?<SidebarOpenIcon aria-hidden="true" className="h-5 w-5"/>:<PanelRightClose aria-hidden="true" className="h-5 w-5"/>}
           </Button>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold leading-5">د مرکز مدیریتي سیسټم</p>
+            <p className="text-sm font-bold leading-6">{pageTitle}</p>
             <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
           </div>
           {access.data?.allowed && showTools && (
-            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50":"border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"):"")}>
+            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" aria-haspopup="dialog" aria-expanded={toolsOpen} title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50":"border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"):"")}>
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
-              <span className="hidden sm:inline">دندې او راپورونه</span>
+              <span>دندې او راپورونه</span>
+              {reportsReady && <span className="hidden border-s border-current/20 ps-2 text-xs md:inline">{reportsComplete ? "بشپړ" : "نیمګړي"}</span>}
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={signOut} aria-label="له سیستم څخه وتل">
-            <LogOut /> وتل
+            <LogOut aria-hidden="true" /> <span className="hidden sm:inline">وتل</span>
           </Button>
         </header>
         {access.data?.allowed && <ScheduledReportNotice />}
         {access.data?.allowed && <NewProblemVisitorNotice />}
-        <main id="main-dashboard-content" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
+        <main id="main-dashboard-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
-            <p className="text-muted-foreground">لاسرسی کتل کېږي…</p>
+            <p role="status" className="rounded-xl border bg-card p-5 text-muted-foreground">لاسرسی کتل کېږي…</p>
           ) : access.isError ? (
             <div role="alert" className="mx-auto max-w-lg rounded-2xl border border-amber-500/35 bg-card p-6 text-center shadow-card">
               <ShieldAlert className="mx-auto h-9 w-9 text-amber-600" aria-hidden="true" />
@@ -202,3 +206,4 @@ function DashboardLayout() {
     </div>
   );
 }
+
