@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowUpLeft, ChartNoAxesColumn, CalendarDays, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
-import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
+import { SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
 import { holidayOfToday } from "@/lib/holidays";
@@ -84,7 +84,7 @@ function Overview() {
 
 
   const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
-  const demo = !overview;
+  const unavailable = !overview;
   const mainCards:SummaryMetric[] = overview ? [
     {...PLACEHOLDERS[0]!,...overview.individual},
     {...PLACEHOLDERS[1]!,...overview.newCards},
@@ -99,13 +99,13 @@ function Overview() {
     violet: {root:"dashboard-kpi-violet",icon:"bg-violet-700/10 text-violet-800",number:"text-violet-900"},
     emerald: {root:"dashboard-kpi-emerald",icon:"bg-emerald-700/10 text-emerald-800",number:"text-emerald-900"},
   } as const;
-  const renderCard = (item: SummaryMetric, index:number) => {
+  const renderCard = (item: SummaryMetric) => {
     const colors = cardStyle[item.tone];
     return (
       <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
         aria-label={item.label + (item.value===null?"؛ معلومات نشته":"؛ "+fmt(item.value))}
         className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[172px] flex-col justify-between gap-4 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
-          (settings.compactCards?" p-3 sm:p-4":" p-4 sm:p-5")+(index===0?" sm:col-span-2 xl:col-span-2":"")}>
+          (settings.compactCards?" p-3 sm:p-4":" p-4 sm:p-5")}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10 "+colors.icon}>
@@ -136,12 +136,11 @@ function Overview() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-8 sm:space-y-6">
-      <section className="relative overflow-hidden rounded-2xl bg-hero p-5 text-primary-foreground shadow-card sm:p-6 md:p-7">
-        <div className="absolute inset-0 pattern-dots" aria-hidden />
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
         <div className="relative">
-          <p className="text-sm font-semibold text-amber-200">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold md:text-3xl">د مرکز کاري بهیر</h1>
-          <p className="mt-2 max-w-xl text-sm text-white/85">د فعالیتونو، عوایدو او کاري پرمختګ روښانه مدیریتي انځور.</p>
+          <p className="text-sm font-semibold text-primary">د دشت برچي د الکترونیکي تذکرو مرکز</p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold text-foreground md:text-3xl">د مرکز کاري بهیر</h1>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">د فعالیتونو، عوایدو او کاري پرمختګ روښانه مدیریتي انځور.</p>
         </div>
       </section>
 
@@ -165,11 +164,19 @@ function Overview() {
         ))}
       </div>
 
-      {demo && !q.isLoading && (
+      {unavailable && !q.isLoading && (
         <p className="rounded-lg border border-warning bg-warning/10 p-3 text-sm">
-          <DemoBadge /> لاندې شمېرې نمونه دي، اصلي معلومات نه دي. کله چې شیټ په خوندي ډول وصل شي، اصلي شمېرې ښکاري.
+          اصلي معلومات لا نه دي ترلاسه شوي. د اړیکې حالت وګورئ او د تازه کولو تڼۍ وکاروئ.
         </p>
       )}
+
+      <div className="flex items-center gap-2 pt-1">
+        <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
+        <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
+      </div>
+      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 xl:gap-4">
+        {mainCards.map(renderCard)}
+      </div>
 
       {settings.showDailyVisitors && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
@@ -188,7 +195,7 @@ function Overview() {
               {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals},
               {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration},
             ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
-              <button type="button" className="flex w-full items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              <button type="button" className="flex min-h-11 w-full flex-wrap items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={()=>setExpandedVisitors(current=>{const nextOpen=!current[item.key];return window.matchMedia("(min-width: 1024px)").matches?{...current,[item.key]:nextOpen}:{intake:item.key==="intake"&&nextOpen,registration:item.key==="registration"&&nextOpen};})}
                 aria-expanded={expandedVisitors[item.key]} aria-controls={`daily-visitor-details-${item.key}`}>
                 <span><span className="block text-sm text-muted-foreground">{item.title}</span>
@@ -208,13 +215,6 @@ function Overview() {
       )}
 
 
-      <div className="flex items-center gap-2 pt-1">
-        <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
-        <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
-      </div>
-      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
-        {mainCards.map(renderCard)}
-      </div>
       <WeeklyActivityChart />
 
 
@@ -223,3 +223,4 @@ function Overview() {
     </div>
   );
 }
+

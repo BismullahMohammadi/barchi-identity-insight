@@ -105,11 +105,12 @@
   * {
     border-color: var(--color-border);
   }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
   [id="main-dashboard-content"] { scroll-margin-top: 5rem; }
   :where(button, a, input, textarea, [role="switch"], [tabindex]):focus-visible { scroll-margin-top: 5.5rem; }
   button, [role="button"] { touch-action: manipulation; }
   body {
+    font-size: 1rem;
     line-height: 1.65;
     min-width: 320px;
     background-color: var(--color-background);
@@ -146,7 +147,7 @@
   .dashboard-kpi { @apply relative min-w-0 overflow-hidden rounded-2xl border border-border/90 bg-card p-4 shadow-card transition-[box-shadow,border-color] duration-200 sm:p-5; }
   .dashboard-kpi:hover { @apply border-primary/25 shadow-md; }
   .dashboard-period-button { @apply min-h-11 cursor-pointer rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring; }
-  .dashboard-period-button[aria-pressed="true"] { @apply border-primary bg-primary text-primary-foreground; }
+  .dashboard-period-button[aria-pressed="true"] { @apply border-primary/40 bg-secondary text-secondary-foreground; }
   .dashboard-period-button[aria-pressed="false"] { @apply border-border bg-card text-foreground hover:bg-muted; }
   .dashboard-subtle-note { @apply rounded-xl border border-border/80 bg-muted/35 px-4 py-3 text-sm leading-7 text-muted-foreground; }
 }
@@ -159,18 +160,18 @@
     isolation: isolate;
     border-width: 1px;
     background-color: var(--card);
-    transition: box-shadow 180ms ease, border-color 180ms ease, transform 180ms ease;
+    transition: box-shadow 180ms ease, border-color 180ms ease;
   }
   .dashboard-kpi-polished:hover {
-    transform: translateY(-2px);
     box-shadow: 0 12px 26px -17px rgb(20 44 54 / 26%);
   }
-  .dashboard-kpi-teal { background-image: linear-gradient(135deg, rgb(13 148 136 / 9%), transparent 66%); border-inline-start: 4px solid #0f766e; }
-  .dashboard-kpi-blue { background-image: linear-gradient(135deg, rgb(2 132 199 / 8%), transparent 66%); border-inline-start: 4px solid #0369a1; }
-  .dashboard-kpi-amber { background-image: linear-gradient(135deg, rgb(180 83 9 / 8%), transparent 66%); border-inline-start: 4px solid #b45309; }
-  .dashboard-kpi-violet { background-image: linear-gradient(135deg, rgb(109 40 217 / 7%), transparent 66%); border-inline-start: 4px solid #6d28d9; }
-  .dashboard-kpi-emerald { background-image: linear-gradient(135deg, rgb(5 150 105 / 8%), transparent 66%); border-inline-start: 4px solid #047857; }
+  .dashboard-kpi-teal { border-inline-start: 4px solid #0f766e; }
+  .dashboard-kpi-blue { border-inline-start: 4px solid #0369a1; }
+  .dashboard-kpi-amber { border-inline-start: 4px solid #b45309; }
+  .dashboard-kpi-violet { border-inline-start: 4px solid #6d28d9; }
+  .dashboard-kpi-emerald { border-inline-start: 4px solid #047857; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dashboard-kpi-polished:hover { transform: none; }
 }
+
