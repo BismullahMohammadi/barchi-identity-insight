@@ -1,3 +1,5 @@
+import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
+import "@/components/dash/dashboard-motion.css";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fuel, Plus, RefreshCw, Download, BarChart3, ClipboardList, History, Info, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
@@ -80,7 +82,7 @@ export function FuelManagementPage(){
     </div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
      {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["اوسنۍ موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
-      <div key={label} className="dashboard-panel p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
+      <div key={label} className="dashboard-panel barchi-card-motion barchi-enter p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
       <p className="mt-3 text-2xl font-black tabular-nums">{q.isLoading?"…":fmt(value)} <span className="text-xs font-semibold">لیتره</span></p></div>)}
     </div>
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-7"><Info className="ml-2 inline h-4 w-4 text-primary"/>
@@ -102,8 +104,8 @@ export function FuelManagementPage(){
    {diesel.isLoading?<p className="text-sm text-muted-foreground">د Google Sheets معلومات رااخیستل کېږي…</p>:
     diesel.error?<p role="alert" className="text-sm text-destructive">د «مصرف دیزل» د ټیب معلومات ونه لوستل شول؛ د Google Sheets اتصال وګورئ.</p>:
     <><div className="grid grid-cols-2 gap-3">
-     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">ثبت شوی ټول مصرف</p><p className="mt-1 text-xl font-extrabold">{fmt(dieselTotal)} لیتره</p></div>
-     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د جنراتور ټول کاري ساعتونه</p><p className="mt-1 text-xl font-extrabold">{fmt(dieselHours)} ساعتونه</p></div>
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">ثبت شوی ټول مصرف</p><p className="mt-1 text-xl font-extrabold"><AnimatedNumber value={dieselTotal} maximumFractionDigits={2}/> لیتره</p></div>
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د جنراتور ټول کاري ساعتونه</p><p className="mt-1 text-xl font-extrabold"><AnimatedNumber value={dieselHours} maximumFractionDigits={2}/> ساعتونه</p></div>
     </div>
     <div className="overflow-x-auto"><table className="w-full min-w-[540px] border-collapse text-sm">
      <thead><tr className="border-b text-start text-xs text-muted-foreground"><th className="py-2 text-start">میاشت</th><th className="py-2 text-start">ساعتونه</th><th className="py-2 text-start">لیتر / ساعت</th><th className="py-2 text-start">مصرف (لیتره)</th><th className="py-2 text-start">د سند معلومات</th></tr></thead>
@@ -132,8 +134,8 @@ export function FuelManagementPage(){
    </div>}
    {diesel.isLoading?<p className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:diesel.error?<p className="text-sm text-destructive">د راوړل شویو ډیزلو معلومات ونه لوستل شول.</p>:<>
     <div className="grid grid-cols-2 gap-3">
-     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د ۱۴۰۵ ثبت شوي راوړل شوي</p><p className="mt-1 text-xl font-extrabold">{fmt(deliveredLiters)} لیتره</p></div>
-     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">له ۱۴۰۴ کال پاتې ثبت</p><p className="mt-1 text-xl font-extrabold">{fmt(carriedLiters)} لیتره</p></div>
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">د ۱۴۰۵ ثبت شوي راوړل شوي</p><p className="mt-1 text-xl font-extrabold"><AnimatedNumber value={deliveredLiters} maximumFractionDigits={2}/> لیتره</p></div>
+     <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">له ۱۴۰۴ کال پاتې ثبت</p><p className="mt-1 text-xl font-extrabold"><AnimatedNumber value={carriedLiters} maximumFractionDigits={2}/> لیتره</p></div>
     </div>
     <div className="overflow-x-auto"><table className="w-full min-w-[750px] border-collapse text-sm">
      <thead><tr className="border-b text-xs text-muted-foreground"><th className="py-2 text-start">ګڼه</th><th className="text-start">نېټه</th><th className="text-start">ډیزل (لیتره)</th><th className="text-start">د فی لیتر بیه</th><th className="text-start">مجموعي مبلغ</th><th className="text-start">سند</th><th className="text-start">یادښت</th></tr></thead>
