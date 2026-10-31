@@ -73,20 +73,20 @@ function Landing() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-hero text-primary-foreground">
-      <div className="absolute inset-0 pattern-dots" aria-hidden />
+    <main className="relative min-h-screen overflow-hidden bg-[#eef9f6] text-[#123e46]">
+      <div className="pointer-events-none absolute inset-0 opacity-25 pattern-dots" aria-hidden />
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
-        <span className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-sidebar-accent px-3 py-1 text-xs font-semibold text-sidebar-primary">
+        <span className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#a6d9d0] bg-white/85 px-3 py-1 text-xs font-semibold text-[#0b6b74]">
           <Lock className="h-3.5 w-3.5" /> خصوصي — یوازې مالک
         </span>
         <h1 className="font-display text-4xl font-extrabold leading-tight md:text-6xl">
           د دشت برچي eNID مرکز
-          <span className="block text-sidebar-primary">تحلیلي ډشبورډ ۱۴۰۵</span>
+          <span className="block text-[#0b6b74]">تحلیلي ډشبورډ ۱۴۰۵</span>
         </h1>
         <p className="mt-6 max-w-xl text-lg opacity-85">
           د تثبت هویت، عوایدو، کنټرول، خدماتو او توزیع ژوندي شمېرې — مستقیم د راپور شیټ څخه، یوازې د لوستلو لپاره.
         </p>
-        {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300/40 bg-black/20 px-4 py-3 text-sm leading-7 text-white">{loginError}</div>}
+        {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
         <div className="mt-10 flex flex-wrap gap-3">
           {signedIn ? (
             <Button asChild variant="hero" size="lg"><Link to="/dashboard">ډشبورډ ته لاړ شئ</Link></Button>
@@ -102,8 +102,8 @@ function Landing() {
             { icon: Lock, t: "یوازې لوستل", d: "اصلي شیټ هیڅکله نه بدلېږي." },
             { icon: LineChart, t: "هره دقیقه تازه", d: "شمېرې هر ۶۰ ثانیې بیا لوستل کېږي." },
           ].map(({ icon: Icon, t, d }) => (
-            <div key={t} className="rounded-xl border border-sidebar-border bg-sidebar-accent/60 p-5 backdrop-blur">
-              <Icon className="h-5 w-5 text-sidebar-primary" />
+            <div key={t} className="rounded-3xl border border-[#c9e7e0] bg-white/95 p-5 text-[#123e46] shadow-sm">
+              <Icon className="h-5 w-5 text-[#0b6b74]" />
               <h3 className="mt-3 font-bold">{t}</h3>
               <p className="mt-1 text-sm opacity-80">{d}</p>
             </div>
