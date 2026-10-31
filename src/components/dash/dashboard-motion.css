@@ -1,0 +1,5 @@
+@keyframes barchi-soft-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+.barchi-enter{animation:barchi-soft-enter 380ms cubic-bezier(.2,.8,.2,1) both}
+.barchi-card-motion{transition:transform 190ms ease,box-shadow 190ms ease}
+@media (hover:hover){.barchi-card-motion:hover{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.barchi-enter{animation:none!important}.barchi-card-motion{transition:none!important}.barchi-card-motion:hover{transform:none!important}}
