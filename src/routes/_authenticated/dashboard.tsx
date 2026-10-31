@@ -162,7 +162,7 @@ function DashboardLayout() {
             <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
           </div>
           {access.data?.allowed && showTools && (
-            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white dark:bg-emerald-700 dark:hover:bg-emerald-600":"border-red-600 bg-red-600 text-white hover:bg-red-700 hover:text-white dark:bg-red-700 dark:hover:bg-red-600"):"")}>
+            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50":"border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"):"")}>
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
               <span className="hidden sm:inline">دندې او راپورونه</span>
             </Button>
