@@ -177,13 +177,14 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
   if(!resp.ok)throw new Error(`STAFF_SHEETS_ERROR_${resp.status}`);
   const data=await resp.json() as {values?:unknown[][]};
   const report=inspectStaffDay(data.values??[],yesterday,month);
+  const isSaturday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat";
   const prevGregorian=new Date(Date.now()-(new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat"?2:1)*86_400_000);
   const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(prevGregorian);
   // Do not accuse staff of missing their reports on a regular Friday closure.
   if(isFridayJalali(yesterday) && report.submittedCount===0 && report.totalCount>0){
    return {...report,status:"nonwork",missing:[],message:"پرون جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
   }
-  return report;
+  return isSaturday?{...report,message:`د پنجشنبې (${report.date}) د راپورونو ارزونه: ${report.message.replaceAll("پرون","پنجشنبه")}`} :report;
  });
 
 /** Second source for completion checking; independent of the registration report. */
@@ -210,14 +211,16 @@ export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middlewa
   if(!month)return inspectInsijamDay([],yesterday,"");
   const range=encodeURIComponent(`'${month.replace(/'/g,"''")}'!A1:AM90`);
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"INSIJAM_SHEETS_ERROR");
-  return inspectInsijamDay(data.values??[],yesterday,month);
+  const report=inspectInsijamDay(data.values??[],yesterday,month);
+  const isSaturday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat";
+  return isSaturday?{...report,message:`د پنجشنبې (${report.date}) د انسجام راپورونو ارزونه: ${report.message}`} :report;
  });
 /** Copy-only output from the pre-existing read-only State Office tab. */
 export const getStateReportForYesterday=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StateReport>=>{
   setResponseHeader("Cache-Control","private, no-store");
   const headers=authorizedSheetHeaders(context.claims);
-  const day=yesterdayJalali();
+  const day=completenessReviewDay();
   const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"STATE_REPORT_ERROR");
   return extractStateReport(data.values??[],day);
