@@ -32,20 +32,20 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const cls = "group flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-border bg-sidebar-accent text-sidebar-primary font-bold` };
   const groups = [
-    { title: "د مرکز فعالیتونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
+    { title: "ورځني او عملیاتي راپورونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
     { title: "مالي راپورونه", slugs: ["bank"] },
-    { title: "نور راپورونه", slugs: ["archive-scan", "annual"] },
+    { title: "آرشیف او کلني راپورونه", slugs: ["archive-scan", "annual"] },
   ];
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
       <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
         <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري بهیر
       </Link>
-      <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}>
-        <Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت
-      </Link>
       <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
         <AlertTriangle className="h-4 w-4 shrink-0" /> مشکلاتي مراجعین
+      </Link>
+      <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}>
+        <Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت
       </Link>
       {groups.map((group) => (
         <div key={group.title} className="space-y-1">
