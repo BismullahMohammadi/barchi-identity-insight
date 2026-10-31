@@ -59,7 +59,7 @@ export function useStaffCompletionMonitor(){
   try{if(window.localStorage.getItem(key)==="notified")return;
       window.localStorage.setItem(key,"notified");}
   catch{/* When browser storage is blocked, still allow a visible notification. */}
-  toast.success("د دواړو مدیریتونو د پرون راپورونه بشپړ شول!",{
+  toast.success("د دواړو مدیریتونو د تېرې ورځې راپورونه بشپړ شول!",{
    description:summary.date+" · د ریاست راپور د کاپي کولو لپاره وګورئ",duration:9000
   });
   if(isReportSoundEnabled())ring();
