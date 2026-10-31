@@ -1,3 +1,4 @@
+import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import { useMemo, useState } from "react";
 import { ChevronDown, Download, Printer, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
         <div>
           <p className="text-sm text-muted-foreground">{primaryLabel ?? "د راپور قطارونه"}</p>
           <p className="mt-1 text-3xl font-extrabold tabular-nums">
-            {mainTotal === null ? (canSum ? "—" : fmt(validRows.length)) : fmt(mainTotal)}
+            {mainTotal === null ? (canSum ? "—" : <AnimatedNumber value={validRows.length}/>) : <AnimatedNumber value={mainTotal} maximumFractionDigits={2}/>}
           </p>
         </div>
         {table.dateCol >= 0 && (
@@ -88,8 +89,8 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
       </section>}
 
       {distributionTotals && <section className="grid grid-cols-2 gap-3" aria-label="عادي او خدماتي توزیع">
-        <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">عادي توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums">{fmt(distributionTotals.regular)}</p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
-        <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">د خدماتو توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums">{fmt(distributionTotals.services)}</p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
+        <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">عادي توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums"><AnimatedNumber value={distributionTotals.regular} maximumFractionDigits={2}/></p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
+        <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">د خدماتو توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums"><AnimatedNumber value={distributionTotals.services} maximumFractionDigits={2}/></p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
       </section>}
 
       <section className="dashboard-panel overflow-hidden">
