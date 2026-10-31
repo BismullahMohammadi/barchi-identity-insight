@@ -135,20 +135,17 @@ function Overview() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-8 sm:space-y-6">
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+    <div className="mx-auto max-w-7xl space-y-3 pb-6 sm:space-y-4">
+      <section className="rounded-xl border border-border bg-card px-4 py-3 shadow-card sm:px-5">
         <div className="relative">
-          <p className="text-sm font-semibold text-primary">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold text-foreground md:text-3xl">د مرکز کاري بهیر</h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">د فعالیتونو، عوایدو او کاري پرمختګ روښانه مدیریتي انځور.</p>
+          <h1 className="font-display text-xl font-extrabold text-foreground md:text-2xl">د مرکز کاري بهیر</h1>
         </div>
       </section>
 
       {holidayOfToday(today)&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-semibold">{holidayOfToday(today)}</p>}
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2.5 shadow-card" role="group" aria-label="د راپور موده">
-        <CalendarDays aria-hidden="true" className="mx-2 h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-1 rounded-xl border bg-card p-1.5 shadow-card" role="group" aria-label="د راپور موده">
         {([
           ["all", "ټول کال"],
           ["month", "روانه میاشت"],
@@ -174,7 +171,7 @@ function Overview() {
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
         <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
       </div>
-      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 xl:gap-4">
+      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {mainCards.map(renderCard)}
       </div>
 
