@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
 import { SPREADSHEET_ID, TABS } from "./tabs";
 import { todayJalali, yesterdayJalali } from "./jalali";
+import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
@@ -145,6 +146,16 @@ export const getDailyCoordination = createServerFn({ method: "GET" })
  * Separate connection grants may be required for this second Google Spreadsheet.
  */
 const STAFF_REPORT_SPREADSHEET_ID = "1Qp5mmA9dRqZ43CLMSMM5tc53rBjAxrTj_gyRp7OVoG8";
+/** On Saturday review Thursday submissions; Friday is Afghanistan's weekly holiday. */
+function completenessReviewDay(){
+ const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date());
+ if(weekday!=="Sat")return yesterdayJalali();
+ const date=new Date(Date.now()-2*86400000);
+ const parts=new Intl.DateTimeFormat("en-US-u-ca-persian",{timeZone:"Asia/Kabul",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(date);
+ const n=(name:string)=>Number(parts.find(p=>p.type===name)?.value);
+ return {y:n("year"),m:n("month"),d:n("day")};
+}
+
 export const getStaffDailyCompleteness = createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StaffCompleteness>=>{
@@ -154,7 +165,7 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
   const sheetsKey=process.env["GOOGLE_SHEETS_API_KEY"];
   if(!lovableKey||!sheetsKey)throw new Error("SHEETS_NOT_CONNECTED");
   const headers={Authorization:`Bearer ${lovableKey}`,"X-Connection-Api-Key":sheetsKey};
-  const yesterday=yesterdayJalali();
+  const yesterday=completenessReviewDay();
   const metadata=await fetch(`${GATEWAY_URL}/spreadsheets/${STAFF_REPORT_SPREADSHEET_ID}?fields=sheets(properties(title))`,{headers});
   if(!metadata.ok)throw new Error(`STAFF_SHEETS_ERROR_${metadata.status}`);
   const body=await metadata.json() as {sheets?:{properties?:{title?:string}}[]};
@@ -166,13 +177,14 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
   if(!resp.ok)throw new Error(`STAFF_SHEETS_ERROR_${resp.status}`);
   const data=await resp.json() as {values?:unknown[][]};
   const report=inspectStaffDay(data.values??[],yesterday,month);
-  const prevGregorian=new Date(Date.now()-86_400_000);
+  const isSaturday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat";
+  const prevGregorian=new Date(Date.now()-(new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat"?2:1)*86_400_000);
   const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(prevGregorian);
   // Do not accuse staff of missing their reports on a regular Friday closure.
-  if(weekday==="Fri" && report.submittedCount===0 && report.totalCount>0){
+  if(isFridayJalali(yesterday) && report.submittedCount===0 && report.totalCount>0){
    return {...report,status:"nonwork",missing:[],message:"پرون جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};
   }
-  return report;
+  return isSaturday?{...report,message:`د پنجشنبې (${report.date}) د راپورونو ارزونه: ${report.message.replaceAll("پرون","پنجشنبه")}`} :report;
  });
 
 /** Second source for completion checking; independent of the registration report. */
@@ -192,21 +204,23 @@ export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middlewa
  .handler(async({context}):Promise<StaffCompleteness>=>{
   setResponseHeader("Cache-Control","private, no-store");
   const headers=authorizedSheetHeaders(context.claims);
-  const yesterday=yesterdayJalali();
+  const yesterday=completenessReviewDay();
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"INSIJAM_SHEETS_ERROR");
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
   const month=findInsijamMonth(titles,yesterday.m);
   if(!month)return inspectInsijamDay([],yesterday,"");
   const range=encodeURIComponent(`'${month.replace(/'/g,"''")}'!A1:AM90`);
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"INSIJAM_SHEETS_ERROR");
-  return inspectInsijamDay(data.values??[],yesterday,month);
+  const report=inspectInsijamDay(data.values??[],yesterday,month);
+  const isSaturday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat";
+  return isSaturday?{...report,message:`د پنجشنبې (${report.date}) د انسجام راپورونو ارزونه: ${report.message}`} :report;
  });
 /** Copy-only output from the pre-existing read-only State Office tab. */
 export const getStateReportForYesterday=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StateReport>=>{
   setResponseHeader("Cache-Control","private, no-store");
   const headers=authorizedSheetHeaders(context.claims);
-  const day=yesterdayJalali();
+  const day=completenessReviewDay();
   const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"STATE_REPORT_ERROR");
   return extractStateReport(data.values??[],day);
