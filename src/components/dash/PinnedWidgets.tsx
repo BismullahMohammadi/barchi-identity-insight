@@ -107,7 +107,7 @@ function ReportHealthContent(){
  const report=query.data;
  return <div className="space-y-3">
   <div className="flex flex-wrap items-center justify-between gap-2">
-   <p className="text-xs text-muted-foreground">د دواړو مدیریتونو د پرون راپورونه</p>
+   <p className="text-xs text-muted-foreground">د دواړو مدیریتونو د تېرې ورځې راپورونه</p>
    <button type="button" className="flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-muted"
     onClick={async()=>{
      if(soundEnabled){disableReportSound();setSoundEnabled(false);return;}
@@ -126,7 +126,7 @@ function ReportHealthContent(){
   {report&&<>
     <div className={"rounded-xl border p-3 "+(report.complete?"border-emerald-600/25 bg-emerald-600/10":"border-amber-600/25 bg-amber-600/10")}>
      <p className="text-sm font-extrabold">{report.complete?"دواړه مدیریتونه بشپړ دي":"د راپورونو بشپړتیا لا نه ده تایید شوې"}</p>
-     <p className="mt-1 text-xs text-muted-foreground">د پرون نېټه: {report.date}</p>
+     <p className="mt-1 text-xs text-muted-foreground">د ارزول شوې ورځې نېټه: {report.date}</p>
     </div>
     <SectionCompleteness title="د نوم‌لیکنې او وېش مدیریت" report={report.registration}/>
     <SectionCompleteness title="د انسجام مدیریت" report={report.insijam}/>
