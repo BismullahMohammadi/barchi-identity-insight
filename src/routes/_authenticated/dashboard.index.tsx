@@ -33,7 +33,7 @@ type SummaryMetric = {slug:string;label:string;value:number|null;change:number|n
 const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
  {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"blue",description:"یوازې پاس شوي"},
- {slug:"total",label:"عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د مجموعي راپور عواید"},
+ {slug:"bank",label:"ټول عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د نوي ثبت او خدماتو عواید"},
  {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"violet"},
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
@@ -104,11 +104,11 @@ function Overview() {
     return (
       <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
         aria-label={item.label + (item.value===null?"؛ معلومات نشته":"؛ "+fmt(item.value))}
-        className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[172px] flex-col justify-between gap-4 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
+        className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[128px] flex-col justify-between gap-2 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
           (settings.compactCards?" p-3 sm:p-4":" p-4 sm:p-5")}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10 "+colors.icon}>
+            <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10 "+colors.icon}>
               <item.icon aria-hidden="true" className="h-5 w-5"/>
             </span>
             <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
@@ -117,7 +117,7 @@ function Overview() {
         </div>
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <p className={"break-all text-3xl font-black tabular-nums tracking-tight sm:text-4xl "+colors.number}>
+            <p className={"break-all text-2xl font-black tabular-nums tracking-tight sm:text-3xl "+colors.number}>
               {q.isLoading?"…":item.value===null?"—":fmt(item.value)}
             </p>
             {item.money&&item.value!==null&&<span className="text-xs font-bold text-muted-foreground">AFN</span>}
