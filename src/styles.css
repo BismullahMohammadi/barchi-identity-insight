@@ -175,3 +175,33 @@
   .dashboard-kpi-polished:hover { transform: none; }
 }
 
+
+/* Mint and aqua visual direction from the supplied reference. */
+:root {
+ --radius:1.1rem; --background:#ecf9f5; --foreground:#10464d; --card:#ffffff; --card-foreground:#10464d;
+ --popover:#ffffff; --popover-foreground:#10464d; --primary:#087680; --primary-foreground:#ffffff;
+ --secondary:#d7f2eb; --secondary-foreground:#175a60; --muted:#e6f3ef; --muted-foreground:#52787c;
+ --accent:#f2dd98; --accent-foreground:#294d4d; --border:#c4e2da; --input:#b6d8d0; --ring:#087680;
+ --sidebar:#f1faf7; --sidebar-foreground:#164d53; --sidebar-primary:#087680;
+ --sidebar-primary-foreground:#ffffff; --sidebar-accent:#d8f2ea; --sidebar-accent-foreground:#164d53;
+ --sidebar-border:#c4e2da; --sidebar-ring:#087680;
+ --gradient-hero:linear-gradient(135deg,#0e6770,#2daaa5);
+ --shadow-card:0 8px 24px -16px rgb(20 92 95 / 23%);
+}
+@layer base {
+ body {background-image:radial-gradient(ellipse at 18% 7%,#d4f3eb,transparent 46%),linear-gradient(160deg,#ecfbf8,#fafbf2 65%,#e8f7f4);}
+}
+@layer components {
+ .dashboard-panel {border-radius:1.35rem;background:#ffffffed;border-color:#c4e2da;}
+ .dashboard-kpi,.dashboard-kpi-polished {border-radius:1.35rem;background:linear-gradient(145deg,#fff,#effaf6);border-color:#c1e4dd;}
+ .dashboard-kpi:hover {border-color:#83c9be;}
+ .dashboard-period-button {border-radius:999px;}
+ .dashboard-period-button[aria-pressed="true"] {background:#087680;color:#fff;border-color:#087680;}
+}
+.dark {--background:#102d33;--foreground:#effaf7;--card:#1b3940;--card-foreground:#effaf7;
+ --popover:#1b3940;--popover-foreground:#effaf7;--primary:#70d4c9;--primary-foreground:#102d33;
+ --secondary:#255052;--secondary-foreground:#effaf7;--muted:#29464a;--muted-foreground:#a8c9c7;
+ --border:#395e60;--input:#496c6d;--ring:#70d4c9;--sidebar:#19363b;--sidebar-foreground:#effaf7;
+ --sidebar-primary:#70d4c9;--sidebar-accent:#294f51;--sidebar-accent-foreground:#effaf7;--sidebar-border:#395e60;}
+.dark body {background-image:none;}
+.dark .dashboard-panel,.dark .dashboard-kpi,.dark .dashboard-kpi-polished {background:#1b3940;border-color:#395e60;}
