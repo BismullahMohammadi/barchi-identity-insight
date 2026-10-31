@@ -70,11 +70,11 @@ export function FuelManagementPage(){
      {diesel.isLoading?<p className="text-sm text-muted-foreground">د شیټ محاسبات رااخیستل کېږي…</p>:diesel.error?<p role="alert" className="text-sm text-destructive">د Google Sheets معلومات ونه لوستل شول. اتصال وګورئ یا بیا تازه کړئ.</p>:
      <><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
        {([["د ۱۴۰۵ راوړل شوي",deliveredLiters],["د ۱۴۰۴ پاتې",carriedLiters],["ټول ثبت شوي",diesel.data?.reconciliation.sheetDelivered??deliveredLiters+carriedLiters],["ټول مصرف",diesel.data?.reconciliation.sheetConsumed??dieselTotal]] as const).map(([label,value])=>
-        <div key={label} className="rounded-xl border bg-muted/30 p-3 sm:p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-xl font-black tabular-nums">{fmt(value)} <span className="text-xs">لیتره</span></p></div>)}
+        <div key={label} className="rounded-xl border bg-muted/30 p-3 sm:p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-xl font-black tabular-nums"><AnimatedNumber value={value} maximumFractionDigits={2}/> <span className="text-xs">لیتره</span></p></div>)}
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">حسابي توپیر (راوړل − مصرف)</p><p className="mt-2 text-xl font-black tabular-nums">{fmt((diesel.data?.reconciliation.sheetDelivered??deliveredLiters+carriedLiters)-(diesel.data?.reconciliation.sheetConsumed??dieselTotal))} لیتره</p></div>
-       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">د جنراتور ساعتونه</p><p className="mt-2 text-xl font-black tabular-nums">{fmt(diesel.data?.reconciliation.sheetHours??dieselHours)} ساعتونه</p></div>
+       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">حسابي توپیر (راوړل − مصرف)</p><p className="mt-2 text-xl font-black tabular-nums"><AnimatedNumber value={(diesel.data?.reconciliation.sheetDelivered??deliveredLiters+carriedLiters)-(diesel.data?.reconciliation.sheetConsumed??dieselTotal)} maximumFractionDigits={2}/> لیتره</p></div>
+       <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">د جنراتور ساعتونه</p><p className="mt-2 text-xl font-black tabular-nums"><AnimatedNumber value={diesel.data?.reconciliation.sheetHours??dieselHours} maximumFractionDigits={2}/> ساعتونه</p></div>
        <div className="rounded-xl border p-3"><p className="text-xs text-muted-foreground">وروستۍ مستنده فزیکي شمېرنه</p><p className="mt-2 text-xl font-black tabular-nums">{diesel.data?.reconciliation.physicalStock==null?"—":fmt(diesel.data.reconciliation.physicalStock)+" لیتره"}</p><p className="mt-1 text-xs text-muted-foreground">{diesel.data?.reconciliation.physicalStockDate??"نېټه نه ده ثبت شوې"}</p></div>
       </div>
       <p className="text-xs leading-6 text-muted-foreground">حسابي توپیر د موجوده ټانک اندازه نه ده. د فزیکي شمېرنې عدد هم یوازې د هغې ثبت شوې نېټې پورې تړاو لري؛ د لاندې لاسي ثبتونو له حساب سره نه یوځای کېږي.</p>
@@ -83,13 +83,13 @@ export function FuelManagementPage(){
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
      {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["اوسنۍ موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
       <div key={label} className="dashboard-panel barchi-card-motion barchi-enter p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
-      <p className="mt-3 text-2xl font-black tabular-nums">{q.isLoading?"…":fmt(value)} <span className="text-xs font-semibold">لیتره</span></p></div>)}
+      <p className="mt-3 text-2xl font-black tabular-nums">{q.isLoading?"…":<AnimatedNumber value={value} maximumFractionDigits={2}/>} <span className="text-xs font-semibold">لیتره</span></p></div>)}
     </div>
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-7"><Info className="ml-2 inline h-4 w-4 text-primary"/>
     موجودي یوازې د دې سیستم له ثبت شویو ترلاسه کولو او مصرفونو محاسبه کېږي. د Google Sheets تاریخي میاشتني مصرف پکې نه شاملېږي.
     که د لومړنۍ موجودۍ ثبت نه وي شوی، ښودل شوې موجودي د مرکز واقعي ذخیره نه ګڼل کېږي.</div>
     <div className="grid gap-3 sm:grid-cols-2">
-     <button onClick={()=>setView("sheet")} className="dashboard-panel p-5 text-start hover:bg-muted/50"><p className="font-bold">د Google Sheets میاشتنی راپور</p><p className="mt-2 text-xl font-black">{diesel.isLoading?"…":fmt(dieselTotal)} لیتره</p><p className="mt-1 text-xs text-muted-foreground">ثبت شوی میاشتنی مصرف · د تفصیل لپاره کلیک وکړئ</p></button>
+     <button onClick={()=>setView("sheet")} className="dashboard-panel p-5 text-start hover:bg-muted/50"><p className="font-bold">د Google Sheets میاشتنی راپور</p><p className="mt-2 text-xl font-black">{diesel.isLoading?"…":<AnimatedNumber value={dieselTotal} maximumFractionDigits={2}/>} لیتره</p><p className="mt-1 text-xs text-muted-foreground">ثبت شوی میاشتنی مصرف · د تفصیل لپاره کلیک وکړئ</p></button>
      <button onClick={()=>setView("register")} className="dashboard-panel p-5 text-start hover:bg-muted/50"><p className="font-bold">د تېلو نوی ثبت</p><p className="mt-2 text-sm text-muted-foreground">رسید، مصرف یا لومړنۍ موجودي اضافه کړئ</p></button>
     </div>
    </section>}
