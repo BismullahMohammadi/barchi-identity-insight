@@ -29,7 +29,7 @@ export function inspectInsijamDay(grid:unknown[][],date:JDate,sheet:string):Staf
  const headerIndex=grid.slice(0,8).findIndex(r=>txt(r[1]).includes("اسم")&&txt(r[4]).includes("تقسیم")&&toLatinDigits(txt(r[5]))==="1");
  if(headerIndex<0)return unavailable("د انسجام د ورځو او کارمندانو کالمونه ونه پېژندل شول.");
  const dayCol=grid[headerIndex]!.findIndex((v,i)=>i>=5 && Number(toLatinDigits(txt(v)))===date.d);
- if(dayCol<0)return unavailable("د انسجام په شیټ کې د پرون کالم نشته.");
+ if(dayCol<0)return unavailable("د انسجام په شیټ کې د تېرې ورځې کالم نشته.");
  const staff:StaffStatus[]=[];
  let current:StaffStatus|null=null;
  let present:boolean[]=[];

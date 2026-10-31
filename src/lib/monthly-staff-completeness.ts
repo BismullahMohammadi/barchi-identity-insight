@@ -28,7 +28,7 @@ export function inspectStaffDay(grid:unknown[][],date:JDate,sheet:string):StaffC
  if(headerIndex<0)return unknown("د راپور د کارمندانو او ورځو کالمونه ونه پېژندل شول.");
  const header=grid[headerIndex]??[];
  const dayCol=header.findIndex((cell,i)=>i>=7 && numeric(cell)&&Number(stringOf(cell))===date.d);
- if(dayCol<0)return unknown("د پرون ورځې کالم په راپور کې نشته.");
+ if(dayCol<0)return unknown("د تېرې ورځې کالم په راپور کې نشته.");
  const people:StaffStatus[]=[];
  let current:StaffStatus|null=null;
  let valuesForPerson:boolean[]=[];
@@ -55,5 +55,5 @@ export function inspectStaffDay(grid:unknown[][],date:JDate,sheet:string):StaffC
  const complete=missing.length===0;
  return {date:dateLabel,sheet,status:complete?"complete":"incomplete",staff:people,missing,
   submittedCount:people.length-missing.length,totalCount:people.length,
-  message:complete?"د ټولو ثبت شويو کارمندانو د پرون راپورونه بشپړ شول.":`${missing.length} کارمندانو د پرون راپور نه دی ثبت کړی.`};
+  message:complete?"د ټولو ثبت شويو کارمندانو د تېرې ورځې راپورونه بشپړ شول.":`${missing.length} کارمندانو د تېرې ورځې راپور نه دی ثبت کړی.`};
 }
