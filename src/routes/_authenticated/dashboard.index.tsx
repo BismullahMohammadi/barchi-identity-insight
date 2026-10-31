@@ -1,3 +1,5 @@
+import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
+import "@/components/dash/dashboard-motion.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -104,7 +106,7 @@ function Overview() {
     return (
       <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
         aria-label={item.label + (item.value===null?"؛ معلومات نشته":"؛ "+fmt(item.value))}
-        className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[128px] flex-col justify-between gap-2 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
+        className={"dashboard-kpi dashboard-kpi-polished barchi-card-motion barchi-enter group flex min-h-[128px] flex-col justify-between gap-2 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
           (settings.compactCards?" p-3 sm:p-4":" p-4 sm:p-5")}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -118,7 +120,7 @@ function Overview() {
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
             <p className={"break-all text-2xl font-black tabular-nums tracking-tight sm:text-3xl "+colors.number}>
-              {q.isLoading?"…":item.value===null?"—":fmt(item.value)}
+              {q.isLoading?"…":item.value===null?"—":<AnimatedNumber value={item.value}/>}
             </p>
             {item.money&&item.value!==null&&<span className="text-xs font-bold text-muted-foreground">AFN</span>}
           </div>
