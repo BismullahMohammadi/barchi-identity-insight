@@ -5,6 +5,7 @@ import { ArrowUpLeft, ChartNoAxesColumn, CalendarDays, Files, ShieldCheck, Landm
 import { DemoBadge, SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
+import { holidayOfToday } from "@/lib/holidays";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
 import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
@@ -144,6 +145,7 @@ function Overview() {
         </div>
       </section>
 
+      {holidayOfToday(today)&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-semibold">{holidayOfToday(today)}</p>}
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
 
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2.5 shadow-card" role="group" aria-label="د راپور موده">
