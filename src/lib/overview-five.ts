@@ -32,7 +32,7 @@ export function deriveOverviewFive(sources: OverviewSource[], period: OverviewPe
   return {
     individual,
     newCards:newlyPassed,
-    income:sourceMetric(sources,"total",2,period,today,yesterday),
+    income:sourceMetric(sources,"bank",6,period,today,yesterday),
     identity:sourceMetric(sources,"identity",10,period,today,yesterday),
     distribution:sourceMetric(sources,"distribution",3,period,today,yesterday),
   };
