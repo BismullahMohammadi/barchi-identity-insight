@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowUpLeft, ChartNoAxesColumn, CalendarDays, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
+import { ArrowUpLeft, ChartNoAxesColumn, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { SyncBar } from "@/components/dash/SyncBar";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
@@ -33,7 +33,7 @@ type SummaryMetric = {slug:string;label:string;value:number|null;change:number|n
 const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
  {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"blue",description:"یوازې پاس شوي"},
- {slug:"total",label:"عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د مجموعي راپور عواید"},
+ {slug:"bank",label:"ټول عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د نوي ثبت او خدماتو عواید"},
  {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"violet"},
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
@@ -104,11 +104,11 @@ function Overview() {
     return (
       <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
         aria-label={item.label + (item.value===null?"؛ معلومات نشته":"؛ "+fmt(item.value))}
-        className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[172px] flex-col justify-between gap-4 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
+        className={"dashboard-kpi dashboard-kpi-polished group flex min-h-[128px] flex-col justify-between gap-2 focus-visible:ring-2 focus-visible:ring-primary "+colors.root+
           (settings.compactCards?" p-3 sm:p-4":" p-4 sm:p-5")}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10 "+colors.icon}>
+            <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10 "+colors.icon}>
               <item.icon aria-hidden="true" className="h-5 w-5"/>
             </span>
             <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
@@ -117,7 +117,7 @@ function Overview() {
         </div>
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
-            <p className={"break-all text-3xl font-black tabular-nums tracking-tight sm:text-4xl "+colors.number}>
+            <p className={"break-all text-2xl font-black tabular-nums tracking-tight sm:text-3xl "+colors.number}>
               {q.isLoading?"…":item.value===null?"—":fmt(item.value)}
             </p>
             {item.money&&item.value!==null&&<span className="text-xs font-bold text-muted-foreground">AFN</span>}
@@ -135,20 +135,17 @@ function Overview() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-8 sm:space-y-6">
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+    <div className="mx-auto max-w-7xl space-y-3 pb-6 sm:space-y-4">
+      <section className="rounded-xl border border-border bg-card px-4 py-3 shadow-card sm:px-5">
         <div className="relative">
-          <p className="text-sm font-semibold text-primary">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold text-foreground md:text-3xl">د مرکز کاري بهیر</h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">د فعالیتونو، عوایدو او کاري پرمختګ روښانه مدیریتي انځور.</p>
+          <h1 className="font-display text-xl font-extrabold text-foreground md:text-2xl">د مرکز کاري بهیر</h1>
         </div>
       </section>
 
       {holidayOfToday(today)&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-semibold">{holidayOfToday(today)}</p>}
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2.5 shadow-card" role="group" aria-label="د راپور موده">
-        <CalendarDays aria-hidden="true" className="mx-2 h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-1 rounded-xl border bg-card p-1.5 shadow-card" role="group" aria-label="د راپور موده">
         {([
           ["all", "ټول کال"],
           ["month", "روانه میاشت"],
@@ -174,7 +171,7 @@ function Overview() {
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
         <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
       </div>
-      <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 xl:gap-4">
+      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {mainCards.map(renderCard)}
       </div>
 
