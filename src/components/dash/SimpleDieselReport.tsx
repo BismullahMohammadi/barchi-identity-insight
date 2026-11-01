@@ -6,6 +6,8 @@ export function SimpleDieselReport(){
  const f=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
  const deliveries=d?.deliveries??[];
  const allDelivered=deliveries.reduce((s,x)=>s+x.liters,0);
+ const undated=deliveries.filter(x=>!x.isCarryover&&!x.date.trim());
+ const undatedLiters=undated.reduce((s,x)=>s+x.liters,0);
  // Last 400L treated as after physical count based on user confirmation; other old deliveries excluded.
  const addedAfter=deliveries.filter(x=>!x.isCarryover&&x.liters===400).reduce((s,x)=>s+x.liters,0);
  const postConsumed=d?.records.find(x=>x.month==="میزان")?.consumedLiters??null;
@@ -17,6 +19,7 @@ export function SimpleDieselReport(){
  {q.isLoading&&<p>معلومات رااخیستل کېږي…</p>}{q.error&&<p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">د Google Sheet اړیکه ناکامه شوه. ریفریش وکړئ او د اتصال اجازه وګورئ.{d?" وروستي بریالي معلومات لاندې ساتل شوي.":""}</p>}
  {d&&<>
  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["مصرف",d.records.reduce((s,r)=>s+(r.consumedLiters??0),0)],["د جنراتور ساعتونه",d.records.reduce((s,r)=>s+(r.hours??0),0)],["ټول راوړل شوي",allDelivered],["د تېر کال پاتې",d.deliveries.filter(x=>x.isCarryover).reduce((s,x)=>s+x.liters,0)]].map(([label,n])=><article key={String(label)} className="dashboard-panel p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{f(Number(n))}</p></article>)}</div>
+ {undated.length>0&&<div role="status" className="rounded-xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-200"><strong>نوي ډیزل له نیمګړو معلوماتو سره ثبت شوي:</strong> {f(undatedLiters)} لیتره ({undated.length} ثبتونه). په ټول راوړل شوي حساب کې شامل دي، خو تر هغې چې په Google Sheet کې یې نېټه نه وي ثبت شوې، د فزیکي موجودۍ وروسته حساب کې نه جمع کېږي.</div>}
  <section className="dashboard-panel border-primary/30 p-5"><h2 className="font-bold">له وروستۍ فزیکي شمېرنې وروسته اټکلي موجودي</h2>
  <p className="mt-2 text-3xl font-black">{estimate===null?"نامعلومه":f(estimate)+" لیتره"}</p>
  <p className="mt-2 text-sm text-muted-foreground">{physical==null?"نامعلومه":f(physical)} + {f(addedAfter)} − {postConsumed===null?"نامعلوم":f(postConsumed)} لیتره</p>
