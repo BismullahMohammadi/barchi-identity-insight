@@ -1,3 +1,4 @@
+import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import { useMemo, useState } from "react";
 import { ChevronDown, Download, Printer, Search } from "lucide-react";
@@ -19,7 +20,7 @@ const PAGE_SIZE = 20;
  */
 export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange, dateRange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; dateRange?: DateFilter | undefined }) {
   const { table, mappingError } = useMemo(() => {
-    try { return { table: normalizeGrid(grid, title), mappingError: null as string | null }; }
+    try { return { table: normalizeGrid(resolveMappedGrid(grid,title), title), mappingError: null as string | null }; }
     catch (e) {
       return { table: normalizeGrid([]), mappingError: e instanceof Error ? e.message : "SHEET_MAPPING_MISMATCH" };
     }
@@ -46,6 +47,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const mainTotal = canSum && validRows.length > 0 ? sumColumn(validRows, primary) : null;
   const primaryLabel = canSum ? table.headers[primary] : null;
   const shownRows = filteredRows.slice(0, shown);
+  const subtotalRows=shownRows.filter(r=>!isTotalRow(r));
   const distributionTotals = title === "توزیع" && validRows.length ? {regular:sumColumn(validRows,1),services:sumColumn(validRows,2)} : null;
 
   function exportCsv() {
@@ -117,7 +119,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
             </div>
             <div className="max-h-[460px] w-full overflow-auto rounded-lg border">
               <Table>
-                <TableHeader className="sticky top-0 z-10 bg-muted">
+                <TableHeader className="sticky top-0 z-20 bg-muted shadow-sm">
                   <TableRow>{table.headers.map((name, i) => <TableHead key={i} className="min-w-24 whitespace-nowrap text-start font-semibold">{name}</TableHead>)}</TableRow>
                 </TableHeader>
                 <TableBody>
@@ -127,6 +129,11 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
                     </TableRow>
                   ))}
                 </TableBody>
+                {shownRows.length>0&&<tfoot className="sticky bottom-0 z-10 bg-secondary font-bold shadow-[0_-2px_6px_rgba(0,0,0,0.08)]">
+                 <TableRow>{table.headers.map((_,i)=><TableCell key={i} className="whitespace-nowrap border-t-2 py-3 text-sm">
+                  {i===table.labelCol?"د ښکاره قطارونو جمع":table.numericCols.includes(i)?fmt(sumColumn(subtotalRows,i)):""}
+                 </TableCell>)}</TableRow>
+                </tfoot>}
               </Table>
               {!shownRows.length && <p className="p-4 text-center text-sm text-muted-foreground">د دې انتخاب لپاره معلومات نشته.</p>}
             </div>
