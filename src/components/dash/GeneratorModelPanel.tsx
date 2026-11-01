@@ -55,7 +55,7 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
   async function submitReading(e: React.FormEvent) {
     e.preventDefault(); setRErr("");
     const j = parseJalali(rDate); const iso = j ? kabulJalaliToIso(j, rTime) : null;
-    if (!iso) { setRErr(MSG.INVALID_DATE!); return; }
+    if (!iso) { setRErr(MSG["INVALID_DATE"]!); return; }
     const payload = { reading_at: iso, meter_hours: Number(meter), rate_lph: rate ? Number(rate) : lastRate, measured_liters: measured.trim() ? Number(measured) : null, note: rNote };
     const v = validateReading(payload, readings);
     if (v) { setRErr(MSG[v] ?? "معلومات سم نه دي."); return; }
@@ -65,11 +65,11 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
   async function submitDelivery(e: React.FormEvent) {
     e.preventDefault(); setDErr("");
     const j = parseJalali(dDate); const iso = j ? kabulJalaliToIso(j, dTime) : null;
-    if (!iso) { setDErr(MSG.INVALID_DATE!); return; }
+    if (!iso) { setDErr(MSG["INVALID_DATE"]!); return; }
     const liters = Number(dLiters);
     if (!Number.isFinite(liters) || liters <= 0) { setDErr("د لیترو سمه اندازه ولیکئ."); return; }
     if (!dRef.trim()) { setDErr("د تایید شوي رسید/سند شمېره اړینه ده."); return; }
-    if (Date.parse(iso) <= Date.parse(GENERATOR_BASELINE.at)) { setDErr(MSG.DELIVERY_BEFORE_BASELINE!); return; }
+    if (Date.parse(iso) <= Date.parse(GENERATOR_BASELINE.at)) { setDErr(MSG["DELIVERY_BEFORE_BASELINE"]!); return; }
     if (!window.confirm(`تایید: ${fmt(liters)} لیتره ډیزل په ${dDate} — سند ${dRef}. دا یوازې هغه وخت ثبت کړئ چې تسلیمي جلا تایید شوې وي.`)) return;
     await deliveryM.mutateAsync({ data: { delivered_at: iso, liters, reference_no: dRef.trim(), supplier: dSupplier, note: dNote } }).catch(() => {});
   }
