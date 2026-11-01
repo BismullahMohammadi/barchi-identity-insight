@@ -2,7 +2,7 @@ import {parseJalali,jKey} from '@/lib/jalali';
 import {useQuery} from "@tanstack/react-query";
 import {getDieselSheetReport} from "@/lib/diesel-sheet.functions";
 export function SimpleDieselReport(){
- const q=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:60000,refetchOnWindowFocus:true,refetchOnReconnect:true,staleTime:0,retry:1});
+ const q=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport({data:{nonce:Date.now()}}),refetchInterval:60000,refetchOnWindowFocus:true,refetchOnReconnect:true,staleTime:0,retry:1});
  const d=q.data;
  const f=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
  const deliveries=d?.deliveries??[];

@@ -18,7 +18,7 @@ const types:Record<FuelEntry["kind"],string>={opening:"لومړنۍ موجودي
 export function FuelManagementPage(){
  const qc=useQueryClient();
  const q=useQuery({queryKey:["fuel-entries"],queryFn:()=>getFuelEntries(),refetchInterval:60000});
- const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
+ const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport({data:{nonce:Date.now()}}),refetchInterval:120000});
  const [kind,setKind]=useState<FuelEntry["kind"]>("received");
  const [view,setView]=useState<"overview"|"generator"|"sheet"|"register"|"history">("generator");
  const [date,setDate]=useState(dateNow);
