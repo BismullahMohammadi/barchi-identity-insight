@@ -2,13 +2,15 @@ import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fuel, Plus, RefreshCw, Download, BarChart3, ClipboardList, History, Info, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Fuel, Plus, RefreshCw, Download, BarChart3, ClipboardList, History, Info, ArrowDownToLine, ArrowUpFromLine, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getFuelEntries, addFuelEntry, type FuelEntry } from "@/lib/fuel.functions";
 import { getDieselSheetReport } from "@/lib/diesel-sheet.functions";
+import { GeneratorModelPanel } from "@/components/dash/GeneratorModelPanel";
+import { GENERATOR_BASELINE } from "@/lib/generator-model";
 
 const dateNow=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kabul",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const fmt=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
@@ -18,7 +20,7 @@ export function FuelManagementPage(){
  const q=useQuery({queryKey:["fuel-entries"],queryFn:()=>getFuelEntries(),refetchInterval:60000});
  const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
  const [kind,setKind]=useState<FuelEntry["kind"]>("received");
- const [view,setView]=useState<"overview"|"sheet"|"register"|"history">("overview");
+ const [view,setView]=useState<"overview"|"generator"|"sheet"|"register"|"history">("overview");
  const [date,setDate]=useState(dateNow);
  const [liters,setLiters]=useState("");
  const [reference,setReference]=useState("");
@@ -57,13 +59,18 @@ export function FuelManagementPage(){
     <p className="mt-2 text-sm leading-6 text-muted-foreground">د موجودۍ حساب، میاشتنی مصرف، نوي ثبتونه او د عملیاتو تاریخچه په جلا برخو کې.</p></div>
     <Button variant="outline" size="sm" onClick={()=>{void q.refetch();void diesel.refetch();}} disabled={q.isFetching||diesel.isFetching}><RefreshCw className={"h-4 w-4 "+(q.isFetching||diesel.isFetching?"animate-spin":"")}/>ټول تازه کړئ</Button></div>
   </header>
-  <nav className="grid grid-cols-2 gap-2 rounded-xl border bg-card p-2 sm:grid-cols-4" aria-label="د تېلو د مدیریت برخې">
-   {([{id:"overview",label:"عمومي کتنه",Icon:BarChart3},{id:"sheet",label:"مصرف او راوړل",Icon:ClipboardList},{id:"register",label:"نوی ثبت",Icon:Plus},{id:"history",label:"تاریخچه",Icon:History}] as const).map(tab=>
+  <nav className="grid grid-cols-2 gap-2 rounded-xl border bg-card p-2 sm:grid-cols-5" aria-label="د تېلو د مدیریت برخې">
+   {([{id:"overview",label:"عمومي کتنه",Icon:BarChart3},{id:"generator",label:"د جنراتور ماډل",Icon:Gauge},{id:"sheet",label:"مصرف او راوړل",Icon:ClipboardList},{id:"register",label:"نوی ثبت",Icon:Plus},{id:"history",label:"تاریخچه",Icon:History}] as const).map(tab=>
     <button key={tab.id} type="button" aria-current={view===tab.id?"page":undefined} onClick={()=>setView(tab.id)}
      className={"flex min-h-12 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-primary "+(view===tab.id?"bg-primary text-primary-foreground shadow-sm":"text-muted-foreground hover:bg-muted")}>
      <tab.Icon className="h-4 w-4"/>{tab.label}</button>)}
   </nav>
+  {view==="generator"&&<GeneratorModelPanel sheetDeliveries={deliveries}/>}
   {view==="overview"&&<section className="space-y-4" aria-label="د موجودۍ عمومي کتنه">
+    <button type="button" onClick={()=>setView("generator")} className="w-full rounded-2xl border-2 border-primary/40 bg-primary/5 p-4 text-start hover:bg-primary/10">
+     <p className="flex items-center gap-2 font-extrabold"><Gauge className="h-5 w-5 text-primary"/>تایید شوې مبدا: {GENERATOR_BASELINE.jalali} — {fmt(GENERATOR_BASELINE.liters)} لیتره، شمېرونکی {fmt(GENERATOR_BASELINE.meterHours)} ساعته، {fmt(GENERATOR_BASELINE.rateLph)} لیتر/ساعت</p>
+     <p className="mt-1 text-xs text-muted-foreground">تاریخي فزیکي شمېرنه، نه اوسنۍ موجودي. د ساعت شمېرونکي له لوستنو او تایید شویو راوړلو اټکل شوې موجودي لپاره کلیک وکړئ.</p>
+    </button>
     <div className="dashboard-panel space-y-4 p-4 sm:p-5">
      <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="text-lg font-extrabold">د Google Sheets د ډیزلو حساب</h2><p className="mt-1 text-xs text-muted-foreground">د «مصرف دیزل» اصلي ثبتونه — د ۱۴۰۵ کال</p></div>
       <Button variant="outline" size="sm" onClick={()=>setView("sheet")}>مفصل راپور</Button></div>
@@ -81,7 +88,7 @@ export function FuelManagementPage(){
      </>}
     </div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-     {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["اوسنۍ موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
+     {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["د لاسي دفتر موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
       <div key={label} className="dashboard-panel barchi-card-motion barchi-enter p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
       <p className="mt-3 text-2xl font-black tabular-nums">{q.isLoading?"…":<AnimatedNumber value={value} maximumFractionDigits={2}/>} <span className="text-xs font-semibold">لیتره</span></p></div>)}
     </div>
