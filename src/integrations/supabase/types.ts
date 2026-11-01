@@ -110,6 +110,72 @@ export type Database = {
         }
         Relationships: []
       }
+      generator_diesel_deliveries: {
+        Row: {
+          created_at: string
+          delivered_at: string
+          id: string
+          liters: number
+          note: string | null
+          reference_no: string
+          supplier: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at: string
+          id?: string
+          liters: number
+          note?: string | null
+          reference_no: string
+          supplier?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string
+          id?: string
+          liters?: number
+          note?: string | null
+          reference_no?: string
+          supplier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      generator_meter_readings: {
+        Row: {
+          created_at: string
+          id: string
+          measured_liters: number | null
+          meter_hours: number
+          note: string | null
+          rate_lph: number
+          reading_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measured_liters?: number | null
+          meter_hours: number
+          note?: string | null
+          rate_lph: number
+          reading_at: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measured_liters?: number | null
+          meter_hours?: number
+          note?: string | null
+          rate_lph?: number
+          reading_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       problem_visitors: {
         Row: {
           created_at: string
