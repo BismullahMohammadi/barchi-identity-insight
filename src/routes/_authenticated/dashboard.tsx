@@ -30,8 +30,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,"archive-scan":ScanLine,bank:Landmark,annual:CalendarRange};
-  const cls = "group flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
-  const active = { className: `${cls} border-sidebar-border bg-sidebar-accent text-sidebar-primary font-bold` };
+  const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
+  const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
   const groups = [
     { title: "ورځني او عملیاتي راپورونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
     { title: "مالي راپورونه", slugs: ["bank"] },
@@ -154,7 +154,7 @@ function DashboardLayout() {
         </Sheet>
       )}
       <div className="print-full flex-1 min-w-0">
-        <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
+        <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b border-border/80 bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur-xl sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
             <Menu aria-hidden="true" />
           </Button>
