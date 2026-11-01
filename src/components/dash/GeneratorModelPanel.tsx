@@ -35,9 +35,6 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
   const lastHours = readings.at(-1)?.meter_hours ?? GENERATOR_BASELINE.meterHours;
 
   const [entryType,setEntryType]=useState<"meter"|"delivery">("meter");
-  const [showDetails,setShowDetails]=useState(false);
-  const [showHistory,setShowHistory]=useState(false);
-  const [showWarnings,setShowWarnings]=useState(false);
   const [rDate, setRDate] = useState(() => formatJ(todayJalali()));
   const [rTime, setRTime] = useState(nowTime);
   const [meter, setMeter] = useState("");
