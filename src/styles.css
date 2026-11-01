@@ -229,3 +229,18 @@
  .dark .dashboard-kpi:hover {border-color:#659c99;}
 }
 @media (prefers-reduced-motion:reduce) {body {background-attachment:initial;}}
+
+/* Keep column labels visible while scrolling any report table inside an overflow container. */
+@layer components {
+  .dashboard-panel table thead,
+  .dashboard-panel [data-slot="table"] thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--muted);
+  }
+  .dashboard-panel table tfoot {
+    background: var(--secondary);
+    border-top: 2px solid var(--border);
+  }
+}
