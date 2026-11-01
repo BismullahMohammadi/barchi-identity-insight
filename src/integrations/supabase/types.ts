@@ -14,13 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_report_checks: {
+        Row: {
+          checked_at: string
+          error_text: string | null
+          insijam: Json | null
+          missing_count: number
+          registration: Json | null
+          report_date: string
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          error_text?: string | null
+          insijam?: Json | null
+          missing_count?: number
+          registration?: Json | null
+          report_date: string
+          status: string
+        }
+        Update: {
+          checked_at?: string
+          error_text?: string | null
+          insijam?: Json | null
+          missing_count?: number
+          registration?: Json | null
+          report_date?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      dashboard_todos: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          legacy_key: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          legacy_key?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          legacy_key?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fuel_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          generator_hours: number | null
+          id: string
+          kind: string
+          liters: number
+          note: string | null
+          reference_no: string | null
+          supplier: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          generator_hours?: number | null
+          id?: string
+          kind: string
+          liters: number
+          note?: string | null
+          reference_no?: string | null
+          supplier?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          generator_hours?: number | null
+          id?: string
+          kind?: string
+          liters?: number
+          note?: string | null
+          reference_no?: string | null
+          supplier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      problem_visitors: {
+        Row: {
+          created_at: string
+          father_name: string
+          full_name: string
+          id: string
+          issue: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          father_name: string
+          full_name: string
+          id?: string
+          issue: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          father_name?: string
+          full_name?: string
+          id?: string
+          issue?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_fuel_entry: {
+        Args: {
+          p_date: string
+          p_hours?: number
+          p_kind: string
+          p_liters: number
+          p_note?: string
+          p_reference?: string
+          p_supplier?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
