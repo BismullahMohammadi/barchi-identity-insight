@@ -7,6 +7,7 @@ export type DashboardSettings = {
   compactCards: boolean;
   showTodo: boolean;
   showReportHealth: boolean;
+  tablePageSize: 10 | 20 | 50 | 100;
 };
 export const DEFAULT_SETTINGS: DashboardSettings = Object.freeze({
   refreshSeconds: 60,
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS: DashboardSettings = Object.freeze({
   compactCards: false,
   showTodo: true,
   showReportHealth: true,
+  tablePageSize: 20,
 });
 const KEY = "barchi-dashboard-preferences-v1";
 let snapshot: DashboardSettings = DEFAULT_SETTINGS;
@@ -28,6 +30,7 @@ function parseSettings(value: unknown): DashboardSettings {
     ? obj.refreshSeconds as DashboardSettings["refreshSeconds"] : 60;
   return {
     refreshSeconds,
+    tablePageSize: [10,20,50,100].includes(Number(obj.tablePageSize)) ? obj.tablePageSize as DashboardSettings["tablePageSize"] : 20,
     showDailyVisitors: typeof obj.showDailyVisitors === "boolean" ? obj.showDailyVisitors : true,
     showCharts: typeof obj.showCharts === "boolean" ? obj.showCharts : true,
     compactCards: typeof obj.compactCards === "boolean" ? obj.compactCards : false,

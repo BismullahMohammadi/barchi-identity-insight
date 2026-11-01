@@ -1,3 +1,4 @@
+import {useDashboardSettings} from "@/lib/dashboard-settings";
 import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import { useMemo, useState } from "react";
@@ -12,13 +13,13 @@ import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, toCsv, type Cell, type DateFilter } from "@/lib/normalize";
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 2 });
-const PAGE_SIZE = 20;
 
 /**
  * Keep report pages actionable, not a second full Google Sheet.
  * Show the main verified metric first. Full rows/exports are optional.
  */
 export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange, dateRange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; dateRange?: DateFilter | undefined }) {
+  const settings=useDashboardSettings();
   const { table, mappingError } = useMemo(() => {
     try { return { table: normalizeGrid(resolveMappedGrid(grid,title), title), mappingError: null as string | null }; }
     catch (e) {
@@ -29,7 +30,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const month = selectedMonth ?? internalMonth;
   const setMonth = onSelectedMonthChange ?? setInternalMonth;
   const [search, setSearch] = useState("");
-  const [shown, setShown] = useState(PAGE_SIZE);
+  const [shown, setShown] = useState(20);
   const [expanded, setExpanded] = useState(false);
 
   const range = useMemo(() => dateRange ?? (month === "all"
@@ -46,7 +47,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const validRows = rows.filter(row => !isTotalRow(row));
   const mainTotal = canSum && validRows.length > 0 ? sumColumn(validRows, primary) : null;
   const primaryLabel = canSum ? table.headers[primary] : null;
-  const shownRows = filteredRows.slice(0, shown);
+  const shownRows = filteredRows.slice(0, Math.max(shown,settings.tablePageSize));
   const subtotalRows=shownRows.filter(r=>!isTotalRow(r));
   const distributionTotals = title === "توزیع" && validRows.length ? {regular:sumColumn(validRows,1),services:sumColumn(validRows,2)} : null;
 
@@ -79,7 +80,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
         {table.dateCol >= 0 && (
           <div className="space-y-1">
             <label htmlFor="report-month" className="text-xs text-muted-foreground">د راپور میاشت</label>
-            <Select value={month} onValueChange={value => { setMonth(value); setShown(PAGE_SIZE); }}>
+            <Select value={month} onValueChange={value => { setMonth(value); setShown(settings.tablePageSize); }}>
               <SelectTrigger id="report-month" className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ټول کال</SelectItem>
@@ -140,7 +141,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>{fmt(shownRows.length)} له {fmt(filteredRows.length)} قطارونو</span>
               {shownRows.length < filteredRows.length && (
-                <Button size="sm" variant="ghost" onClick={() => setShown(n => n + PAGE_SIZE)}>نور ښکاره کړئ</Button>
+                <Button size="sm" variant="ghost" onClick={() => setShown(n => n + settings.tablePageSize)}>نور ښکاره کړئ</Button>
               )}
             </div>
           </div>
