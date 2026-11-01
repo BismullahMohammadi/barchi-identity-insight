@@ -6,7 +6,7 @@ import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settin
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
-import { accessQuery } from "@/lib/queries";
+import { accessQuery, recentReferralsQuery } from "@/lib/queries";
 import { TABS } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 import { ScheduledReportNotice } from "@/components/dash/ScheduledReportNotice";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardLayout,
 });
 
-function Nav({ onNavigate }: { onNavigate?: () => void }) {
+function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?:number }) {
   const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,"archive-scan":ScanLine,bank:Landmark,annual:CalendarRange};
   const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
@@ -43,7 +43,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
         <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري بهیر
       </Link>
       <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
-        <AlertTriangle className="h-4 w-4 shrink-0" /> مشکلاتي مراجعین
+        <AlertTriangle className="h-4 w-4 shrink-0" /> <span className="min-w-0 flex-1">مشکلاتي مراجعین</span>{matchCount>0&&<span aria-label={`د احتمالي تطابق شمېر ${matchCount}`} className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-extrabold text-amber-950 dark:bg-amber-800 dark:text-white">{matchCount>99?"99+":matchCount}</span>}
       </Link>
       <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}>
         <Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت
@@ -104,6 +104,8 @@ function DashboardLayout() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const access = useQuery(accessQuery);
+  const matchesQuery=useQuery({...recentReferralsQuery(60_000),enabled:access.data?.allowed===true});
+  const matchCount=matchesQuery.data?.potentialMatches?.length??0;
 
   async function signOut() {
     await qc.cancelQueries();
@@ -126,7 +128,7 @@ function DashboardLayout() {
       <aside id="desktop-dashboard-sidebar" className={"no-print shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground "+(sidebarCollapsed?"hidden":"hidden w-64 lg:block")}>
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
-          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav /></div>
+          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} /></div>
           <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>
         </div>
       </aside>
@@ -135,7 +137,7 @@ function DashboardLayout() {
           <SheetTitle className="sr-only">مینو</SheetTitle>
           <div className="flex max-h-full flex-col">
             {brand}
-            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav onNavigate={() => setOpen(false)} /></div>
+            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} onNavigate={() => setOpen(false)} /></div>
             <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>
           </div>
         </SheetContent>
