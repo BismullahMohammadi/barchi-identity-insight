@@ -1,3 +1,4 @@
+import {parseJalali,jKey} from '@/lib/jalali';
 import {useQuery} from "@tanstack/react-query";
 import {getDieselSheetReport} from "@/lib/diesel-sheet.functions";
 export function SimpleDieselReport(){
@@ -9,7 +10,7 @@ export function SimpleDieselReport(){
  const undated=deliveries.filter(x=>!x.isCarryover&&!x.date.trim());
  const undatedLiters=undated.reduce((s,x)=>s+x.liters,0);
  // Last 400L treated as after physical count based on user confirmation; other old deliveries excluded.
- const addedAfter=deliveries.filter(x=>!x.isCarryover&&x.liters===400).reduce((s,x)=>s+x.liters,0);
+ const addedAfter=deliveries.filter(x=>{const dt=parseJalali(x.date);return !x.isCarryover&&dt!==null&&jKey(dt)>14050631;}).reduce((s,x)=>s+x.liters,0);
  const postConsumed=d?.records.find(x=>x.month==="میزان")?.consumedLiters??null;
  const physical=d?.reconciliation.physicalStock;
  const estimate=physical!==null&&physical!==undefined&&postConsumed!==null?physical+addedAfter-postConsumed:null;
