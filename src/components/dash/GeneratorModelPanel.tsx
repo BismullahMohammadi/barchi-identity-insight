@@ -75,9 +75,10 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
   }
 
   const baselineKey = 14050631;
+  const sheetDate = (d: DieselDelivery) => parseJalali(d.date) ?? parseJalali((`${d.date} ${d.document}`.match(/14\d\d\/\d{1,2}\/\d{1,2}/) ?? [""])[0]);
   const sheetUncounted = sheetDeliveries.filter(d => {
     if (d.isCarryover) return false;
-    const j = parseJalali(d.date); return !j || jKey(j) > baselineKey || d.liters === 510;
+    const j = sheetDate(d); return !j || jKey(j) > baselineKey || d.liters === 510;
   });
   const staleDays = model.lastReadingAt ? Math.floor((Date.now() - Date.parse(model.lastReadingAt)) / 86400000) : null;
   const gaps: string[] = [];
@@ -169,7 +170,7 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
         <tbody>{[...deliveries].reverse().map(d => <tr key={d.id} className="border-b border-border/50"><td className="py-2" dir="ltr">{isoToKabulJalali(d.delivered_at)}</td><td className="font-bold">{fmt(d.liters)}</td><td>{d.reference_no}</td><td>{d.supplier || "—"}</td><td className="text-xs">{d.note || "—"}</td></tr>)}</tbody></table></div>}
       {sheetUncounted.length > 0 && <div className="rounded-xl border border-dashed p-3 text-xs leading-6">
         <p className="font-bold">د Google Sheet ثبتونه چې نه دي شمېرل شوي (جلا تایید ته اړتیا):</p>
-        <ul className="list-disc ps-5">{sheetUncounted.map(d => <li key={d.code + "-" + d.sequence}>{d.date || "بې‌نېټې"} — {fmt(d.liters)} لیتره{d.liters === 510 ? " (متنازع)" : ""}{d.document ? " — " + d.document : ""}</li>)}</ul></div>}
+        <ul className="list-disc ps-5">{sheetUncounted.map(d => <li key={d.code + "-" + d.sequence}>{(() => { const j = sheetDate(d); return j ? formatJ(j) : "بې‌نېټې"; })()} — {fmt(d.liters)} لیتره{d.liters === 510 ? " (متنازع)" : ""}{d.document ? " — " + d.document : ""}</li>)}</ul></div>}
       <p className="text-xs text-muted-foreground">ټول ثبتونه د پلټنې لپاره نه بدلېدونکي او نه حذف کېدونکي دي. نېټې په میلادي (UTC) ساتل کېږي او په هجري لمریز ښودل کېږي.</p>
     </div>
   </section>;
