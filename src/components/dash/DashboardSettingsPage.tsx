@@ -1,3 +1,5 @@
+import {SHEET_COLUMNS} from "@/lib/sheet-columns";
+import {COLUMN_ALIAS_KEY,readAliases,type HeaderAliases} from "@/lib/sheet-mapping-preferences";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, RotateCcw, ShieldCheck, Settings2, Monitor, LayoutDashboard, CalendarClock, Check, Info, ListTodo, Activity, Users, PanelsTopLeft, BarChart3 } from "lucide-react";
@@ -34,6 +36,15 @@ export function DashboardSettingsPage() {
  const [refreshing,setRefreshing]=useState(false);
  const [resetConfirm,setResetConfirm]=useState(false);
  const [saved,setSaved]=useState(false);
+ const [aliasSheet,setAliasSheet]=useState(Object.keys(SHEET_COLUMNS)[0]??"");
+ const [aliases,setAliases]=useState<HeaderAliases>(readAliases);
+ const [aliasSaved,setAliasSaved]=useState(false);
+ function updateAlias(expected:string,newLabel:string){
+  setAliases(prev=>({...prev,[aliasSheet]:{...(prev[aliasSheet]??{}),[expected]:newLabel}}));setAliasSaved(false);
+ }
+ function saveAliases(){
+  try{window.localStorage.setItem(COLUMN_ALIAS_KEY,JSON.stringify(aliases));setAliasSaved(true);void queryClient.invalidateQueries({queryKey:["sheet"]});}catch{setAliasSaved(false);}
+ }
  function update<K extends keyof DashboardSettings>(key: K, value: DashboardSettings[K]) {
   saveDashboardSettings({ ...settings, [key]: value });
   setSaved(true);
@@ -97,6 +108,23 @@ export function DashboardSettingsPage() {
    </div>
 
    <div className="space-y-5">
+    <section className="dashboard-panel space-y-4 p-5" aria-label="د Google Sheets کالمونو تنظیمات">
+     <div><h2 className="font-extrabold">د شیټ کالمونو نومونه</h2>
+     <p className="mt-1 text-xs leading-6 text-muted-foreground">که د Google Sheet د کالم نوم بدل شي، دلته یې نوی نوم ولیکئ. ترتیب بدل شوي معلوم کالمونه په نوم پېژندل کېږي. دا تنظیم یوازې په همدې براوزر کې خوندي کېږي.</p></div>
+     <label className="grid gap-1 text-sm font-bold">راپور
+      <select className="h-10 rounded-lg border bg-background px-3" value={aliasSheet} onChange={e=>{setAliasSheet(e.target.value);setAliasSaved(false);}}>
+       {Object.keys(SHEET_COLUMNS).filter(s=>s!=="ریاست ته ګزارش").map(s=><option key={s} value={s}>{s}</option>)}
+      </select>
+     </label>
+     <div className="max-h-72 space-y-2 overflow-y-auto">
+      {Object.values(SHEET_COLUMNS[aliasSheet]?.expectedHeaders??{}).map(expected=><label key={expected} className="grid gap-1 text-xs">
+       <span className="font-semibold">{expected}</span>
+       <input className="h-10 rounded-lg border bg-background px-3 text-sm" value={aliases[aliasSheet]?.[expected]??""} onChange={e=>updateAlias(expected,e.target.value)} placeholder="د شیټ نوی کالم نوم (که بدل شوی وي)"/>
+      </label>)}
+     </div>
+     <Button onClick={saveAliases}>د کالمونو تنظیمات خوندي کړئ</Button>
+     {aliasSaved&&<p role="status" className="text-xs text-primary">تنظیمات خوندي شول. راپور بیا تازه کړئ.</p>}
+    </section>
     <section className="dashboard-panel space-y-4 p-5" aria-labelledby="settings-security-title">
      <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary"/><h2 id="settings-security-title" className="font-extrabold">حساب او امنیت</h2></div>
      <div className="rounded-xl bg-muted/40 p-3"><p className="text-xs text-muted-foreground">ننوتلی حساب</p><p dir="ltr" className="mt-1 break-all text-start text-sm font-bold">{access.data?.email??"—"}</p></div>
