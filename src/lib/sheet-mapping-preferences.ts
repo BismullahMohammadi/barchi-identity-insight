@@ -22,8 +22,9 @@ export function resolveMappedGrid(grid:string[][],title:string):string[][]{
  }
  // Only reorder when every numeric/date/label index has a known mapping.
  const cols=[cfg.dateCol,cfg.labelCol,...cfg.metricCols].filter(i=>i>=0);
+ const reordered=Array.from(indices).some(([to,from])=>to!==from);
  for(const col of cols){if(!indices.has(col)){
-   if(col<rawHeader.length&&!Array.from(indices.values()).includes(col))indices.set(col,col);
+   if(!reordered&&col<rawHeader.length&&!Array.from(indices.values()).includes(col))indices.set(col,col);
    else throw new Error("COLUMN_MAPPING_REQUIRED: "+String(rawHeader[col]??col+1));
  }}
  const width=Math.max(rawHeader.length,...cols.map(x=>x+1),0);
