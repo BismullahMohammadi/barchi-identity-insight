@@ -154,30 +154,36 @@ function DashboardLayout() {
         </Sheet>
       )}
       <div className="print-full flex-1 min-w-0">
-        <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b border-border/80 bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur-xl sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
-            <Menu aria-hidden="true" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="hidden lg:inline-flex" onClick={toggleSidebar}
-            aria-label={sidebarCollapsed?"سایډ بار خلاص کړئ":"سایډ بار بند کړئ"}
-            aria-expanded={!sidebarCollapsed} aria-controls="desktop-dashboard-sidebar">
-            {sidebarCollapsed?<SidebarOpenIcon aria-hidden="true" className="h-5 w-5"/>:<PanelRightClose aria-hidden="true" className="h-5 w-5"/>}
-          </Button>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold leading-6">{pageTitle}</p>
-            <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
-          </div>
-          <time className="shrink-0 rounded-full border border-border bg-secondary/65 px-3 py-1.5 text-xs font-bold text-secondary-foreground sm:text-sm" aria-label="نننۍ هجري شمسي نېټه">{today?`${today.d} ${JALALI_MONTHS[today.m-1]} ${today.y}`:"…"}</time>
-          {access.data?.allowed && showTools && (
-            <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" aria-haspopup="dialog" aria-expanded={toolsOpen} title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50":"border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"):"")}>
-              <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
-              <span>دندې او راپورونه</span>
-              {reportsReady && <span className="hidden border-s border-current/20 ps-2 text-xs md:inline">{reportsComplete ? "بشپړ" : "نیمګړي"}</span>}
+        <header className="no-print sticky top-0 z-20 border-b border-border bg-card/95 shadow-sm backdrop-blur-xl" aria-label="د سیستم ټاپ بار">
+          <div className="mx-auto flex min-h-16 w-full max-w-[1600px] items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
+            <Button variant="ghost" size="icon" className="shrink-0 rounded-xl lg:hidden" onClick={() => setOpen(true)} aria-label="مینو خلاص کړئ"><Menu aria-hidden="true" className="h-5 w-5"/></Button>
+            <Button type="button" variant="ghost" size="icon" className="hidden shrink-0 rounded-xl lg:inline-flex" onClick={toggleSidebar}
+              aria-label={sidebarCollapsed?"سایډ بار خلاص کړئ":"سایډ بار بند کړئ"} aria-expanded={!sidebarCollapsed} aria-controls="desktop-dashboard-sidebar">
+              {sidebarCollapsed?<SidebarOpenIcon aria-hidden="true" className="h-5 w-5"/>:<PanelRightClose aria-hidden="true" className="h-5 w-5"/>}
             </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={signOut} aria-label="له سیستم څخه وتل">
-            <LogOut aria-hidden="true" /> <span className="hidden sm:inline">وتل</span>
-          </Button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-extrabold leading-6 text-foreground sm:text-base">{pageTitle}</p>
+              <p className="hidden truncate text-xs text-muted-foreground md:block">د دشت برچي د الکترونیکي تذکرو مرکز</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <time className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-xl border border-border bg-secondary/60 px-2 text-xs font-bold text-secondary-foreground sm:px-3 sm:text-sm" aria-label="نننۍ هجري شمسي نېټه">
+                <CalendarRange aria-hidden="true" className="hidden h-4 w-4 sm:block"/>
+                {today?`${today.d} ${JALALI_MONTHS[today.m-1]} ${today.y}`:"…"}
+              </time>
+              {access.data?.allowed && showTools && (
+                <Button variant="outline" size="icon" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه" aria-haspopup="dialog" aria-expanded={toolsOpen}
+                  title={reportsReady?(reportsComplete?"د راپورونو بشپړتیا تایید شوې":"د راپورونو بشپړتیا نیمګړې ده"):"دندې او راپورونه"}
+                  className="h-9 w-9 shrink-0 rounded-xl sm:h-10 sm:w-auto sm:gap-2 sm:px-3">
+                  <PanelRightOpen aria-hidden="true" className="h-4 w-4"/>
+                  <span className="hidden text-sm font-semibold sm:inline">دندې</span>
+                  {reportsReady&&<span className={"hidden h-2 w-2 rounded-full md:inline-block "+(reportsComplete?"bg-emerald-500":"bg-rose-500")} aria-hidden="true"/>}
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-xl sm:h-10 sm:w-auto sm:gap-2 sm:px-3" onClick={signOut} aria-label="له سیستم څخه وتل">
+                <LogOut aria-hidden="true" className="h-4 w-4"/><span className="hidden text-sm sm:inline">وتل</span>
+              </Button>
+            </div>
+          </div>
         </header>
         {access.data?.allowed && <ScheduledReportNotice />}
         {access.data?.allowed && <NewProblemVisitorNotice />}
