@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import {getDieselSheetReport} from "@/lib/diesel-sheet.functions";
 export function SimpleDieselReport(){
- const q=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
+ const q=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:60000,refetchOnWindowFocus:true,refetchOnReconnect:true,staleTime:0,retry:1});
  const d=q.data;
  const f=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
  const deliveries=d?.deliveries??[];
@@ -12,8 +12,9 @@ export function SimpleDieselReport(){
  const physical=d?.reconciliation.physicalStock;
  const estimate=physical!==null&&physical!==undefined&&postConsumed!==null?physical+addedAfter-postConsumed:null;
  return <main className="mx-auto max-w-6xl space-y-4">
- <header className="flex items-center justify-between gap-3"><div><h1 className="text-2xl font-bold">د ډیزلو راپور</h1><p className="text-sm text-muted-foreground">سرچینه: Google Sheets — مصرف دیزل</p></div><button className="rounded-full border px-4 py-2" onClick={()=>q.refetch()} disabled={q.isFetching}>ریفریش</button></header>
- {q.isLoading&&<p>معلومات رااخیستل کېږي…</p>}{q.error&&<p role="alert">د شیټ معلومات ونه لوستل شول.</p>}
+ <header className="flex items-center justify-between gap-3"><div><h1 className="text-2xl font-bold">د ډیزلو راپور</h1><p className="text-sm text-muted-foreground">سرچینه: Google Sheets — مصرف دیزل</p></div><button className="rounded-full border px-4 py-2" onClick={()=>q.refetch()} disabled={q.isFetching}>{q.isFetching?"تازه کېږي…":"ریفریش"}</button></header>
+ {d&&<p role="status" className="text-xs text-muted-foreground">{q.isFetching?"له Google Sheet څخه تازه کېږي…":`له شیټ سره وصل · وروستی تازه کول: ${new Intl.DateTimeFormat("ps-AF",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit"}).format(new Date(d.fetchedAt))}`} · هره دقیقه اتومات تازه کېږي</p>}
+ {q.isLoading&&<p>معلومات رااخیستل کېږي…</p>}{q.error&&<p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">د Google Sheet اړیکه ناکامه شوه. ریفریش وکړئ او د اتصال اجازه وګورئ.{d?" وروستي بریالي معلومات لاندې ساتل شوي.":""}</p>}
  {d&&<>
  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["مصرف",d.records.reduce((s,r)=>s+(r.consumedLiters??0),0)],["د جنراتور ساعتونه",d.records.reduce((s,r)=>s+(r.hours??0),0)],["ټول راوړل شوي",allDelivered],["د تېر کال پاتې",d.deliveries.filter(x=>x.isCarryover).reduce((s,x)=>s+x.liters,0)]].map(([label,n])=><article key={String(label)} className="dashboard-panel p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{f(Number(n))}</p></article>)}</div>
  <section className="dashboard-panel border-primary/30 p-5"><h2 className="font-bold">له وروستۍ فزیکي شمېرنې وروسته اټکلي موجودي</h2>
