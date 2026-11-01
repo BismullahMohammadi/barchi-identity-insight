@@ -51,7 +51,7 @@ export function parseDieselReconciliation(rows:unknown[][]):DieselReconciliation
   physicalStock:physicalValue?numeric(physicalValue[1]?.replace("٫",".")):null,
   physicalStockDate:physicalDate?.[0]??null,deliveryAmountError:rows.some(row=>row.some(cell=>String(cell)==="#VALUE!"))};
 }
-export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context}):Promise<MonthlyDieselReport>=>{
+export const getDieselSheetReport=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((x:{nonce:number})=>{if(!Number.isFinite(x?.nonce))throw new Error("INVALID_REFRESH");return x;}).handler(async({context}):Promise<MonthlyDieselReport>=>{
  setResponseHeader("Cache-Control","private, no-store");
  const claims=context.claims as {email?:string}|null;
  if(!isEmailAllowed(claims?.email??null,process.env["OWNER_EMAILS"]))throw new Error("ACCESS_DENIED");
