@@ -68,6 +68,22 @@ export const getDieselSheetReport=createServerFn({method:"POST"}).middleware([re
  const json=await res.json() as {valueRanges?:{values?:unknown[][]}[]};
  const rows=json.valueRanges?.[0]?.values;
  if(!rows?.length)throw new Error("DIESEL_SHEET_EMPTY");
+ // UNFORMATTED_VALUE can turn date-formatted cells into Sheets serial numbers.
+ // Fetch visible dates separately, retaining raw numeric values for accurate consumption.
+ const formattedParams=new URLSearchParams(params);
+ formattedParams.set("valueRenderOption","FORMATTED_VALUE");
+ const formattedResponse=await fetch(`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${SPREADSHEET_ID}/values:batchGet?${formattedParams}`,{headers:{Authorization:`Bearer ${lovable}`,"X-Connection-Api-Key":key},cache:"no-store"});
+ if(!formattedResponse.ok)throw new Error("DIESEL_DATES_ERROR_"+formattedResponse.status);
+ const formatted=await formattedResponse.json() as {valueRanges?:{values?:unknown[][]}[]};
+ const shown=formatted.valueRanges?.[0]?.values??[];
+ for(let i=0;i<rows.length;i++){
+  const display=shown[i];
+  if(!display)continue;
+  // Dates in delivery table are column C, and in consumption table B/C.
+  // Preserve formatted strings only for dates; exact decimals remain numeric.
+  for(const col of [1,2])if(display[col]!=null&&rows[i])rows[i]![col]=display[col];
+ }
+
  const records=parseDieselSheet(rows),deliveries=parseDieselDeliveries(rows);
  if(!records.length||!deliveries.length)throw new Error("DIESEL_SHEET_FORMAT_CHANGED");
  return {source:"مصرف دیزل",records,deliveries,reconciliation:parseDieselReconciliation(rows),fetchedAt:Date.now()};
