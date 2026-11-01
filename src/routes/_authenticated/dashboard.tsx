@@ -33,9 +33,8 @@ function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?
   const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
   const groups = [
-    { title: "ورځني او عملیاتي راپورونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
-    { title: "مالي راپورونه", slugs: ["bank"] },
-    { title: "آرشیف او کلني راپورونه", slugs: ["archive-scan", "annual"] },
+    { title: "اصلي عملیاتي راپورونه", slugs: ["total", "identity", "control", "services", "distribution", "bank"] },
+    { title: "نور راپورونه", slugs: ["arrivals", "archive-scan", "annual"] },
   ];
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
@@ -44,9 +43,6 @@ function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?
       </Link>
       <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
         <AlertTriangle className="h-4 w-4 shrink-0" /> <span className="min-w-0 flex-1">مشکلاتي مراجعین</span>{matchCount>0&&<span aria-label={`د احتمالي تطابق شمېر ${matchCount}`} className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-extrabold text-amber-950 dark:bg-amber-800 dark:text-white">{matchCount>99?"99+":matchCount}</span>}
-      </Link>
-      <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}>
-        <Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت
       </Link>
       {groups.map((group) => (
         <div key={group.title} className="space-y-1">
@@ -64,6 +60,10 @@ function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?
           })}
         </div>
       ))}
+      <div className="space-y-1 border-t border-sidebar-border pt-3">
+        <p className="px-3 pb-1 text-xs font-semibold text-sidebar-foreground/60">اداري او مرستندویه برخې</p>
+        <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت</Link>
+      </div>
     </nav>
   );
 }
