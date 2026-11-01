@@ -20,7 +20,7 @@ export function FuelManagementPage(){
  const q=useQuery({queryKey:["fuel-entries"],queryFn:()=>getFuelEntries(),refetchInterval:60000});
  const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
  const [kind,setKind]=useState<FuelEntry["kind"]>("received");
- const [view,setView]=useState<"overview"|"sheet"|"register"|"history">("overview");
+ const [view,setView]=useState<"overview"|"generator"|"sheet"|"register"|"history">("overview");
  const [date,setDate]=useState(dateNow);
  const [liters,setLiters]=useState("");
  const [reference,setReference]=useState("");
@@ -88,7 +88,7 @@ export function FuelManagementPage(){
      </>}
     </div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-     {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["اوسنۍ موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
+     {([["لومړنۍ موجودي او ترلاسه شوي",received,ArrowDownToLine],["مصرف شوي تېل",used,ArrowUpFromLine],["د لاسي دفتر موجودي",balance,Fuel],["د ټاکلې مودې مصرف",monthOut,History]] as const).map(([label,value,Icon])=>
       <div key={label} className="dashboard-panel barchi-card-motion barchi-enter p-4 sm:p-5"><div className="flex items-center gap-2 text-muted-foreground"><Icon className="h-4 w-4"/><p className="text-xs">{label}</p></div>
       <p className="mt-3 text-2xl font-black tabular-nums">{q.isLoading?"…":<AnimatedNumber value={value} maximumFractionDigits={2}/>} <span className="text-xs font-semibold">لیتره</span></p></div>)}
     </div>
