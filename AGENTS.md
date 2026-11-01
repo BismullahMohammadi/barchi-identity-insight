@@ -22,3 +22,7 @@ python3 .agents/skills/ui-ux-pro-max/scripts/search.py "card table shadcn" --sta
 ```
 
 Project requirements override generic presets: Pashto RTL, legible Vazirmatn, Afghan Jalali dates, uncluttered management KPIs, clear missing-data states, sensitive private records, keyboard/mobile usability, and truthful data visualization. The skill provides design recommendations; it does **not** change production UI automatically. Do not send project data to external searches or services.
+
+## Generator diesel model
+- Generator stock is modeled separately (`generator_meter_readings`, `generator_diesel_deliveries`, logic in `src/lib/generator-model.ts`) from `fuel_entries` and the Google Sheet — why: prevents double-counting; only separately confirmed post-baseline deliveries count.
+- Both generator tables are append-only (triggers block UPDATE/DELETE) and validate baseline/chronology/monotonic meter in BEFORE INSERT triggers — why: audit trail and integrity even if the client is bypassed.
