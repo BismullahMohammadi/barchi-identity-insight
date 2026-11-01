@@ -57,10 +57,18 @@ export const getDieselSheetReport=createServerFn({method:"GET"}).middleware([req
  if(!isEmailAllowed(claims?.email??null,process.env["OWNER_EMAILS"]))throw new Error("ACCESS_DENIED");
  const lovable=process.env["LOVABLE_API_KEY"],key=process.env["GOOGLE_SHEETS_API_KEY"];
  if(!lovable||!key)throw new Error("SHEETS_NOT_CONNECTED");
- const range=encodeURIComponent("'مصرف دیزل'!A1:I250");
- const url=`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS`;
- const res=await fetch(url,{headers:{Authorization:`Bearer ${lovable}`,"X-Connection-Api-Key":key}});
+ const params=new URLSearchParams();
+ params.append("ranges","\'مصرف دیزل\'!A1:I250");
+ params.set("valueRenderOption","UNFORMATTED_VALUE");
+ params.set("majorDimension","ROWS");
+ let res:Response;
+ try{res=await fetch(`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${SPREADSHEET_ID}/values:batchGet?${params}`,{headers:{Authorization:`Bearer ${lovable}`,"X-Connection-Api-Key":key},cache:"no-store"});}
+ catch{throw new Error("DIESEL_NETWORK_FAILED");}
  if(!res.ok)throw new Error("DIESEL_SHEET_ERROR_"+res.status);
- const json=await res.json() as {values?:unknown[][]};
- return {source:"مصرف دیزل",records:parseDieselSheet(json.values??[]),deliveries:parseDieselDeliveries(json.values??[]),reconciliation:parseDieselReconciliation(json.values??[]),fetchedAt:Date.now()};
+ const json=await res.json() as {valueRanges?:{values?:unknown[][]}[]};
+ const rows=json.valueRanges?.[0]?.values;
+ if(!rows?.length)throw new Error("DIESEL_SHEET_EMPTY");
+ const records=parseDieselSheet(rows),deliveries=parseDieselDeliveries(rows);
+ if(!records.length||!deliveries.length)throw new Error("DIESEL_SHEET_FORMAT_CHANGED");
+ return {source:"مصرف دیزل",records,deliveries,reconciliation:parseDieselReconciliation(rows),fetchedAt:Date.now()};
 });
