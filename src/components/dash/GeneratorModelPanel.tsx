@@ -34,6 +34,7 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
   const lastRate = readings.at(-1)?.rate_lph ?? GENERATOR_BASELINE.rateLph;
   const lastHours = readings.at(-1)?.meter_hours ?? GENERATOR_BASELINE.meterHours;
 
+  const [entryType,setEntryType]=useState<"meter"|"delivery">("meter");
   const [rDate, setRDate] = useState(() => formatJ(todayJalali()));
   const [rTime, setRTime] = useState(nowTime);
   const [meter, setMeter] = useState("");
@@ -89,16 +90,17 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
   if (model.pendingDeliveries.length) gaps.push(`${fmt(model.pendingDeliveries.length)} تایید شوی راوړل له وروستۍ لوستنې وروسته دی؛ تر راتلونکې لوستنې پورې په اټکل کې نه شمېرل کېږي.`);
   if (sheetUncounted.length) gaps.push(`په Google Sheet کې ${fmt(sheetUncounted.length)} راوړل شوي ثبتونه شته چې له مبدا وروسته، بې‌نېټې یا متنازع (۵۱۰ لیتره) دي — په اټکل کې نه شمېرل کېږي تر څو جلا تایید او دلته ثبت نه شي.`);
 
-  return <section className="space-y-4" aria-label="د جنراتور د ډیزلو د موجودۍ ماډل">
-    <div className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4 sm:p-5">
+  return <section className="space-y-4" aria-label="د جنراتور د ډیزلو ساده مدیریت">
+    <div className="dashboard-panel p-4 sm:p-5"><h2 className="text-lg font-black">د ډیزلو حساب</h2><p className="mt-1 text-sm text-muted-foreground">د جنراتور ساعتونه ثبت کړئ، نوي ډیزل اضافه کړئ او پاتې موجودي وګورئ.</p></div>
+    <details className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5"><summary className="cursor-pointer font-bold text-primary">تایید شوې لومړنۍ موجودي: ۴۹۷ لیتره · ۵۱۱۳ ساعتونه · ۱۴۰۵/۰۶/۳۱</summary><div className="mt-3">
       <div className="flex flex-wrap items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /><h2 className="text-lg font-extrabold">تایید شوې تاریخي مبدا (فزیکي شمېرنه)</h2>
         <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">تایید شوی</span></div>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {([["نېټه", `${GENERATOR_BASELINE.jalali}`, `میلادي ${GENERATOR_BASELINE.gregorian}`], ["فزیکي موجودي", `${fmt(GENERATOR_BASELINE.liters)} لیتره`, "په هغه ورځ"], ["د ساعت شمېرونکی", `${fmt(GENERATOR_BASELINE.meterHours)} ساعته`, "مبدا"], ["مصرف کچه", `${fmt(GENERATOR_BASELINE.rateLph)} لیتر/ساعت`, "لومړنۍ کچه"]] as const).map(([l, v, s]) =>
           <div key={l} className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">{l}</p><p className="mt-1 text-lg font-black tabular-nums">{v}</p><p className="text-xs text-muted-foreground">{s}</p></div>)}
       </div>
-      <p className="mt-3 text-xs leading-6 text-muted-foreground">دا د یوې ټاکلې ورځې تاریخي فزیکي شمېرنه ده، اوسنۍ موجودي نه ده. د لاسي دفتر موجودي او د Google Sheet تاریخي ثبتونه له دې ماډل سره نه یوځای کېږي.</p>
-    </div>
+      <p className="mt-3 text-xs leading-6 text-muted-foreground">دا تاریخي فزیکي موجودي ده، نه د نن ورځې موجودي.</p>
+    </div></details>
 
     <div className="dashboard-panel space-y-3 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><Gauge className="h-5 w-5 text-primary" /><h2 className="text-lg font-extrabold">اټکل شوې موجودي (ماډل)</h2>
@@ -115,13 +117,17 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
         {model.lastMeasured && <div className={"rounded-xl border p-3 text-sm " + (Math.abs(model.lastMeasured.discrepancy ?? 0) > 20 ? "border-destructive/50 bg-destructive/5" : "")}>
           وروستۍ فزیکي اندازه ({isoToKabulJalali(model.lastMeasured.reading_at)}): <strong>{fmt(model.lastMeasured.measured_liters ?? 0)} L</strong> · اټکل: <strong>{fmt(model.lastMeasured.estimatedBalance)} L</strong> · توپیر (فزیکي − اټکل): <strong className="tabular-nums">{(model.lastMeasured.discrepancy ?? 0) > 0 ? "+" : ""}{fmt(model.lastMeasured.discrepancy ?? 0)} L</strong></div>}
       </>}
-      {gaps.length > 0 && <div role="status" className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+      {gaps.length > 0 && <details className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-sm"><summary className="cursor-pointer font-bold">د حساب نیمګړتیاوې ({gaps.length})</summary><div className="mt-2">
         <p className="mb-1 flex items-center gap-2 font-bold"><AlertTriangle className="h-4 w-4" />نیمګړي شواهد</p>
-        <ul className="list-disc space-y-1 pe-1 ps-5 text-xs leading-6">{gaps.map(g => <li key={g}>{g}</li>)}</ul></div>}
+        <ul className="list-disc space-y-1 pe-1 ps-5 text-xs leading-6">{gaps.map(g => <li key={g}>{g}</li>)}</ul></div></details>}
     </div>
 
-    <div className="grid gap-4 lg:grid-cols-2">
-      <form onSubmit={submitReading} className="dashboard-panel space-y-3 p-4 sm:p-5" aria-label="د ساعت شمېرونکي نوې لوستنه">
+    <div className="dashboard-panel space-y-3 p-4 sm:p-5"><h3 className="font-extrabold">نوی ثبت</h3><div className="grid grid-cols-2 gap-2">
+      <button type="button" onClick={()=>setEntryType("meter")} aria-pressed={entryType==="meter"} className={"rounded-xl border p-3 text-sm font-bold "+(entryType==="meter"?"border-primary bg-primary text-primary-foreground":"border-border bg-card")}>د جنراتور ساعتونه</button>
+      <button type="button" onClick={()=>setEntryType("delivery")} aria-pressed={entryType==="delivery"} className={"rounded-xl border p-3 text-sm font-bold "+(entryType==="delivery"?"border-primary bg-primary text-primary-foreground":"border-border bg-card")}>نوي ډیزل راوړل</button>
+    </div></div>
+    <div className="mx-auto max-w-2xl">
+      {entryType==="meter"&&<form onSubmit={submitReading} className="dashboard-panel space-y-3 p-4 sm:p-5" aria-label="د ساعت شمېرونکي نوې لوستنه">
         <h3 className="flex items-center gap-2 font-extrabold"><Gauge className="h-4 w-4" />د ساعت شمېرونکي لوستنه</h3>
         <div className="grid grid-cols-2 gap-3">
           <label className="text-sm">نېټه (هجري لمریز)<Input required dir="ltr" inputMode="numeric" value={rDate} onChange={e => setRDate(e.target.value)} placeholder="1405/07/01" /></label>
@@ -134,8 +140,8 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
         <p className="text-xs text-muted-foreground">کچه د هغې دورې لپاره ده چې په دې لوستنه پای ته رسېږي. خالي پرېښودل = وروستۍ کچه ({fmt(lastRate)}).</p>
         {rErr && <p role="alert" className="text-sm text-destructive">{rErr}</p>}
         <Button type="submit" className="w-full" disabled={readingM.isPending}>{readingM.isPending ? "ثبتېږي…" : "لوستنه ثبت کړئ"}</Button>
-      </form>
-      <form onSubmit={submitDelivery} className="dashboard-panel space-y-3 p-4 sm:p-5" aria-label="تایید شوی راوړل شوی ډیزل">
+      </form>}
+      {entryType==="delivery"&&<form onSubmit={submitDelivery} className="dashboard-panel space-y-3 p-4 sm:p-5" aria-label="تایید شوی راوړل شوی ډیزل">
         <h3 className="flex items-center gap-2 font-extrabold"><PackagePlus className="h-4 w-4" />تایید شوی راوړل شوی ډیزل</h3>
         <p className="text-xs leading-6 text-muted-foreground">یوازې هغه ډیزل چې له ۱۴۰۵/۰۶/۳۱ وروسته راغلی او تسلیمي یې په سند جلا تایید شوې. د Sheet یا لاسي دفتر ثبتونه دلته بیا مه ولیکئ مګر دا چې تایید شوي وي.</p>
         <div className="grid grid-cols-2 gap-3">
@@ -148,10 +154,10 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
         <label className="block text-sm">یادښت<Textarea maxLength={2000} value={dNote} onChange={e => setDNote(e.target.value)} placeholder="څوک یې تایید کړ…" /></label>
         {dErr && <p role="alert" className="text-sm text-destructive">{dErr}</p>}
         <Button type="submit" className="w-full" variant="outline" disabled={deliveryM.isPending}>{deliveryM.isPending ? "ثبتېږي…" : "تایید شوی راوړل ثبت کړئ"}</Button>
-      </form>
+      </form>}
     </div>
 
-    <div className="dashboard-panel space-y-3 p-4 sm:p-5">
+    <details className="dashboard-panel space-y-3 p-4 sm:p-5"><summary className="cursor-pointer font-extrabold">پخواني ثبتونه او تفصیلي راپور</summary><div className="mt-3 space-y-3">
       <h3 className="font-extrabold">د لوستنو او دورو تاریخچه</h3>
       {model.rows.length === 0 ? <p className="rounded-lg bg-muted/40 p-6 text-center text-sm text-muted-foreground">تر اوسه لوستنه نشته. لومړۍ لوستنه له {fmt(GENERATOR_BASELINE.meterHours)} ساعتونو سره پرتله کېږي.</p> :
         <div className="overflow-x-auto"><table className="w-full min-w-[820px] border-collapse text-sm">
@@ -172,6 +178,6 @@ export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: Dies
         <p className="font-bold">د Google Sheet ثبتونه چې نه دي شمېرل شوي (جلا تایید ته اړتیا):</p>
         <ul className="list-disc ps-5">{sheetUncounted.map(d => <li key={d.code + "-" + d.sequence}>{(() => { const j = sheetDate(d); return j ? formatJ(j) : "بې‌نېټې"; })()} — {fmt(d.liters)} لیتره{d.liters === 510 ? " (متنازع)" : ""}{d.document ? " — " + d.document : ""}</li>)}</ul></div>}
       <p className="text-xs text-muted-foreground">ټول ثبتونه د پلټنې لپاره نه بدلېدونکي او نه حذف کېدونکي دي. نېټې په میلادي (UTC) ساتل کېږي او په هجري لمریز ښودل کېږي.</p>
-    </div>
+    </div></details>
   </section>;
 }

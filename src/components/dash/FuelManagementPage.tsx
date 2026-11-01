@@ -20,7 +20,7 @@ export function FuelManagementPage(){
  const q=useQuery({queryKey:["fuel-entries"],queryFn:()=>getFuelEntries(),refetchInterval:60000});
  const diesel=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport(),refetchInterval:120000});
  const [kind,setKind]=useState<FuelEntry["kind"]>("received");
- const [view,setView]=useState<"overview"|"generator"|"sheet"|"register"|"history">("overview");
+ const [view,setView]=useState<"overview"|"generator"|"sheet"|"register"|"history">("generator");
  const [date,setDate]=useState(dateNow);
  const [liters,setLiters]=useState("");
  const [reference,setReference]=useState("");
@@ -54,13 +54,13 @@ export function FuelManagementPage(){
  }
  return <div className="mx-auto max-w-6xl space-y-5 pb-8">
   <header className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
-   <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-primary">د مرکز د جنراتور حسابداري</p>
+   <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-primary">ساده او منظم حساب</p>
     <h1 className="mt-1 flex items-center gap-2 text-2xl font-extrabold"><Fuel className="h-7 w-7 text-primary"/>د تېلو او ډیزلو مدیریت</h1>
-    <p className="mt-2 text-sm leading-6 text-muted-foreground">د موجودۍ حساب، میاشتنی مصرف، نوي ثبتونه او د عملیاتو تاریخچه په جلا برخو کې.</p></div>
+    <p className="mt-2 text-sm leading-6 text-muted-foreground">د جنراتور ساعتونه او نوي ډیزل ثبت کړئ؛ پاتې موجودي او راپورونه په آسانۍ وګورئ.</p></div>
     <Button variant="outline" size="sm" onClick={()=>{void q.refetch();void diesel.refetch();}} disabled={q.isFetching||diesel.isFetching}><RefreshCw className={"h-4 w-4 "+(q.isFetching||diesel.isFetching?"animate-spin":"")}/>ټول تازه کړئ</Button></div>
   </header>
-  <nav className="grid grid-cols-2 gap-2 rounded-xl border bg-card p-2 sm:grid-cols-5" aria-label="د تېلو د مدیریت برخې">
-   {([{id:"overview",label:"عمومي کتنه",Icon:BarChart3},{id:"generator",label:"د جنراتور ماډل",Icon:Gauge},{id:"sheet",label:"مصرف او راوړل",Icon:ClipboardList},{id:"register",label:"نوی ثبت",Icon:Plus},{id:"history",label:"تاریخچه",Icon:History}] as const).map(tab=>
+  <nav className="grid grid-cols-3 gap-2 rounded-2xl border bg-card p-2" aria-label="د تېلو د مدیریت برخې">
+   {([{id:"generator",label:"لنډیز او ثبت",Icon:Gauge},{id:"sheet",label:"د شیټ راپور",Icon:ClipboardList},{id:"overview",label:"پخوانی حساب",Icon:History}] as const).map(tab=>
     <button key={tab.id} type="button" aria-current={view===tab.id?"page":undefined} onClick={()=>setView(tab.id)}
      className={"flex min-h-12 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-primary "+(view===tab.id?"bg-primary text-primary-foreground shadow-sm":"text-muted-foreground hover:bg-muted")}>
      <tab.Icon className="h-4 w-4"/>{tab.label}</button>)}
