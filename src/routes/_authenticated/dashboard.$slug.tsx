@@ -8,7 +8,7 @@ import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-setting
 import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
 import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
-import { FuelManagementPage } from "@/components/dash/FuelManagementPage";
+import { SimpleDieselReport } from "@/components/dash/SimpleDieselReport";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
@@ -33,7 +33,7 @@ function TabPage() {
   const { slug } = Route.useParams();
   if (slug === "settings") return <DashboardSettingsPage />;
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;
-  if (slug === "fuel-management") return <FuelManagementPage />;
+  if (slug === "fuel-management") return <SimpleDieselReport />;
   return <ReportPage slug={slug} />;
 }
 
