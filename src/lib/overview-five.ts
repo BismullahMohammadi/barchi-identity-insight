@@ -4,7 +4,7 @@ import type { JDate } from "./jalali";
 
 export type OverviewSource = { slug: string; title: string; grid: string[][] };
 export type MetricValue = {value:number|null;change:number|null};
-export type OverviewFive = {individual:MetricValue;newCards:MetricValue;income:MetricValue;identity:MetricValue;distribution:MetricValue};
+export type OverviewFive = {individual:MetricValue;newCards:MetricValue;income:MetricValue;identity:MetricValue;distribution:MetricValue;duplicateRenewal:MetricValue};
 
 export function sourceMetric(sources: OverviewSource[], slug: string, col: number, period: OverviewPeriod, today: JDate, yesterday: JDate): MetricValue {
   const source = sources.find(s => s.slug === slug);
@@ -31,6 +31,7 @@ export function deriveOverviewFive(sources: OverviewSource[], period: OverviewPe
     : {value:null,change:null};
   return {
     individual,
+    duplicateRenewal: duplicate.value!==null && renewal.value!==null ? {value:duplicate.value+renewal.value,change:null} : {value:null,change:null},
     newCards:newlyPassed,
     income:sourceMetric(sources,"bank",6,period,today,yesterday),
     identity:sourceMetric(sources,"identity",10,period,today,yesterday),

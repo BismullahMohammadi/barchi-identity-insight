@@ -3,8 +3,8 @@ import "@/components/dash/dashboard-motion.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowUpLeft, ChartNoAxesColumn, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
-import { SyncBar } from "@/components/dash/SyncBar";
+import { ArrowUpLeft, ChartNoAxesColumn, RefreshCw, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
 import { holidayOfToday } from "@/lib/holidays";
@@ -34,6 +34,7 @@ const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 
 type SummaryMetric = {slug:string;label:string;value:number|null;change:number|null;icon:typeof Files;tone:"teal"|"blue"|"amber"|"violet"|"emerald";money?:boolean;description?:string};
 const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
+ {slug:"services",label:"مثنی او تجدید",value:null,change:null,icon:Files,tone:"violet",description:"د خدماتو مجموعي ثبتونه"},
  {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"blue",description:"یوازې پاس شوي"},
  {slug:"bank",label:"ټول عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د نوي ثبت او خدماتو عواید"},
  {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"violet"},
@@ -89,10 +90,11 @@ function Overview() {
   const unavailable = !overview;
   const mainCards:SummaryMetric[] = overview ? [
     {...PLACEHOLDERS[0]!,...overview.individual},
-    {...PLACEHOLDERS[1]!,...overview.newCards},
-    {...PLACEHOLDERS[2]!,...overview.income},
-    {...PLACEHOLDERS[3]!,...overview.identity},
-    {...PLACEHOLDERS[4]!,...overview.distribution},
+    {...PLACEHOLDERS[1]!,...overview.duplicateRenewal},
+    {...PLACEHOLDERS[2]!,...overview.newCards},
+    {...PLACEHOLDERS[3]!,...overview.income},
+    {...PLACEHOLDERS[4]!,...overview.identity},
+    {...PLACEHOLDERS[5]!,...overview.distribution},
   ] : PLACEHOLDERS;
   const cardStyle = {
     teal: {root:"dashboard-kpi-teal",icon:"bg-teal-700/10 text-teal-800",number:"text-teal-900"},
@@ -138,16 +140,10 @@ function Overview() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-3 pb-6 sm:space-y-4">
-      <section className="rounded-xl border border-border bg-card px-4 py-3 shadow-card sm:px-5">
-        <div className="relative">
-          <h1 className="font-display text-xl font-extrabold text-foreground md:text-2xl">د مرکز کاري بهیر</h1>
-        </div>
-      </section>
-
       {holidayOfToday(today)&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-semibold">{holidayOfToday(today)}</p>}
-      <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={refreshMs} />
-
-      <div className="flex flex-wrap items-center gap-1 rounded-xl border bg-card p-1.5 shadow-card" role="group" aria-label="د راپور موده">
+      {q.error&&<p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errorText(q.error)}</p>}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2 shadow-card">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1" role="group" aria-label="د راپور موده">
         {([
           ["all", "ټول کال"],
           ["month", "روانه میاشت"],
@@ -161,6 +157,10 @@ function Overview() {
             {label}
           </button>
         ))}
+        </div>
+        <Button variant="outline" size="sm" className="ms-auto shrink-0 rounded-full" onClick={()=>void q.refetch()} disabled={q.isFetching}>
+          <RefreshCw className={"h-4 w-4 "+(q.isFetching?"animate-spin":"")}/>{q.isFetching?"ریفریش کېږي…":"ریفریش"}
+        </Button>
       </div>
 
       {unavailable && !q.isLoading && (
@@ -173,7 +173,7 @@ function Overview() {
         <ChartNoAxesColumn aria-hidden="true" className="h-5 w-5 text-primary"/>
         <h2 className="text-lg font-extrabold">مهم مدیریتي شاخصونه</h2>
       </div>
-      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {mainCards.map(renderCard)}
       </div>
 

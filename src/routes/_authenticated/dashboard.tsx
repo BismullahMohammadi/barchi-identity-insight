@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { todayJalali, JALALI_MONTHS } from "@/lib/jalali";
 import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -29,8 +30,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,"archive-scan":ScanLine,bank:Landmark,annual:CalendarRange};
-  const cls = "group flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-colors outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-primary";
-  const active = { className: `${cls} border-sidebar-border bg-sidebar-accent text-sidebar-primary font-bold` };
+  const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
+  const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
   const groups = [
     { title: "ورځني او عملیاتي راپورونه", slugs: ["total", "identity", "control", "services", "distribution", "arrivals"] },
     { title: "مالي راپورونه", slugs: ["bank"] },
@@ -84,6 +85,8 @@ function DashboardLayout() {
   const pageTitle = currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
   const completion = useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
+  const [today,setToday]=useState<ReturnType<typeof todayJalali>|null>(null);
+  useEffect(()=>{const update=()=>setToday(todayJalali());update();const timer=window.setInterval(update,60_000);return ()=>window.clearInterval(timer);},[]);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{
     if(typeof window==="undefined")return false;
     try{return window.localStorage.getItem("barchi-sidebar-collapsed")==="1";}catch{return false;}
@@ -151,7 +154,7 @@ function DashboardLayout() {
         </Sheet>
       )}
       <div className="print-full flex-1 min-w-0">
-        <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
+        <header className="no-print sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-2 border-b border-border/80 bg-card/95 px-3 py-2.5 shadow-sm backdrop-blur-xl sm:flex-nowrap sm:gap-3 sm:px-5 md:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="مینو">
             <Menu aria-hidden="true" />
           </Button>
@@ -164,6 +167,7 @@ function DashboardLayout() {
             <p className="text-sm font-bold leading-6">{pageTitle}</p>
             <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
           </div>
+          <time className="shrink-0 rounded-full border border-border bg-secondary/65 px-3 py-1.5 text-xs font-bold text-secondary-foreground sm:text-sm" aria-label="نننۍ هجري شمسي نېټه">{today?`${today.d} ${JALALI_MONTHS[today.m-1]} ${today.y}`:"…"}</time>
           {access.data?.allowed && showTools && (
             <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" aria-haspopup="dialog" aria-expanded={toolsOpen} title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50":"border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"):"")}>
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
