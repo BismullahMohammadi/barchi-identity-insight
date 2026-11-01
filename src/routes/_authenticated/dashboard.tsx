@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { todayJalali, JALALI_MONTHS } from "@/lib/jalali";
 import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -84,6 +85,8 @@ function DashboardLayout() {
   const pageTitle = currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
   const completion = useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
+  const [today,setToday]=useState<ReturnType<typeof todayJalali>|null>(null);
+  useEffect(()=>{const update=()=>setToday(todayJalali());update();const timer=window.setInterval(update,60_000);return ()=>window.clearInterval(timer);},[]);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{
     if(typeof window==="undefined")return false;
     try{return window.localStorage.getItem("barchi-sidebar-collapsed")==="1";}catch{return false;}
@@ -164,6 +167,7 @@ function DashboardLayout() {
             <p className="text-sm font-bold leading-6">{pageTitle}</p>
             <p dir="ltr" className="hidden max-w-xs truncate text-start text-xs text-muted-foreground sm:block">{access.data?.email ?? ""}</p>
           </div>
+          <time className="shrink-0 rounded-full border border-border bg-secondary/65 px-3 py-1.5 text-xs font-bold text-secondary-foreground sm:text-sm" aria-label="نننۍ هجري شمسي نېټه">{today?`${today.d} ${JALALI_MONTHS[today.m-1]} ${today.y}`:"…"}</time>
           {access.data?.allowed && showTools && (
             <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه پرانیزئ" aria-haspopup="dialog" aria-expanded={toolsOpen} title={reportsReady?(reportsComplete?"د دواړو مدیریتونو راپورونه بشپړ دي":"د راپورونو بشپړتیا نیمګړې ده"):"د راپورونو حالت نه دی تایید شوی"} className={"shrink-0 gap-1.5 font-semibold transition-colors "+(reportsReady?(reportsComplete?"border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50":"border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"):"")}>
               <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
