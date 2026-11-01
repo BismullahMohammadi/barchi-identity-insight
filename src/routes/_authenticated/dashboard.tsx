@@ -11,6 +11,7 @@ import { TABS } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 import { ScheduledReportNotice } from "@/components/dash/ScheduledReportNotice";
 import { NewProblemVisitorNotice } from "@/components/dash/NewProblemVisitorNotice";
+import { ProblemNotificationBell } from "@/components/dash/ProblemNotificationBell";
 import { useDashboardSettings } from "@/lib/dashboard-settings";
 import { useStaffCompletionMonitor } from "@/lib/staff-completion-alerts";
 
@@ -172,6 +173,7 @@ function DashboardLayout() {
                 <CalendarRange aria-hidden="true" className="hidden h-4 w-4 sm:block"/>
                 {today?`${today.d} ${JALALI_MONTHS[today.m-1]} ${today.y}`:"…"}
               </time>
+              {access.data?.allowed && <ProblemNotificationBell matches={matchesQuery.data?.potentialMatches??[]}/>}
               {access.data?.allowed && showTools && (
                 <Button variant="outline" size="icon" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه" aria-haspopup="dialog" aria-expanded={toolsOpen}
                   title={reportsReady?(reportsComplete?"د راپورونو بشپړتیا تایید شوې":"د راپورونو بشپړتیا نیمګړې ده"):"دندې او راپورونه"}
