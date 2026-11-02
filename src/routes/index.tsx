@@ -80,11 +80,11 @@ function Landing() {
           <Lock className="h-3.5 w-3.5" /> خصوصي — یوازې مالک
         </span>
         <h1 className="font-display text-4xl font-extrabold leading-tight md:text-6xl">
-          د دشت برچي eNID مرکز
-          <span className="block text-[#0b6b74]">تحلیلي ډشبورډ ۱۴۰۵</span>
+          د دشت برچي د الکترونیکي تذکرو مرکز
+          <span className="block text-[#0b6b74]">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
         </h1>
         <p className="mt-6 max-w-xl text-lg opacity-85">
-          د تثبت هویت، عوایدو، کنټرول، خدماتو او توزیع ژوندي شمېرې — مستقیم د راپور شیټ څخه، یوازې د لوستلو لپاره.
+          د اسنادو چک، تثبت هویت، عوایدو، ثبت نام، کنټرول کیفیت، خدمات پس از توزیع او توزیع ژوندي شمېرې — مستقیم د راپور شیټ څخه، یوازې د حلیل لپاره.
         </p>
         {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
         <div className="mt-10 flex flex-wrap gap-3">
