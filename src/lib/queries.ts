@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import {readReferralCellPreference} from "./referral-cell";
+import {readReferralCellPreference,readSourceCell,REGISTRATION_CELL_KEY} from "./referral-cell";
 import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness,getInsijamDailyCompleteness,getStateReportForYesterday,getRecentReferrals } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
@@ -22,7 +22,7 @@ export const sheetQuery = (slugs: string[], refreshMs = REFRESH_MS) =>
 
 export const dailyFormsQuery = (refreshMs = REFRESH_MS) => queryOptions({
   queryKey: ["daily-forms"],
-  queryFn: () => getDailyForms({data:{cell:readReferralCellPreference()}}),
+  queryFn: () => getDailyForms({data:{cell:readReferralCellPreference(),nonce:Date.now()}}),
   refetchInterval: refreshMs,
   refetchIntervalInBackground: false,
   retry: 1,
@@ -30,7 +30,7 @@ export const dailyFormsQuery = (refreshMs = REFRESH_MS) => queryOptions({
 
 export const dailyCoordinationQuery = (refreshMs = REFRESH_MS) => queryOptions({
   queryKey: ["daily-coordination"],
-  queryFn: () => getDailyCoordination(),
+  queryFn: () => getDailyCoordination({data:{cell:readSourceCell(REGISTRATION_CELL_KEY),nonce:Date.now()}}),
   refetchInterval: refreshMs,
   refetchIntervalInBackground: false,
   retry: 1,
