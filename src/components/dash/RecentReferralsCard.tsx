@@ -91,16 +91,23 @@ function ReferralCard({
           ) : group ? (
             <>
               <People group={group} shown={shown} />
-              {group.people.length > 5 && (
-                <div className="mt-3 flex justify-center">
+              {group.people.length > 0 && (
+                <div className="mt-3 flex flex-col items-center gap-1">
                   {shown < group.people.length ? (
                     <Button type="button" size="sm" variant="outline" onClick={() => setShown((current) => Math.min(current + 5, group.people.length))}>
                       نور وګورئ ({group.people.length - shown} پاتې)
                     </Button>
-                  ) : (
+                  ) : shown > 5 ? (
                     <Button type="button" size="sm" variant="ghost" onClick={() => setShown(5)}>
                       یوازې وروستي ۵ وښایئ
                     </Button>
+                  ) : (
+                    <>
+                      <Button type="button" size="sm" variant="outline" disabled>
+                        نور وګورئ
+                      </Button>
+                      <p className="text-xs text-muted-foreground">نور مراجعین نشته.</p>
+                    </>
                   )}
                 </div>
               )}
