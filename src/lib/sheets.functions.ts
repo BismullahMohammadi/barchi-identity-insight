@@ -140,6 +140,7 @@ export const getDailyCoordination = createServerFn({ method: "POST" })
     const {row,column}=cellIndex(chosen);
     const raw=body.values?.[row]?.[column];
     const count=raw===undefined||raw===null||String(raw).trim()==="" ? null : String(raw).trim();
+    if(count!==null&&!/^[0-9۰-۹٠-٩٬, ]+$/.test(count))throw new Error("COORDINATION_CELL_NOT_NUMERIC");
     return {
       tabName:match.name,
       date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,
