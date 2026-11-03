@@ -9,6 +9,7 @@ import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./mont
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab } from "./daily-forms";
+import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
 import type {ProblemVisitor} from "./problem-visitors.functions";

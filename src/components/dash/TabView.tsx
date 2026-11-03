@@ -109,7 +109,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
               <div className="relative min-w-40 flex-1 sm:max-w-xs">
                 <Search aria-hidden className="absolute start-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input aria-label="په راپور کې پلټنه" placeholder="په جدول کې پلټنه" className="min-h-11 ps-9"
-                  value={search} onChange={event => { setSearch(event.target.value); setShown(PAGE_SIZE); }} />
+                  value={search} onChange={event => { setSearch(event.target.value); setShown(settings.tablePageSize); }} />
               </div>
               <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filteredRows.length}>
                 <Download className="h-4 w-4" /> CSV
