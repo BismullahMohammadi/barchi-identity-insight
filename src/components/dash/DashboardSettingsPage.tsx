@@ -7,8 +7,8 @@ import {useDashboardSettings,saveDashboardSettings,resetDashboardSettings,type D
 import {SHEET_COLUMNS} from "@/lib/sheet-columns";
 import {readAliases,COLUMN_ALIAS_KEY,type HeaderAliases} from "@/lib/sheet-mapping-preferences";
 import {accessQuery} from "@/lib/queries";
-import {getDailyForms} from "@/lib/sheets.functions";
-import {REFERRAL_CELL_KEY,normalizeReferralCell,readReferralCellPreference} from "@/lib/referral-cell";
+import {getDailyForms,getDailyCoordination} from "@/lib/sheets.functions";
+import {REFERRAL_CELL_KEY,REGISTRATION_CELL_KEY,normalizeReferralCell,readReferralCellPreference,readSourceCell} from "@/lib/referral-cell";
 
 type Section="general"|"reports"|"sheets"|"account";
 const sections=[{id:"general",label:"عمومي",Icon:Settings2},{id:"reports",label:"راپورونه او جدولونه",Icon:Table2},{id:"sheets",label:"Google Sheets",Icon:FileSpreadsheet},{id:"account",label:"حساب او ساتنه",Icon:ShieldCheck}] as const;
@@ -26,13 +26,17 @@ export function DashboardSettingsPage(){
  const [cellBusy,setCellBusy]=useState(false);
  const [cellResult,setCellResult]=useState("");
  const [cellError,setCellError]=useState("");
+ const [registrationCell,setRegistrationCell]=useState(()=>readSourceCell(REGISTRATION_CELL_KEY));
+ const [registrationResult,setRegistrationResult]=useState("");
+ const [registrationError,setRegistrationError]=useState("");
+ const [registrationBusy,setRegistrationBusy]=useState(false);
  function update<K extends keyof DashboardSettings>(key:K,value:DashboardSettings[K]){saveDashboardSettings({...settings,[key]:value});setSaved(true);}
  async function refreshAll(){setBusy(true);try{await Promise.all(["sheet","diesel-sheet-report","daily-forms","daily-coordination","recent-referrals","problem-visitors","staff-report-completeness","insijam-report-completeness","state-report-yesterday"].map(k=>qc.invalidateQueries({queryKey:[k]})));}finally{setBusy(false);}}
  async function testReferralCell(){
    setCellBusy(true);setCellError("");setCellResult("");
    try{
     const cell=normalizeReferralCell(referralCell);
-    const result=await getDailyForms({data:{cell}});
+    const result=await getDailyForms({data:{cell,nonce:Date.now()}});
     if(!result.tabName)throw new Error("د نېټې شیټ ونه موندل شو");
     setCellResult((result.ah2??"—")+" · "+(result.cell??"—")+" · "+result.tabName);
    }catch(e){setCellError(String(e instanceof Error?e.message:e));}
@@ -46,6 +50,24 @@ export function DashboardSettingsPage(){
     setReferralCell(cell);setCellError("");setCellResult("");
     void qc.invalidateQueries({queryKey:["daily-forms"]});
    }catch(e){setCellError(String(e instanceof Error?e.message:e));}
+ }
+ async function testRegistrationCell(){
+  setRegistrationBusy(true);setRegistrationError("");setRegistrationResult("");
+  try{
+   const result=await getDailyCoordination({data:{cell:normalizeReferralCell(registrationCell),nonce:Date.now()}});
+   if(!result.tabName||!result.count||!/^[0-9۰-۹٠-٩٬, ]+$/.test(result.count))throw new Error("په ټاکلي سیل کې عدد ونه موندل شو");
+   setRegistrationResult(result.count+" · "+(result.cell??"G3")+" · "+result.tabName);
+  }catch(e){setRegistrationError(String(e instanceof Error?e.message:e));}
+  finally{setRegistrationBusy(false);}
+ }
+ function saveRegistrationCell(){
+  try{
+   const cell=normalizeReferralCell(registrationCell);
+   if(cell)window.localStorage.setItem(REGISTRATION_CELL_KEY,cell);
+   else window.localStorage.removeItem(REGISTRATION_CELL_KEY);
+   setRegistrationCell(cell);setRegistrationError("");setRegistrationResult("");
+   void qc.invalidateQueries({queryKey:["daily-coordination"]});
+  }catch(e){setRegistrationError(String(e instanceof Error?e.message:e));}
  }
  function saveAliases(){try{window.localStorage.setItem(COLUMN_ALIAS_KEY,JSON.stringify(aliases));setAliasSaved(true);void qc.invalidateQueries({queryKey:["sheet"]});}catch{setAliasSaved(false);}}
  const flags=[{key:"showDailyVisitors",label:"ورځني مراجعین",Icon:Users},{key:"showCharts",label:"ګرافونه",Icon:BarChart3},{key:"compactCards",label:"کوچني کارتونه",Icon:PanelsTopLeft},{key:"showTodo",label:"زما دندې",Icon:ListTodo},{key:"showReportHealth",label:"د راپورونو بشپړتیا",Icon:Activity}] as const;
@@ -95,6 +117,20 @@ export function DashboardSettingsPage(){
      {cellResult&&<p role="status" className="mt-2 text-sm font-semibold text-primary">لوستل شوی شمېر: {cellResult}</p>}
      {cellError&&<p role="alert" className="mt-2 text-xs text-destructive">{cellError}</p>}
    </div>
+   <div className="rounded-xl border p-4">
+     <h2 className="text-sm font-extrabold">ثبت‌نام ته معرفي شوي مراجعین — د شمېر سیل</h2>
+     <label className="mt-3 grid max-w-xs gap-1 text-xs font-semibold">سیل (اختیاري)
+      <input dir="ltr" className="h-11 rounded-xl border bg-background px-3 text-start text-sm" placeholder="اصلي G3" value={registrationCell} onChange={e=>{setRegistrationCell(e.target.value);setRegistrationError("");setRegistrationResult("");}}/>
+     </label>
+     <div className="mt-3 flex flex-wrap items-center gap-2">
+      <Button size="sm" variant="outline" disabled={registrationBusy} onClick={()=>void testRegistrationCell()}>{registrationBusy?"ازموینه روانه ده…":"سیل وازمویئ"}</Button>
+      <Button size="sm" onClick={saveRegistrationCell}>خوندي کړئ</Button>
+      <Button size="sm" variant="ghost" onClick={()=>{setRegistrationCell("");window.localStorage.removeItem(REGISTRATION_CELL_KEY);setRegistrationResult("");setRegistrationError("");void qc.invalidateQueries({queryKey:["daily-coordination"]});}}>اصلي G3</Button>
+     </div>
+     {registrationResult&&<p role="status" className="mt-2 text-sm font-bold text-primary">لوستل شوی شمېر: {registrationResult}</p>}
+     {registrationError&&<p role="alert" className="mt-2 text-xs text-destructive">{registrationError}</p>}
+   </div>
+   <div className="border-t pt-4"><h2 className="font-extrabold">د نورو راپورونو کالمونه</h2><p className="mt-1 text-xs text-muted-foreground">راپور وټاکئ او د شیټ نوی کالم نوم ولیکئ.</p></div>
    <div><h2 className="font-extrabold">د شیټ کالمونو نومونه</h2><p className="mt-1 text-xs text-muted-foreground">د بدل شوي کالم نوم لپاره نوی نوم ثبت کړئ.</p></div>
    <label className="grid max-w-md gap-2 text-sm font-semibold">راپور
     <select className="h-11 rounded-xl border bg-background px-3" value={sheet} onChange={e=>{setSheet(e.target.value);setAliasSaved(false);}}>

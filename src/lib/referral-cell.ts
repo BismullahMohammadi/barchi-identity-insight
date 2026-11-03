@@ -1,7 +1,9 @@
 /** Finds the daily "newly referred" aggregate even when spreadsheet columns move. */
 export const REFERRAL_CELL_KEY="barchi-intake-total-cell-v1";
+export const REGISTRATION_CELL_KEY="barchi-registration-total-cell-v1";
+export function readSourceCell(key:string):string{if(typeof window==="undefined")return "";try{return normalizeReferralCell(window.localStorage.getItem(key)??"");}catch{return "";}}
 export type ReferralTotalLocation={cell:string;value:string};
-export function readReferralCellPreference():string{if(typeof window==="undefined")return "";try{return normalizeReferralCell(window.localStorage.getItem(REFERRAL_CELL_KEY)??"");}catch{return "";}}
+export function readReferralCellPreference():string{if(typeof window==="undefined")return "";try{return readSourceCell(REFERRAL_CELL_KEY);}catch{return "";}}
 export function normalizeReferralCell(raw:string):string{
  const cell=String(raw||"").trim().toUpperCase();
  if(!cell)return "";
