@@ -6,6 +6,7 @@ import { TabView } from "@/components/dash/TabView";
 import { JALALI_MONTHS } from "@/lib/jalali";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable, type DateFilter } from "@/lib/normalize";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
+import { resolveMappedGrid } from "@/lib/sheet-mapping-preferences";
 import { latestActivitySignal } from "@/lib/management-insight";
 import { ARCHIVE_PERIOD_OPTIONS, archivePeriodRange, archivePeriodCaption, type ArchivePeriod } from "@/lib/archive-period";
 
@@ -15,7 +16,7 @@ const SPECIAL = new Set<Kind>(["total", "identity", "control", "services", "bank
 export function isManagementReport(slug: string): slug is Kind { return SPECIAL.has(slug as Kind); }
 
 function normalizeRows(grid: string[][], title: string, month: string, dateRange?: DateFilter) {
-  const table = normalizeGrid(grid, title);
+  const table = normalizeGrid(resolveMappedGrid(grid,title), title);
   const period = dateRange ?? (month === "all" || table.dateCol < 0
     ? { from: null, to: null }
     : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } });
