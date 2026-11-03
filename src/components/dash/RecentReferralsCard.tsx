@@ -8,7 +8,7 @@ import type { ReferralGroup } from "@/lib/recent-referrals";
 
 type Section = "intake" | "registration";
 
-function People({ group }: { group: ReferralGroup }) {
+function People({ group, shown }: { group: ReferralGroup; shown: number }) {
   return (
     <div>
       <p className="mb-3 text-xs text-muted-foreground">
@@ -20,7 +20,7 @@ function People({ group }: { group: ReferralGroup }) {
         </p>
       ) : (
         <ol className="space-y-2">
-          {group.people.slice(0, 5).map((person, index) => (
+          {group.people.slice(0, shown).map((person, index) => (
             <li key={index} className="rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2"><p className="break-words text-sm font-bold text-foreground">{person.name}</p>{person.team && <span className="shrink-0 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -51,6 +51,7 @@ function ReferralCard({
   error: Error | null;
 }) {
   const [visible, setVisible] = useState(false);
+  const [shown, setShown] = useState(5);
   const Icon = section === "intake" ? UserRoundPlus : UsersRound;
   const contentId = `recent-referrals-${section}`;
 
@@ -88,7 +89,22 @@ function ReferralCard({
               {errorText(error)}
             </p>
           ) : group ? (
-            <People group={group} />
+            <>
+              <People group={group} shown={shown} />
+              {group.people.length > 5 && (
+                <div className="mt-3 flex justify-center">
+                  {shown < group.people.length ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => setShown((current) => Math.min(current + 5, group.people.length))}>
+                      نور وګورئ ({group.people.length - shown} پاتې)
+                    </Button>
+                  ) : (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setShown(5)}>
+                      یوازې وروستي ۵ وښایئ
+                    </Button>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">معلومات نشته.</p>
           )}
@@ -138,7 +154,7 @@ export function RecentReferralsCard() {
           error={q.error}
         />
       </div>
-      <p className="text-xs text-muted-foreground">تر پنځو وروستیو ثبتونو · یوازې د مدیر لپاره</p>
+      <p className="text-xs text-muted-foreground">په پیل کې ۵ وروستي ثبتونه؛ نور د اړتیا پر مهال · یوازې د مدیر لپاره</p>
     </section>
   );
 }
