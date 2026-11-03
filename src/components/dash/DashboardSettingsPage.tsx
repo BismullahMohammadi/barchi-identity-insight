@@ -7,6 +7,8 @@ import {useDashboardSettings,saveDashboardSettings,resetDashboardSettings,type D
 import {SHEET_COLUMNS} from "@/lib/sheet-columns";
 import {readAliases,COLUMN_ALIAS_KEY,type HeaderAliases} from "@/lib/sheet-mapping-preferences";
 import {accessQuery} from "@/lib/queries";
+import {getDailyForms} from "@/lib/sheets.functions";
+import {REFERRAL_CELL_KEY,normalizeReferralCell,readReferralCellPreference} from "@/lib/referral-cell";
 
 type Section="general"|"reports"|"sheets"|"account";
 const sections=[{id:"general",label:"عمومي",Icon:Settings2},{id:"reports",label:"راپورونه او جدولونه",Icon:Table2},{id:"sheets",label:"Google Sheets",Icon:FileSpreadsheet},{id:"account",label:"حساب او ساتنه",Icon:ShieldCheck}] as const;
@@ -20,8 +22,31 @@ export function DashboardSettingsPage(){
  const [sheet,setSheet]=useState(Object.keys(SHEET_COLUMNS).find(s=>s!=="ریاست ته ګزارش")??"");
  const [aliases,setAliases]=useState<HeaderAliases>(readAliases);
  const [aliasSaved,setAliasSaved]=useState(false);
+ const [referralCell,setReferralCell]=useState(readReferralCellPreference);
+ const [cellBusy,setCellBusy]=useState(false);
+ const [cellResult,setCellResult]=useState("");
+ const [cellError,setCellError]=useState("");
  function update<K extends keyof DashboardSettings>(key:K,value:DashboardSettings[K]){saveDashboardSettings({...settings,[key]:value});setSaved(true);}
  async function refreshAll(){setBusy(true);try{await Promise.all(["sheet","diesel-sheet-report","daily-forms","daily-coordination","recent-referrals","problem-visitors","staff-report-completeness","insijam-report-completeness","state-report-yesterday"].map(k=>qc.invalidateQueries({queryKey:[k]})));}finally{setBusy(false);}}
+ async function testReferralCell(){
+   setCellBusy(true);setCellError("");setCellResult("");
+   try{
+    const cell=normalizeReferralCell(referralCell);
+    const result=await getDailyForms({data:{cell}});
+    if(!result.tabName)throw new Error("د نېټې شیټ ونه موندل شو");
+    setCellResult((result.ah2??"—")+" · "+(result.cell??"—")+" · "+result.tabName);
+   }catch(e){setCellError(String(e instanceof Error?e.message:e));}
+   finally{setCellBusy(false);}
+ }
+ function saveReferralCell(){
+   try{
+    const cell=normalizeReferralCell(referralCell);
+    if(cell)window.localStorage.setItem(REFERRAL_CELL_KEY,cell);
+    else window.localStorage.removeItem(REFERRAL_CELL_KEY);
+    setReferralCell(cell);setCellError("");setCellResult("");
+    void qc.invalidateQueries({queryKey:["daily-forms"]});
+   }catch(e){setCellError(String(e instanceof Error?e.message:e));}
+ }
  function saveAliases(){try{window.localStorage.setItem(COLUMN_ALIAS_KEY,JSON.stringify(aliases));setAliasSaved(true);void qc.invalidateQueries({queryKey:["sheet"]});}catch{setAliasSaved(false);}}
  const flags=[{key:"showDailyVisitors",label:"ورځني مراجعین",Icon:Users},{key:"showCharts",label:"ګرافونه",Icon:BarChart3},{key:"compactCards",label:"کوچني کارتونه",Icon:PanelsTopLeft},{key:"showTodo",label:"زما دندې",Icon:ListTodo},{key:"showReportHealth",label:"د راپورونو بشپړتیا",Icon:Activity}] as const;
  return <div className="mx-auto max-w-6xl space-y-4 pb-10">
@@ -56,6 +81,20 @@ export function DashboardSettingsPage(){
    </label></div>
   </section>}
   {tab==="sheets"&&<section className="dashboard-panel space-y-4 p-4 sm:p-6">
+   <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+     <h2 className="text-sm font-extrabold">نوي معرفي شوي مراجعین — د شمېر سیل</h2>
+     <p className="mt-1 text-xs text-muted-foreground">اتومات پېژندنه فعاله ده؛ که سیل بدل شوی وي، دلته یې ولیکئ.</p>
+     <label htmlFor="referral-count-cell" className="mt-3 grid max-w-xs gap-1 text-xs font-semibold">سیل (اختیاري)
+       <input id="referral-count-cell" dir="ltr" className="h-11 rounded-xl border bg-background px-3 text-start text-sm" placeholder="اتومات — مثلاً AM2" value={referralCell} onChange={e=>{setReferralCell(e.target.value);setCellError("");setCellResult("");}}/>
+     </label>
+     <div className="mt-3 flex flex-wrap items-center gap-2">
+      <Button size="sm" variant="outline" disabled={cellBusy} onClick={()=>void testReferralCell()}>{cellBusy?"ازموینه روانه ده…":"سیل وازمویئ"}</Button>
+      <Button size="sm" onClick={saveReferralCell}>خوندي کړئ</Button>
+      <Button size="sm" variant="ghost" onClick={()=>{setReferralCell("");setCellError("");setCellResult("");window.localStorage.removeItem(REFERRAL_CELL_KEY);void qc.invalidateQueries({queryKey:["daily-forms"]});}}>اتومات ته ستانه شئ</Button>
+     </div>
+     {cellResult&&<p role="status" className="mt-2 text-sm font-semibold text-primary">لوستل شوی شمېر: {cellResult}</p>}
+     {cellError&&<p role="alert" className="mt-2 text-xs text-destructive">{cellError}</p>}
+   </div>
    <div><h2 className="font-extrabold">د شیټ کالمونو نومونه</h2><p className="mt-1 text-xs text-muted-foreground">د بدل شوي کالم نوم لپاره نوی نوم ثبت کړئ.</p></div>
    <label className="grid max-w-md gap-2 text-sm font-semibold">راپور
     <select className="h-11 rounded-xl border bg-background px-3" value={sheet} onChange={e=>{setSheet(e.target.value);setAliasSaved(false);}}>
