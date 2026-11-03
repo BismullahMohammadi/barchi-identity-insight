@@ -191,8 +191,8 @@ function Overview() {
           </div>
           <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
             {([
-              {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals},
-              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration},
+              {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals,source:daily.data?.tabName&&daily.data?.cell?daily.data.tabName+" · "+daily.data.cell:null},
+              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration,source:coordination.data?.tabName&&coordination.data?.cell?coordination.data.tabName+" · "+coordination.data.cell:null},
             ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
               <button type="button" className="flex min-h-11 w-full flex-wrap items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={()=>setExpandedVisitors(current=>{const nextOpen=!current[item.key];return window.matchMedia("(min-width: 1024px)").matches?{...current,[item.key]:nextOpen}:{intake:item.key==="intake"&&nextOpen,registration:item.key==="registration"&&nextOpen};})}
@@ -205,6 +205,7 @@ function Overview() {
                 </span>
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
+              {item.source&&<p className="mt-1 text-[11px] text-muted-foreground">سرچینه: {item.source}</p>}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
                 <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"}/>
               </div>}
