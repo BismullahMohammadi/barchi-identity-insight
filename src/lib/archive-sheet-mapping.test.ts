@@ -2,7 +2,7 @@ import {describe,it,expect} from "vitest";
 import {resolveMappedGrid} from "./sheet-mapping-preferences";
 import {normalizeGrid} from "./normalize";
 
-const header=["نیټه","کریمي","تابش","مجموعه","علیزاده","افشار","مجموعه","نا کنترول شوي"];
+const header=["نیټه","کریمي","تابش","مجموعه سکن","علیزاده","افشار","مجموعه کنترول","نا کنترول شوي"];
 const title="د آرشیف دوسیو سکن";
 describe("Archive scan header mapping",()=>{
  it("keeps both total columns as distinct measurements",()=>{
