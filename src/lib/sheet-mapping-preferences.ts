@@ -13,12 +13,29 @@ export function resolveMappedGrid(grid:string[][],title:string):string[][]{
  const expected=cfg.expectedHeaders;
  // Treat new column order and inserted columns by binding known header labels, rather than fixed positions.
  const indices=new Map<number,number>();
- for(const [k,v] of Object.entries(expected)){
-  const original=Number(k), preferred=aliases[v]||v;
-  const candidates=rawHeader.map((cell,i)=>headerMatches(String(cell??""),preferred)?i:-1).filter(i=>i>=0);
-  if(candidates.length===1)indices.set(original,candidates[0]!);
-  else if(candidates.length>1)throw new Error("AMBIGUOUS_COLUMN: "+preferred);
-  else throw new Error("SHEET_MAPPING_MISMATCH: "+preferred);
+ const groups=new Map<string,{original:number; label:string}[]>();
+ for(const [key,label] of Object.entries(expected)){
+  const original=Number(key);
+  const preferred=(aliases[key]??aliases[label]??label).trim()||label;
+  const group=groups.get(preferred)??[];
+  group.push({original,label});
+  groups.set(preferred,group);
+ }
+ const occupied=new Set<number>();
+ for(const [preferred,entries] of groups){
+  const positions=rawHeader.map((cell,i)=>headerMatches(String(cell??""),preferred)?i:-1).filter(i=>i>=0);
+  entries.sort((a,b)=>a.original-b.original);
+  // Repeated source headings are legitimate: align their occurrences in column order.
+  // Never infer a missing or extra duplicate as a valid metric.
+  if(positions.length!==entries.length){
+   throw new Error((positions.length>entries.length?"AMBIGUOUS_COLUMN: ":"SHEET_MAPPING_MISMATCH: ")+preferred);
+  }
+  entries.forEach((entry,i)=>{
+   const from=positions[i]!;
+   if(occupied.has(from))throw new Error("AMBIGUOUS_COLUMN: "+preferred);
+   occupied.add(from);
+   indices.set(entry.original,from);
+  });
  }
  // Only reorder when every numeric/date/label index has a known mapping.
  const cols=[cfg.dateCol,cfg.labelCol,...cfg.metricCols].filter(i=>i>=0);
