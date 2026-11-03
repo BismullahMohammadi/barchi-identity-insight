@@ -70,7 +70,7 @@ export type DailyFormsPayload = {
 };
 export const getDailyForms = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: {cell?:string})=>({cell:normalizeReferralCell(data?.cell??"")}))
+  .inputValidator((data: {cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
   .handler(async ({ context,data }): Promise<DailyFormsPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
     if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
@@ -106,11 +106,13 @@ export type DailyCoordinationPayload = {
   tabName: string | null;
   date: string | null;
   count: string | null;
+  cell: string | null;
   fetchedAt: number;
 };
-export const getDailyCoordination = createServerFn({ method: "GET" })
+export const getDailyCoordination = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<DailyCoordinationPayload> => {
+  .inputValidator((data:{cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
+  .handler(async ({ context,data }): Promise<DailyCoordinationPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
     if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
     const lovableKey=process.env["LOVABLE_API_KEY"];
@@ -125,7 +127,7 @@ export const getDailyCoordination = createServerFn({ method: "GET" })
     const meta=await metaResponse.json() as {sheets?:{properties?:{title?:string}}[]};
     const names=(meta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>typeof x==="string");
     const match=selectDailyTab(names,todayJalali());
-    if (!match) return {tabName:null,date:null,count:null,fetchedAt:Date.now()};
+    if (!match) return {tabName:null,date:null,count:null,cell:null,fetchedAt:Date.now()};
     const escaped=match.name.replace(/'/g,"''");
     const range=encodeURIComponent(`'${escaped}'!G3`);
     const response=await fetch(
@@ -134,12 +136,15 @@ export const getDailyCoordination = createServerFn({ method: "GET" })
     );
     if (!response.ok) throw new Error(`COORDINATION_SHEETS_ERROR_${response.status}`);
     const data=await response.json() as {values?:unknown[][]};
-    const raw=data.values?.[0]?.[0];
+    const chosen=data.cell||"G3";
+    const {row,column}=cellIndex(chosen);
+    const raw=data.values?.[row]?.[column];
     const count=raw===undefined||raw===null||String(raw).trim()==="" ? null : String(raw).trim();
     return {
       tabName:match.name,
       date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,
       count,
+      cell:chosen,
       fetchedAt:Date.now(),
     };
   });
