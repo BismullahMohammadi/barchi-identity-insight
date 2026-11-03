@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import {readReferralCellPreference} from "./referral-cell";
 import { getAccess, getSheetTabs, getDailyForms, getDailyCoordination, getStaffDailyCompleteness,getInsijamDailyCompleteness,getStateReportForYesterday,getRecentReferrals } from "./sheets.functions";
 
 export const REFRESH_MS = 60_000;
@@ -21,7 +22,7 @@ export const sheetQuery = (slugs: string[], refreshMs = REFRESH_MS) =>
 
 export const dailyFormsQuery = (refreshMs = REFRESH_MS) => queryOptions({
   queryKey: ["daily-forms"],
-  queryFn: () => getDailyForms(),
+  queryFn: () => getDailyForms({data:{cell:readReferralCellPreference()}}),
   refetchInterval: refreshMs,
   refetchIntervalInBackground: false,
   retry: 1,
