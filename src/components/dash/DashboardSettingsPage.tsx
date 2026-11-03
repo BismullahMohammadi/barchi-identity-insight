@@ -137,8 +137,8 @@ export function DashboardSettingsPage(){
      {Object.keys(SHEET_COLUMNS).filter(s=>s!=="ریاست ته ګزارش").map(s=><option key={s} value={s}>{s}</option>)}
     </select>
    </label>
-   <div className="grid gap-3 sm:grid-cols-2">{Object.values(SHEET_COLUMNS[sheet]?.expectedHeaders??{}).map(expected=><label key={expected} className="grid gap-1 text-xs font-semibold">{expected}
-    <input className="h-10 rounded-lg border bg-background px-3 text-sm" placeholder="اوسنی نوم په شیټ کې" value={aliases[sheet]?.[expected]??""} onChange={e=>{setAliases(prev=>({...prev,[sheet]:{...(prev[sheet]??{}),[expected]:e.target.value}}));setAliasSaved(false);}}/>
+   <div className="grid gap-3 sm:grid-cols-2">{Object.entries(SHEET_COLUMNS[sheet]?.expectedHeaders??{}).map(([index,expected])=><label key={index} className="grid gap-1 text-xs font-semibold">{expected} <span className="text-muted-foreground">(کالم {Number(index)+1})</span>
+    <input className="h-10 rounded-lg border bg-background px-3 text-sm" placeholder="اوسنی نوم په شیټ کې" value={aliases[sheet]?.[index]??aliases[sheet]?.[expected]??""} onChange={e=>{setAliases(prev=>({...prev,[sheet]:{...(prev[sheet]??{}),[index]:e.target.value}}));setAliasSaved(false);}}/>
    </label>)}</div>
    <div className="flex flex-wrap items-center gap-3"><Button onClick={saveAliases}>نومونه خوندي کړئ</Button>{aliasSaved&&<span role="status" className="text-xs text-primary">خوندي شول</span>}</div>
    <p className="text-xs text-muted-foreground">دا نومونه په همدې براوزر کې خوندي کېږي. د شیټ مهم عددي کالمونه مه حذفوئ.</p>
