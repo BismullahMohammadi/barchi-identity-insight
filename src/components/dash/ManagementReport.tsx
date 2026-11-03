@@ -1,4 +1,5 @@
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
+import {Link} from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -107,10 +108,10 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
   const archiveRange=kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined;
   const parsed=useMemo(()=>{
     try {return {data:normalizeRows(grid,title,month,kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined), error:null};}
-    catch {return {data:null,error:"د Google Sheet د کالمونو جوړښت له ثبت شوې نقشې سره برابر نه دی."};}
+    catch (e) {return {data:null,error:e instanceof Error?e.message:"د Google Sheet د کالمونو جوړښت له ثبت شوې نقشې سره برابر نه دی."};}
   },[grid,title,month,kind,archivePeriod]);
   if (parsed.error || !parsed.data) {
-    return <p role="alert" className="rounded-xl border p-4 text-sm text-destructive"><AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}</p>;
+    return <p role="alert" className="rounded-xl border p-4 text-sm text-destructive"><AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}<Link to="/dashboard/$slug" params={{slug:"settings"}} className="mt-3 block w-fit rounded-lg bg-primary px-3 py-2 text-primary-foreground">د Google Sheets تنظیمات</Link></p>;
   }
   const {table,rows}=parsed.data;
   const metric=(index:number)=>valueOf(rows,index,table.numericCols.includes(index));
