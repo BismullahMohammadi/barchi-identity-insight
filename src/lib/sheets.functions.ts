@@ -65,11 +65,13 @@ export type DailyFormsPayload = {
   tabName: string | null;
   date: string | null;
   ah2: string | null;
+  cell: string | null;
   fetchedAt: number;
 };
-export const getDailyForms = createServerFn({ method: "GET" })
+export const getDailyForms = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<DailyFormsPayload> => {
+  .inputValidator((data: {cell?:string})=>({cell:normalizeReferralCell(data?.cell??"")}))
+  .handler(async ({ context,data }): Promise<DailyFormsPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
     if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
     const lovableKey=process.env["LOVABLE_API_KEY"];
@@ -82,16 +84,17 @@ export const getDailyForms = createServerFn({ method: "GET" })
     const metadata=await metadataResponse.json() as {sheets?:{properties?:{title?:string}}[]};
     const names=(metadata.sheets ?? []).map(s=>s.properties?.title).filter((x):x is string=>typeof x==="string");
     const match=selectDailyTab(names,todayJalali());
-    if (!match) return {tabName:null,date:null,ah2:null,fetchedAt:Date.now()};
+    if (!match) return {tabName:null,date:null,ah2:null,cell:null,fetchedAt:Date.now()};
     const escaped=match.name.replace(/'/g,"''");
-    // AH2:AI2 is one merged cell; Google Sheets stores its value in AH2 only.
-    const range=encodeURIComponent(`'${escaped}'!AH2`);
-    const response=await fetch(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE`,{method:"GET",headers});
-    if (!response.ok) throw new Error(`FORMS_SHEETS_ERROR_${response.status}`);
+    // Daily template changes merged cells and columns: detect the aggregate by its label.
+    // Manual owner override is a validated A1 cell (A1:AZ20) in this same authorized tab.
+    const range=encodeURIComponent(`\'${escaped}\'!A1:AZ20`);
+    const response=await fetch(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE`,{method:"GET",headers,cache:"no-store"});
+    if(!response.ok)throw new Error(`FORMS_SHEETS_ERROR_${response.status}`);
     const body=await response.json() as {values?:unknown[][]};
-    const row=body.values?.[0] ?? [];
-    const value=(i:number):string|null=>row[i]==null||String(row[i]).trim()===""?null:String(row[i]).trim();
-    return {tabName:match.name,date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,ah2:value(0),fetchedAt:Date.now()};
+    const found=findReferralTotal(body.values??[],data.cell);
+    if(!found)throw new Error("REFERRAL_CELL_NOT_FOUND");
+    return {tabName:match.name,date:`${match.date.y}/${String(match.date.m).padStart(2,"0")}/${String(match.date.d).padStart(2,"0")}`,ah2:found.value,cell:found.cell,fetchedAt:Date.now()};
   });
 
 /**
