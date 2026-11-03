@@ -16,7 +16,7 @@ describe("Archive scan header mapping",()=>{
  });
  it("follows both repeated total headings when two new columns are inserted",()=>{
   const changed=[header[0],"new",...header.slice(1,6),"extra",...header.slice(6)];
-  const input=[[],[],[],changed,["۱۴۰۵/۰۱/۰۱","", "2","3","5","1","2","","3","2"]];
+  const input:string[][]=[[],[],[],changed as string[],["۱۴۰۵/۰۱/۰۱","", "2","3","5","1","2","","3","2"]];
   const table=normalizeGrid(resolveMappedGrid(input,title),title);
   expect(table.rows[0]?.[3]).toBe(5);
   expect(table.rows[0]?.[6]).toBe(3);
