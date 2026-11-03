@@ -1,10 +1,19 @@
-import {describe,it,expect} from "vitest";
+import {describe,it,expect,vi,afterEach} from "vitest";
 import {resolveMappedGrid} from "./sheet-mapping-preferences";
 import {normalizeGrid} from "./normalize";
 
 const header=["نیټه","کریمي","تابش","مجموعه سکن","علیزاده","افشار","مجموعه کنترول","نا کنترول شوي"];
 const title="د آرشیف دوسیو سکن";
 describe("Archive scan header mapping",()=>{
+ afterEach(()=>vi.unstubAllGlobals());
+ it("uses the live official archive headings even if a stale browser alias is saved",()=>{
+  vi.stubGlobal("window",{localStorage:{getItem:()=>JSON.stringify({"د آرشیف دوسیو سکن":{"3":"مجموعه","6":"مجموعه"}})}});
+  const sheet=[[],[],[],header,["۱۴۰۵/۰۸/۰۴","787","1015","1802","730","954","1684","118"]];
+  const table=normalizeGrid(resolveMappedGrid(sheet,title),title);
+  expect(table.rows.length).toBe(1);
+  expect(table.rows[0]?.[3]).toBe(1802);
+  expect(table.rows[0]?.[6]).toBe(1684);
+ });
  it("keeps both total columns as distinct measurements",()=>{
   const input=[["د آرشیف سکن شوي دوسیې او کنترول"],[],["","سکن شوي ورقې","","","کنترول شوي ورقې"],header,["۱۴۰۵/۰۱/۰۱","2","3","5","1","2","3","2"]];
   const mapped=resolveMappedGrid(input,title);

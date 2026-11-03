@@ -16,7 +16,10 @@ export function resolveMappedGrid(grid:string[][],title:string):string[][]{
  const groups=new Map<string,{original:number; label:string}[]>();
  for(const [key,label] of Object.entries(expected)){
   const original=Number(key);
-  const preferred=(aliases[key]??aliases[label]??label).trim()||label;
+  const saved=(aliases[key]??aliases[label]??"").trim();
+  // Ignore stale browser overrides whenever the sheet has its canonical heading.
+  const canonicalExists=rawHeader.some(cell=>headerMatches(String(cell??""),label));
+  const preferred=saved&&!canonicalExists?saved:label;
   const group=groups.get(preferred)??[];
   group.push({original,label});
   groups.set(preferred,group);
