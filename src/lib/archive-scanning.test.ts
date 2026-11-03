@@ -3,7 +3,7 @@ import {filterByDate,normalizeGrid,sumColumn} from "./normalize";
 const source=[
  ["د آرشیف سکن شوي دوسیې او کنترول"],[],
  ["","سکن شوي ورقې","","","کنترول شوي ورقې"],
- ["نیټه","کریمي","تابش","مجموعه","علیزاده","افشار","مجموعه","نا کنترول شوي"],
+ ["نیټه","کریمي","تابش","مجموعه سکن","علیزاده","افشار","مجموعه کنترول","نا کنترول شوي"],
  ["۱۴۰۵/۰۱/۰۱","","","0","","","0","0"],
  ["۱۴۰۵/۰۱/۰۲","16","24","40","18","10","28","12"],
  ["۱۴۰۵/۰۲/۰۱","5","10","15","8","7","15","0"],
@@ -11,8 +11,8 @@ const source=[
 describe("verified archive scan tab",()=>{
  it("uses two different sum columns, and does not double-count employee totals",()=>{
   const t=normalizeGrid(source,"د آرشیف دوسیو سکن");
-  expect(t.headers[3]).toBe("مجموعه");
-  expect(t.headers[6]).toBe("مجموعه");
+  expect(t.headers[3]).toBe("مجموعه سکن");
+  expect(t.headers[6]).toBe("مجموعه کنترول");
   expect(sumColumn(t.rows,3)).toBe(55);
   expect(sumColumn(t.rows,6)).toBe(43);
   expect(sumColumn(t.rows,7)).toBe(12);
