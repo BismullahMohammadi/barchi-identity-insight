@@ -7,7 +7,7 @@ import { TabView } from "@/components/dash/TabView";
 import { JALALI_MONTHS } from "@/lib/jalali";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable, type DateFilter } from "@/lib/normalize";
 import { SHEET_COLUMNS } from "@/lib/sheet-columns";
-import { resolveMappedGrid } from "@/lib/sheet-mapping-preferences";
+import { resolveMappedGrid, COLUMN_ALIAS_KEY } from "@/lib/sheet-mapping-preferences";
 import { latestActivitySignal } from "@/lib/management-insight";
 import { ARCHIVE_PERIOD_OPTIONS, archivePeriodRange, archivePeriodCaption, type ArchivePeriod } from "@/lib/archive-period";
 
@@ -111,7 +111,16 @@ export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid
     catch (e) {return {data:null,error:e instanceof Error?e.message:"د Google Sheet د کالمونو جوړښت له ثبت شوې نقشې سره برابر نه دی."};}
   },[grid,title,month,kind,archivePeriod]);
   if (parsed.error || !parsed.data) {
-    return <p role="alert" className="rounded-xl border p-4 text-sm text-destructive"><AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}<Link to="/dashboard/$slug" params={{slug:"settings"}} className="mt-3 block w-fit rounded-lg bg-primary px-3 py-2 text-primary-foreground">د Google Sheets تنظیمات</Link></p>;
+    return <div role="alert" className="rounded-xl border border-destructive/30 bg-card p-4 text-sm text-destructive">
+      <AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}
+      <div className="mt-3 flex flex-wrap gap-2">
+       <Link to="/dashboard/$slug" params={{slug:"settings"}} className="rounded-lg bg-primary px-3 py-2 font-bold text-primary-foreground">د Google Sheets تنظیمات</Link>
+       {kind==="archive-scan"&&<button type="button" className="rounded-lg border px-3 py-2 font-bold" onClick={()=>{
+         try{const all=JSON.parse(localStorage.getItem(COLUMN_ALIAS_KEY)||"{}") as Record<string,unknown>;delete all[title];localStorage.setItem(COLUMN_ALIAS_KEY,JSON.stringify(all));}catch{localStorage.removeItem(COLUMN_ALIAS_KEY);}
+         window.location.reload();
+       }}>د آرشیف کالمونه بېرته اصلي کړئ</button>}
+      </div>
+    </div>;
   }
   const {table,rows}=parsed.data;
   const metric=(index:number)=>valueOf(rows,index,table.numericCols.includes(index));
