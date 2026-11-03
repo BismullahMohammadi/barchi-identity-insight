@@ -1,4 +1,5 @@
 import {useDashboardSettings} from "@/lib/dashboard-settings";
+import {Link} from "@tanstack/react-router";
 import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import { useMemo, useState } from "react";
@@ -63,7 +64,8 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
 
   if (mappingError) return (
     <p role="alert" className="rounded-xl border border-destructive/50 bg-card p-5 text-sm text-destructive">
-      د شیټ د کالمونو جوړښت بدل شوی دی. د ناسمو شمېرو د مخنیوي لپاره راپور نه ښکاري: {mappingError}
+      د شیټ د کالمونو ستونزه: {mappingError}
+      <Link to="/dashboard/$slug" params={{slug:"settings"}} className="mt-3 block w-fit rounded-lg bg-primary px-3 py-2 text-sm font-bold text-primary-foreground">تنظیمات ← Google Sheets کې یې اصلاح کړئ</Link>
     </p>
   );
   if (!grid.length) return <p className="rounded-xl border bg-card p-5 text-muted-foreground">د دې راپور معلومات لا نه دي ترلاسه شوي.</p>;
