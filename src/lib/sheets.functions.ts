@@ -236,7 +236,7 @@ export const getStateReportForYesterday=createServerFn({method:"GET"}).middlewar
   return extractStateReport(data.values??[],day);
  });
 
-/** Only return the five latest personal records per group to authorized center management.
+/** Return at most 50 recent records per group to authorized center management, initially showing only five in the UI.
  * The full spreadsheets and patient data are never exposed to the browser.
  */
 export const getRecentReferrals=createServerFn({method:"GET"})
@@ -260,8 +260,8 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    collection?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
    target?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${target.name.replace(/'/g,"''")}'!A1:L300`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
   ]);
-  const newReferrals=newestCollectedPeople(intakeData.values??[],today);
-  const registration=newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today);
+  const newReferrals=newestCollectedPeople(intakeData.values??[],today,50);
+  const registration=newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today,50);
   // Server-only full daily collections: no full person lists are returned to the browser.
   const fullGroups={
     newReferrals:newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY),
