@@ -22,7 +22,7 @@ function digits(text:string):string{return text.replace(/[۰-۹]/g,c=>String("۰
 function numeric(value:unknown):boolean{return /^\d+(?:[.٫]\d+)?$/.test(digits(String(value??"")).trim());}
 /** Explicit coordinate always takes precedence; auto follows source label on its own row. */
 export function findReferralTotal(grid:unknown[][],override=""):ReferralTotalLocation|null{
- if(override){const {row,column}=cellIndex(override);const value=String(grid[row]?.[column]??"").trim();return value?{cell:normalizeReferralCell(override),value}:null;}
+ if(override){const {row,column}=cellIndex(override);const value=String(grid[row]?.[column]??"").trim();return numeric(value)?{cell:normalizeReferralCell(override),value}:null;}
  for(let row=0;row<Math.min(grid.length,10);row++){
   const cells=grid[row]??[];
   for(let col=0;col<cells.length;col++){
