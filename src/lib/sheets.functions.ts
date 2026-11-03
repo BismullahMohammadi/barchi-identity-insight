@@ -135,10 +135,10 @@ export const getDailyCoordination = createServerFn({ method: "POST" })
       {method:"GET",headers},
     );
     if (!response.ok) throw new Error(`COORDINATION_SHEETS_ERROR_${response.status}`);
-    const data=await response.json() as {values?:unknown[][]};
+    const body=await response.json() as {values?:unknown[][]};
     const chosen=data.cell||"G3";
     const {row,column}=cellIndex(chosen);
-    const raw=data.values?.[row]?.[column];
+    const raw=body.values?.[row]?.[column];
     const count=raw===undefined||raw===null||String(raw).trim()==="" ? null : String(raw).trim();
     return {
       tabName:match.name,
