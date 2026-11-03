@@ -129,7 +129,7 @@ export const getDailyCoordination = createServerFn({ method: "POST" })
     const match=selectDailyTab(names,todayJalali());
     if (!match) return {tabName:null,date:null,count:null,cell:null,fetchedAt:Date.now()};
     const escaped=match.name.replace(/'/g,"''");
-    const range=encodeURIComponent(`'${escaped}'!G3`);
+    const range=encodeURIComponent(`'${escaped}'!A1:AZ20`);
     const response=await fetch(
       `${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE`,
       {method:"GET",headers},
