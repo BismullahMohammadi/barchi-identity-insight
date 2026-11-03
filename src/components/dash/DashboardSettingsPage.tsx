@@ -7,7 +7,10 @@ import {useDashboardSettings,saveDashboardSettings,resetDashboardSettings,type D
 import {SHEET_COLUMNS} from "@/lib/sheet-columns";
 import {readAliases,COLUMN_ALIAS_KEY,type HeaderAliases} from "@/lib/sheet-mapping-preferences";
 import {accessQuery} from "@/lib/queries";
-import {getDailyForms,getDailyCoordination} from "@/lib/sheets.functions";
+import {getDailyForms,getDailyCoordination,getSheetTabs} from "@/lib/sheets.functions";
+import {TABS} from "@/lib/tabs";
+import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
+import {normalizeGrid} from "@/lib/normalize";
 import {REFERRAL_CELL_KEY,REGISTRATION_CELL_KEY,normalizeReferralCell,readReferralCellPreference,readSourceCell} from "@/lib/referral-cell";
 
 type Section="general"|"reports"|"sheets"|"account";
@@ -22,6 +25,8 @@ export function DashboardSettingsPage(){
  const [sheet,setSheet]=useState(Object.keys(SHEET_COLUMNS).find(s=>s!=="ریاست ته ګزارش")??"");
  const [aliases,setAliases]=useState<HeaderAliases>(readAliases);
  const [aliasSaved,setAliasSaved]=useState(false);
+ const [reportTest,setReportTest]=useState("");
+ const [reportTestBusy,setReportTestBusy]=useState(false);
  const [referralCell,setReferralCell]=useState(readReferralCellPreference);
  const [cellBusy,setCellBusy]=useState(false);
  const [cellResult,setCellResult]=useState("");
@@ -68,6 +73,20 @@ export function DashboardSettingsPage(){
    setRegistrationCell(cell);setRegistrationError("");setRegistrationResult("");
    void qc.invalidateQueries({queryKey:["daily-coordination"]});
   }catch(e){setRegistrationError(String(e instanceof Error?e.message:e));}
+ }
+ async function testReport(){
+  setReportTestBusy(true);setReportTest("");
+  try{
+   const def=TABS.find(t=>t.title===sheet);
+   if(!def)throw new Error("د دې راپور د مستقیمې ازموینې ملاتړ نشته.");
+   const result=await getSheetTabs({data:{slugs:[def.slug]}});
+   const grid=result.tabs.find(t=>t.slug===def.slug)?.grid;
+   if(!grid?.length)throw new Error("په Google Sheet کې معلومات ونه موندل شول.");
+   const table=normalizeGrid(resolveMappedGrid(grid,sheet),sheet);
+   if(table.headers.length===0)throw new Error("هیډر نه دی موندل شوی.");
+   setReportTest("اړیکه سمه ده · "+table.rows.length+" قطارونه · "+table.headers.length+" کالمونه");
+  }catch(e){setReportTest("تېروتنه: "+String(e instanceof Error?e.message:e));}
+  finally{setReportTestBusy(false);}
  }
  function saveAliases(){try{window.localStorage.setItem(COLUMN_ALIAS_KEY,JSON.stringify(aliases));setAliasSaved(true);void qc.invalidateQueries({queryKey:["sheet"]});}catch{setAliasSaved(false);}}
  const flags=[{key:"showDailyVisitors",label:"ورځني مراجعین",Icon:Users},{key:"showCharts",label:"ګرافونه",Icon:BarChart3},{key:"compactCards",label:"کوچني کارتونه",Icon:PanelsTopLeft},{key:"showTodo",label:"زما دندې",Icon:ListTodo},{key:"showReportHealth",label:"د راپورونو بشپړتیا",Icon:Activity}] as const;
@@ -133,13 +152,14 @@ export function DashboardSettingsPage(){
    <div className="border-t pt-4"><h2 className="font-extrabold">د نورو راپورونو کالمونه</h2><p className="mt-1 text-xs text-muted-foreground">راپور وټاکئ او د شیټ نوی کالم نوم ولیکئ.</p></div>
    <div><h2 className="font-extrabold">د شیټ کالمونو نومونه</h2><p className="mt-1 text-xs text-muted-foreground">د بدل شوي کالم نوم لپاره نوی نوم ثبت کړئ.</p></div>
    <label className="grid max-w-md gap-2 text-sm font-semibold">راپور
-    <select className="h-11 rounded-xl border bg-background px-3" value={sheet} onChange={e=>{setSheet(e.target.value);setAliasSaved(false);}}>
+    <select className="h-11 rounded-xl border bg-background px-3" value={sheet} onChange={e=>{setSheet(e.target.value);setAliasSaved(false);setReportTest("");}}>
      {Object.keys(SHEET_COLUMNS).filter(s=>s!=="ریاست ته ګزارش").map(s=><option key={s} value={s}>{s}</option>)}
     </select>
    </label>
-   <div className="grid gap-3 sm:grid-cols-2">{Object.values(SHEET_COLUMNS[sheet]?.expectedHeaders??{}).map(expected=><label key={expected} className="grid gap-1 text-xs font-semibold">{expected}
-    <input className="h-10 rounded-lg border bg-background px-3 text-sm" placeholder="اوسنی نوم په شیټ کې" value={aliases[sheet]?.[expected]??""} onChange={e=>{setAliases(prev=>({...prev,[sheet]:{...(prev[sheet]??{}),[expected]:e.target.value}}));setAliasSaved(false);}}/>
+   <div className="grid gap-3 sm:grid-cols-2">{Object.entries(SHEET_COLUMNS[sheet]?.expectedHeaders??{}).map(([index,expected])=><label key={index} className="grid gap-1 text-xs font-semibold">{expected} <span className="text-muted-foreground">(کالم {Number(index)+1})</span>
+    <input className="h-10 rounded-lg border bg-background px-3 text-sm" placeholder="اوسنی نوم په شیټ کې" value={aliases[sheet]?.[index]??aliases[sheet]?.[expected]??""} onChange={e=>{setAliases(prev=>({...prev,[sheet]:{...(prev[sheet]??{}),[index]:e.target.value}}));setAliasSaved(false);}}/>
    </label>)}</div>
+   <div className="flex flex-wrap items-center gap-3"><Button variant="outline" disabled={reportTestBusy} onClick={()=>void testReport()}>{reportTestBusy?"ازموینه روانه ده…":"راپور وازمویئ"}</Button>{reportTest&&<span role="status" className="text-xs text-muted-foreground">{reportTest}</span>}</div>
    <div className="flex flex-wrap items-center gap-3"><Button onClick={saveAliases}>نومونه خوندي کړئ</Button>{aliasSaved&&<span role="status" className="text-xs text-primary">خوندي شول</span>}</div>
    <p className="text-xs text-muted-foreground">دا نومونه په همدې براوزر کې خوندي کېږي. د شیټ مهم عددي کالمونه مه حذفوئ.</p>
   </section>}
