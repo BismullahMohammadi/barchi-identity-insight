@@ -42,16 +42,26 @@ const PLACEHOLDERS:SummaryMetric[]=[
 ];
 
 function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean}) {
+ const [shown,setShown]=useState(5);
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
    !group?.people.length?<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>:
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
-    <ol className="space-y-2">{group.people.slice(0,5).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
+    <ol className="space-y-2">{group.people.slice(0,shown).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
      <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
      <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
-    </li>)}</ol></>}
+    </li>)}</ol>
+    <div className="mt-3 flex flex-col items-center gap-1">
+      {shown < group.people.length ? (
+        <Button type="button" size="sm" variant="outline" onClick={()=>setShown(n=>Math.min(n+5,group.people.length))}>نور وګورئ ({group.people.length-shown} پاتې)</Button>
+      ) : shown > 5 ? (
+        <Button type="button" size="sm" variant="ghost" onClick={()=>setShown(5)}>یوازې وروستي ۵ وښایئ</Button>
+      ) : (
+        <><Button type="button" size="sm" variant="outline" disabled>نور وګورئ</Button><p className="text-xs text-muted-foreground">نور مراجعین نشته.</p></>
+      )}
+    </div></>}
  </div>;
 }
 
