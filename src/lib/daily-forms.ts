@@ -23,3 +23,9 @@ export function selectDailyTab(names:string[],today:JDate): {name:string,date:JD
     .sort((a,b)=>jKey(b.date)-jKey(a.date));
   return candidates[0] ?? null;
 }
+
+/** Registration visitor lists must never silently fall back to yesterday. */
+export function selectTodayDailyTab(names:string[],today:JDate): {name:string,date:JDate}|null {
+ const selected=selectDailyTab(names,today);
+ return selected&&jKey(selected.date)===jKey(today)?selected:null;
+}
