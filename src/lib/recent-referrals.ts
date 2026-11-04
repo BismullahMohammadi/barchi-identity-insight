@@ -1,5 +1,5 @@
 import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
-import {selectDailyTab} from "./daily-forms";
+import {selectTodayDailyTab} from "./daily-forms";
 export type RecentReferral={name:string;father:string;familyMembers:number|null;team?:string|undefined;recordKey?:string|undefined};
 export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null};
 export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;teamCounts?:[number,number,number,number];fetchedAt:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
@@ -46,7 +46,7 @@ export function newestCollectedPeople(grid:unknown[][],today:JDate,limit=5):Refe
 }
 /** The daily registration coordination tab has four independent A:C,D:F,G:I,J:L worker groups. */
 export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unknown[][]}|null,today:JDate,limit=5):ReferralGroup{
- const chosen=selectDailyTab(titles,today);
+ const chosen=selectTodayDailyTab(titles,today);
  if(!chosen||!load||jKey(load.date)!==jKey(chosen.date))
   return {date:null,people:[],source:null};
  const records:RecentReferral[]=[];
