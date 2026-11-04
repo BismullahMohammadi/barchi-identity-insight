@@ -1,7 +1,7 @@
 import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
-import {selectTodayDailyTab} from "./daily-forms";
+import {selectTodayCoordinationTab} from "./daily-forms";
 export type RecentReferral={name:string;father:string;familyMembers:number|null;team?:string|undefined;recordKey?:string|undefined};
-export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null};
+export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null;diagnostic?:RegistrationDiagnostic|undefined};
 export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;teamCounts?:[number,number,number,number];fetchedAt:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
 
 function clean(x:unknown):string{return String(x??"").replace(/\s+/g," ").trim();}
@@ -44,31 +44,61 @@ export function newestCollectedPeople(grid:unknown[][],today:JDate,limit=5):Refe
    .sort((a,b)=>jKey(b.date)-jKey(a.date))[0];
  return {date:latest?formatJ(latest.date):null,people:latest?latest.people.slice(-limit).reverse():[],source:null};
 }
-/** The daily registration coordination tab has four independent A:C,D:F,G:I,J:L worker groups. */
-export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unknown[][]}|null,today:JDate,limit=5):ReferralGroup{
- const chosen=selectTodayDailyTab(titles,today);
- if(!chosen||!load||jKey(load.date)!==jKey(chosen.date))
-  return {date:null,people:[],source:null};
- const records:RecentReferral[]=[];
- // Header is on Excel row 5; skip section totals and metadata above it.
- for(const row of load.grid.slice(5)){
-  for(const offset of [0,3,6,9]){
-   const name=clean(row[offset]),father=clean(row[offset+1]),familyMembers=count(row[offset+2]);
-   if(!name||!father||familyMembers===null)continue;
-   records.push({name,father,familyMembers,team:({0:"درېیم ټیم",3:"څلورم ټیم",6:"پنځم ټیم",9:"شپږم ټیم"} as Record<number,string>)[offset]});
+export type RegistrationStatus="ok"|"no_today_tab"|"empty_today"|"no_header"|"fetch_error";
+/** Safe metadata only: dates, tab titles (which are dates), counts — never person data. */
+export type RegistrationDiagnostic={status:RegistrationStatus;today:string;todayTab:string|null;latestTab:string|null;latestDate:string|null;headerRow:number|null;groups:number;rowsScanned:number;sheetDateCell:string|null;errorCode?:string|undefined};
+const TEAM_LABELS=["درېیم ټیم","څلورم ټیم","پنځم ټیم","شپږم ټیم"];
+/** Find the header row (اسم / ولد / تعداد) and each worker group's starting column. */
+export function detectRegistrationLayout(grid:unknown[][]):{headerIndex:number;offsets:number[]}|null{
+ for(let r=0;r<Math.min(grid.length,25);r++){
+  const row=grid[r]??[];
+  const offsets:number[]=[];
+  for(let c=0;c<row.length;c++){
+   const here=clean(row[c]);
+   if(/^(اسم|نام)$/.test(here)&&/تعداد|اعضا|فامیل/.test(clean(row[c+2])))offsets.push(c);
   }
+  if(offsets.length)return {headerIndex:r,offsets};
  }
- return {date:formatJ(chosen.date),people:records.slice(-limit).reverse(),source:chosen.name};
+ return null;
+}
+function readRegistrationRows(grid:unknown[][]):{records:RecentReferral[];layout:ReturnType<typeof detectRegistrationLayout>}{
+ const layout=detectRegistrationLayout(grid);
+ if(!layout)return {records:[],layout};
+ const records:RecentReferral[]=[];
+ for(const row of grid.slice(layout.headerIndex+1)){
+  layout.offsets.forEach((offset,index)=>{
+   const name=clean(row[offset]);
+   if(!name||/^(مجموع|ټول|جمع)/.test(name))return;
+   const father=clean(row[offset+1]),familyMembers=count(row[offset+2]);
+   // Real sheets often leave the father column blank; keep the person, show "—".
+   if(!father&&familyMembers===null)return;
+   records.push({name,father:father||"—",familyMembers,team:TEAM_LABELS[index]??`ټیم ${index+1}`});
+  });
+ }
+ return {records,layout};
+}
+/** The daily registration coordination tab has independent worker groups (normally A:C,D:F,G:I,J:L). */
+export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unknown[][]}|null,today:JDate,limit=5):ReferralGroup&{diagnostic:RegistrationDiagnostic}{
+ const pick=selectTodayCoordinationTab(titles,today);
+ const chosen=pick.today;
+ const base:RegistrationDiagnostic={status:"no_today_tab",today:formatJ(today),todayTab:chosen?.name??null,
+  latestTab:pick.latest?.name??null,latestDate:pick.latest?formatJ(pick.latest.date):null,headerRow:null,groups:0,rowsScanned:0,sheetDateCell:null};
+ if(!chosen||!load||jKey(load.date)!==jKey(chosen.date))
+  return {date:null,people:[],source:null,diagnostic:base};
+ const {records,layout}=readRegistrationRows(load.grid);
+ const dateCell=load.grid.slice(0,4).flat().map(clean).find(v=>/14\d\d[\/\-.]\d{1,2}[\/\-.]\d{1,2}/.test(toLatinDigits(v)))??null;
+ const diagnostic:RegistrationDiagnostic={...base,status:!layout?"no_header":records.length?"ok":"empty_today",
+  headerRow:layout?layout.headerIndex+1:null,groups:layout?.offsets.length??0,
+  rowsScanned:layout?Math.max(0,load.grid.length-layout.headerIndex-1):0,sheetDateCell:dateCell?toLatinDigits(dateCell):null};
+ return {date:formatJ(chosen.date),people:records.slice(-limit).reverse(),source:chosen.name,diagnostic};
 }
 
 /** Sum family-member counts for each daily registration team, not person rows. */
 export function registrationTeamCounts(grid:unknown[][]):[number,number,number,number]{
  const totals:[number,number,number,number]=[0,0,0,0];
- for(const row of grid.slice(5)){
-  [0,3,6,9].forEach((offset,index)=>{
-   const members=count(row[offset+2]);
-   if(clean(row[offset])&&members!==null)totals[index]=(totals[index]??0)+members;
-  });
+ for(const person of readRegistrationRows(grid).records){
+  const index=TEAM_LABELS.indexOf(person.team??"");
+  if(index>=0&&index<4&&person.familyMembers!==null)totals[index]=(totals[index]??0)+person.familyMembers;
  }
  return totals;
 }
