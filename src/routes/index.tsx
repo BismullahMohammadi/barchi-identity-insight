@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, LineChart, Lock } from "lucide-react";
+import { ShieldCheck, LineChart, Lock, Fingerprint } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
@@ -73,43 +73,41 @@ function Landing() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#eef9f6] text-[#123e46]">
-      <div className="pointer-events-none absolute inset-0 opacity-25 pattern-dots" aria-hidden />
-      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
-        <span className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#a6d9d0] bg-white/85 px-3 py-1 text-xs font-semibold text-[#0b6b74]">
-          <Lock className="h-3.5 w-3.5" /> خصوصي — یوازې مالک
-        </span>
-        <h1 className="font-display text-4xl font-extrabold leading-tight md:text-6xl">
-          د دشت برچي د الکترونیکي تذکرو مرکز
-          <span className="block text-[#0b6b74]">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
-        </h1>
-        <p className="mt-6 max-w-xl text-lg opacity-85">
-          د اسنادو چک، تثبت هویت، عوایدو، ثبت نام، کنټرول کیفیت، خدمات پس از توزیع او توزیع ژوندي شمېرې — مستقیم د راپور شیټ څخه، یوازې د حلیل لپاره.
-        </p>
-        {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
-        <div className="mt-10 flex flex-wrap gap-3">
-          {signedIn ? (
-            <Button asChild variant="hero" size="lg"><Link to="/dashboard">ډشبورډ ته لاړ شئ</Link></Button>
-          ) : (
-            <Button variant="hero" size="lg" onClick={signIn} disabled={busy}>
-              {busy ? "د ننوتلو هڅه روانه ده…" : "د ګوګل له لارې ننوتل"}
-            </Button>
-          )}
+    <main dir="rtl" className="grid h-[100dvh] w-full grid-cols-1 overflow-hidden bg-[#f8fbff] text-[#122448] lg:grid-cols-[45%_55%]">
+      <section className="relative order-2 flex min-h-0 items-center justify-center overflow-hidden px-5 py-4 sm:px-10 lg:order-1 lg:px-12">
+        <div className="w-full max-w-[440px]">
+          <div className="mb-[clamp(12px,3vh,30px)] flex items-center gap-3">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#0758ad] text-white shadow-lg shadow-blue-900/15"><Fingerprint className="size-7" /></span>
+            <div><p dir="ltr" className="text-left text-[clamp(17px,2vw,23px)] font-extrabold tracking-tight text-[#0b2857]">Barchi Identity Insight</p><p className="text-xs text-slate-500">د دشت برچي د الکترونیکي تذکرو مرکز</p></div>
+          </div>
+          <div className="mb-[clamp(12px,3vh,28px)]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800"><Lock className="size-3.5" /> خصوصي او خوندي سیستم</span>
+            <h1 className="mt-3 text-[clamp(22px,3.5vh,36px)] font-extrabold leading-[1.45] text-[#102d5b]">خپل حساب ته ننوزئ</h1>
+            <p className="mt-1 text-[clamp(12px,1.7vh,15px)] leading-6 text-slate-500">د مرکز د راپورونو او مدیریتي معلوماتو لپاره د خپل مجاز Google حساب له لارې ننوزئ.</p>
+          </div>
+          <div className="rounded-[24px] border border-[#e0e9f6] bg-white p-[clamp(16px,3vh,30px)] shadow-[0_16px_55px_-25px_rgba(10,47,105,.30)]">
+            <div className="mb-4 flex items-center gap-2 text-[clamp(15px,2.1vh,19px)] font-bold text-[#102d5b]"><ShieldCheck className="size-5 text-[#0864bd]" /> خوندي ننوتل</div>
+            {loginError && <div role="alert" className="mb-3 max-h-[18vh] overflow-auto rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{loginError}</div>}
+            {signedIn ? (
+              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-[#0758ad] text-white hover:bg-[#06478c]"><Link to="/dashboard">ډشبورډ ته لاړ شئ</Link></Button>
+            ) : (
+              <Button size="lg" onClick={signIn} disabled={busy} className="h-12 w-full rounded-xl bg-[#0758ad] text-white hover:bg-[#06478c]">{busy ? "د ننوتلو هڅه روانه ده…" : "د ګوګل له لارې ننوتل"}</Button>
+            )}
+            <p className="mt-3 text-center text-xs leading-5 text-slate-500">یوازې اجازه لرونکي حسابونه سیستم ته لاسرسی لري.</p>
+          </div>
+          <div className="mt-[clamp(10px,2.5vh,24px)] grid grid-cols-3 gap-2 text-center text-[11px] text-[#31527b]">
+            <span className="rounded-xl bg-[#edf4fc] px-2 py-2"><ShieldCheck className="mx-auto mb-1 size-4" /> خوندي لاسرسی</span>
+            <span className="rounded-xl bg-[#edf4fc] px-2 py-2"><Lock className="mx-auto mb-1 size-4" /> یوازې لوستل</span>
+            <span className="rounded-xl bg-[#edf4fc] px-2 py-2"><LineChart className="mx-auto mb-1 size-4" /> تازه راپورونه</span>
+          </div>
         </div>
-        <div className="mt-16 grid gap-4 sm:grid-cols-3">
-          {[
-            { icon: ShieldCheck, t: "یوازې اجازه لرونکي", d: "یوازې د مالک ایمیل لاسرسی لري؛ نور ټول رد کېږي." },
-            { icon: Lock, t: "یوازې لوستل", d: "اصلي شیټ هیڅکله نه بدلېږي." },
-            { icon: LineChart, t: "هره دقیقه تازه", d: "شمېرې هر ۶۰ ثانیې بیا لوستل کېږي." },
-          ].map(({ icon: Icon, t, d }) => (
-            <div key={t} className="rounded-3xl border border-[#c9e7e0] bg-white/95 p-5 text-[#123e46] shadow-sm">
-              <Icon className="h-5 w-5 text-[#0b6b74]" />
-              <h3 className="mt-3 font-bold">{t}</h3>
-              <p className="mt-1 text-sm opacity-80">{d}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      </section>
+      <section aria-hidden="true" className="relative order-1 h-[min(24dvh,180px)] min-h-0 overflow-hidden bg-[#15365d] lg:order-2 lg:h-full">
+        <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1400&q=85" alt="" className="absolute inset-0 h-full w-full object-cover object-center lg:object-[45%_center]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061c44]/55 via-[#0a3264]/10 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-20 bg-gradient-to-l from-[#0758ad]/80 to-transparent lg:block" />
+        <div className="absolute bottom-7 left-8 right-8 hidden text-white drop-shadow-lg lg:block"><p dir="ltr" className="text-left text-2xl font-bold">Barchi Identity Insight</p><p className="mt-2 text-sm">د دشت برچي د الکترونیکي تذکرو مرکز مدیریتي سیستم</p></div>
+      </section>
     </main>
   );
 }
