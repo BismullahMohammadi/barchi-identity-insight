@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseNamedJalaliTab, selectDailyTab } from "./daily-forms";
+import { parseNamedJalaliTab, selectDailyTab, selectTodayDailyTab } from "./daily-forms";
 describe("daily introduced forms tab resolution",()=>{
  it("parses explicit Mizan 1405 dates",()=>{
    expect(parseNamedJalaliTab("29 میزان 1405")).toEqual({y:1405,m:7,d:29});
@@ -10,6 +10,10 @@ describe("daily introduced forms tab resolution",()=>{
  });
  it("uses the latest prior day when today does not exist",()=>{
    expect(selectDailyTab(["20 میزان 1405","23 میزان 1405","جدول جمع اوری ماه میزان 1405"],{y:1405,m:7,d:25})?.name).toBe("23 میزان 1405");
+ });
+ it("does not use yesterday for today's registration visitors",()=>{
+   expect(selectTodayDailyTab(["23 میزان 1405"],{y:1405,m:7,d:24})).toBeNull();
+   expect(selectTodayDailyTab(["23 میزان 1405","24 میزان 1405"],{y:1405,m:7,d:24})?.name).toBe("24 میزان 1405");
  });
  it("rejects unrelated templates",()=>{
    expect(parseNamedJalaliTab("مجموعه")).toBeNull();
