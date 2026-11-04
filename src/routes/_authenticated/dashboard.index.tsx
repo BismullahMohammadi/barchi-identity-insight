@@ -13,7 +13,7 @@ import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
 import { WeeklyActivityChart } from "@/components/dash/WeeklyActivityChart";
 import { recentReferralsQuery } from "@/lib/queries";
-import type { ReferralGroup } from "@/lib/recent-referrals";
+import type { ReferralGroup, RegistrationDiagnostic } from "@/lib/recent-referrals";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
@@ -41,12 +41,33 @@ const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
 ];
 
+/** Registration-only: explain why no people are shown using safe metadata (dates, tab titles, counts). */
+function RegistrationDiagnosticNote({d}:{d:RegistrationDiagnostic}) {
+ const text={
+  no_today_tab:`د نن ورځې (${d.today}) د هماهنګۍ پاڼه (tab) په شیټ کې نشته.`,
+  empty_today:`د نن ورځې پاڼه «${d.todayTab??""}» شته، خو تر اوسه پکې مراجعین نه دي ثبت شوي.`,
+  no_header:`د نن ورځې پاڼه «${d.todayTab??""}» شته، خو د «اسم / ولد / تعداد اعضای فامیل» سرلیک ونه موندل شو.`,
+  fetch_error:"د هماهنګۍ شیټ لوستل ناکام شول؛ لږ وروسته بیا هڅه وکړئ.",
+  ok:"",
+ }[d.status];
+ return <div role={d.status==="fetch_error"?"alert":"status"} className={"space-y-1 text-sm "+(d.status==="fetch_error"?"text-destructive":"text-muted-foreground")}>
+  <p>{text}</p>
+  <ul className="space-y-0.5 text-[11px] text-muted-foreground">
+   <li>د نن نېټه: {d.today}</li>
+   {d.status==="no_today_tab"&&<li>وروستۍ موجوده پاڼه: {d.latestTab?`«${d.latestTab}» (${d.latestDate})`:"نشته"} — د پرونۍ ورځې معلومات د نن په توګه نه ښودل کېږي.</li>}
+   {d.todayTab&&<li>سرچینه: «{d.todayTab}»{d.headerRow?` · سرلیک په {d.headerRow}م قطار · ${d.groups} ټیمونه · ${d.rowsScanned} قطارونه وکتل شول`:""}</li>}
+   {d.sheetDateCell&&<li>په پاڼه کې لیکل شوې نېټه: {d.sheetDateCell}</li>}
+   {d.errorCode&&<li>کوډ: {d.errorCode}</li>}
+  </ul>
+ </div>;
+}
+
 function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean}) {
  const [shown,setShown]=useState(5);
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
-   !group?.people.length?<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>:
+   !group?.people.length?(group?.diagnostic?<RegistrationDiagnosticNote d={group.diagnostic}/>:<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>):
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
     <ol className="space-y-2">{group.people.slice(0,shown).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
      <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
