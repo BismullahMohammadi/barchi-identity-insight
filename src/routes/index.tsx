@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, LineChart, Lock, Fingerprint } from "lucide-react";
+const officePhoto = "https://raw.githubusercontent.com/BismullahMohammadi/barchi-identity-insight/491a5151f3c2fc1c11bc78b2335420345ac864cd/src/assets/kabul-office-login.webp";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
@@ -73,41 +74,95 @@ function Landing() {
   }
 
   return (
-    <main dir="rtl" className="grid h-[100dvh] w-full grid-cols-1 overflow-hidden bg-[#f8fbff] text-[#122448] lg:grid-cols-[45%_55%]">
-      <section className="relative order-2 flex min-h-0 items-center justify-center overflow-hidden px-5 py-4 sm:px-10 lg:order-1 lg:px-12">
-        <div className="w-full max-w-[440px]">
-          <div className="mb-[clamp(12px,3vh,30px)] flex items-center gap-3">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#0758ad] text-white shadow-lg shadow-blue-900/15"><Fingerprint className="size-7" /></span>
-            <div><p dir="ltr" className="text-left text-[clamp(17px,2vw,23px)] font-extrabold tracking-tight text-[#0b2857]">Barchi Identity Insight</p><p className="text-xs text-slate-500">د دشت برچي د الکترونیکي تذکرو مرکز</p></div>
+    <main className="grid h-[100dvh] w-full grid-rows-[minmax(0,130px)_minmax(0,1fr)] overflow-hidden bg-card text-foreground lg:grid-rows-1 lg:grid-cols-[45fr_55fr]">
+      {/* Login panel — first in DOM → right side in RTL */}
+      <section className="relative z-10 flex min-h-0 flex-col justify-center overflow-hidden px-5 py-3 sm:px-10 lg:px-14">
+        <div className="mx-auto w-full max-w-md">
+          <div className="flex items-center gap-3">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-navy-foreground shadow-md">
+              <Fingerprint className="h-7 w-7" aria-hidden />
+            </span>
+            <div dir="ltr" className="text-left">
+              <p className="font-display text-lg font-extrabold leading-tight text-navy">Barchi Identity Insight</p>
+              <p className="text-xs text-muted-foreground">eNID Analytics · 1405</p>
+            </div>
           </div>
-          <div className="mb-[clamp(12px,3vh,28px)]">
-            <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800"><Lock className="size-3.5" /> خصوصي او خوندي سیستم</span>
-            <h1 className="mt-3 text-[clamp(22px,3.5vh,36px)] font-extrabold leading-[1.45] text-[#102d5b]">خپل حساب ته ننوزئ</h1>
-            <p className="mt-1 text-[clamp(12px,1.7vh,15px)] leading-6 text-slate-500">د مرکز د راپورونو او مدیریتي معلوماتو لپاره د خپل مجاز Google حساب له لارې ننوزئ.</p>
+
+          <h1 className="mt-[clamp(8px,3vh,40px)] font-display text-[clamp(20px,3vh,36px)] font-extrabold leading-snug text-navy md:text-4xl">
+            د دشت برچي د الکترونیکي تذکرو مرکز
+            <span className="mt-1 block text-xl font-bold text-foreground md:text-2xl">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">
+            د اسنادو چک، تثبت هویت، عوایدو، ثبت نام، کنټرول کیفیت، خدمات پس از توزیع او توزیع ژوندي شمېرې — مستقیم د راپور شیټ څخه، یوازې د حلیل لپاره.
+          </p>
+
+          <div className="mt-[clamp(8px,2vh,32px)] rounded-3xl border border-border bg-card p-6 [box-shadow:var(--shadow-login-card)] sm:p-7">
+            <div className="flex items-center gap-2 text-sm font-bold text-navy">
+              <ShieldCheck className="h-5 w-5" aria-hidden /> خوندي ننوتل
+            </div>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+              یوازې د اجازه لرونکي مالک Google حساب لاسرسی لري؛ نور ټول حسابونه رد کېږي.
+            </p>
+            {loginError && <div role="alert" className="mt-4 rounded-xl border border-warning/50 bg-warning/10 px-4 py-3 text-sm leading-7 text-foreground">{loginError}</div>}
+            <div className="mt-6">
+              {signedIn ? (
+                <Button asChild size="lg" className="h-12 w-full bg-navy text-base font-bold text-navy-foreground hover:bg-navy/90">
+                  <Link to="/dashboard">ډشبورډ ته لاړ شئ</Link>
+                </Button>
+              ) : (
+                <Button size="lg" onClick={signIn} disabled={busy} variant="outline"
+                  className="h-12 w-full gap-3 border-navy/25 text-base font-bold text-navy hover:bg-navy-soft">
+                  <GoogleMark />
+                  {busy ? "د ننوتلو هڅه روانه ده…" : "د ګوګل له لارې ننوتل"}
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="rounded-[24px] border border-[#e0e9f6] bg-white p-[clamp(16px,3vh,30px)] shadow-[0_16px_55px_-25px_rgba(10,47,105,.30)]">
-            <div className="mb-4 flex items-center gap-2 text-[clamp(15px,2.1vh,19px)] font-bold text-[#102d5b]"><ShieldCheck className="size-5 text-[#0864bd]" /> خوندي ننوتل</div>
-            {loginError && <div role="alert" className="mb-3 max-h-[18vh] overflow-auto rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{loginError}</div>}
-            {signedIn ? (
-              <Button asChild size="lg" className="h-12 w-full rounded-xl bg-[#0758ad] text-white hover:bg-[#06478c]"><Link to="/dashboard">ډشبورډ ته لاړ شئ</Link></Button>
-            ) : (
-              <Button size="lg" onClick={signIn} disabled={busy} className="h-12 w-full rounded-xl bg-[#0758ad] text-white hover:bg-[#06478c]">{busy ? "د ننوتلو هڅه روانه ده…" : "د ګوګل له لارې ننوتل"}</Button>
-            )}
-            <p className="mt-3 text-center text-xs leading-5 text-slate-500">یوازې اجازه لرونکي حسابونه سیستم ته لاسرسی لري.</p>
-          </div>
-          <div className="mt-[clamp(10px,2.5vh,24px)] grid grid-cols-3 gap-2 text-center text-[11px] text-[#31527b]">
-            <span className="rounded-xl bg-[#edf4fc] px-2 py-2"><ShieldCheck className="mx-auto mb-1 size-4" /> خوندي لاسرسی</span>
-            <span className="rounded-xl bg-[#edf4fc] px-2 py-2"><Lock className="mx-auto mb-1 size-4" /> یوازې لوستل</span>
-            <span className="rounded-xl bg-[#edf4fc] px-2 py-2"><LineChart className="mx-auto mb-1 size-4" /> تازه راپورونه</span>
-          </div>
+
+          <ul className="mt-3 hidden gap-2 text-xs sm:grid text-muted-foreground sm:grid-cols-3">
+            {[
+              { icon: Lock, t: "یوازې مالک" },
+              { icon: ShieldCheck, t: "یوازې لوستل" },
+              { icon: LineChart, t: "هره دقیقه تازه" },
+            ].map(({ icon: Icon, t }) => (
+              <li key={t} className="flex items-center gap-2 rounded-xl bg-navy-soft px-3 py-2 text-navy">
+                <Icon className="h-4 w-4 shrink-0" aria-hidden /> {t}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
-      <section aria-hidden="true" className="relative order-1 h-[min(24dvh,180px)] min-h-0 overflow-hidden bg-[#15365d] lg:order-2 lg:h-full">
-        <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1400&q=85" alt="" className="absolute inset-0 h-full w-full object-cover object-center lg:object-[45%_center]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061c44]/55 via-[#0a3264]/10 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-20 bg-gradient-to-l from-[#0758ad]/80 to-transparent lg:block" />
-        <div className="absolute bottom-7 left-8 right-8 hidden text-white drop-shadow-lg lg:block"><p dir="ltr" className="text-left text-2xl font-bold">Barchi Identity Insight</p><p className="mt-2 text-sm">د دشت برچي د الکترونیکي تذکرو مرکز مدیریتي سیستم</p></div>
+
+      {/* Photo panel — left side on desktop, top banner on mobile */}
+      <section className="relative order-first h-full min-h-0 overflow-hidden lg:order-none" aria-hidden>
+        <img src={officePhoto} alt="" width={1152} height={1536} fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_60%] lg:object-[45%_center]" />
+        <div className="absolute inset-0 [background-image:var(--gradient-login-photo)]" />
+        {/* curved transition into the white panel (desktop) */}
+        <svg className="absolute inset-y-0 right-0 hidden h-full w-24 lg:block" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M100 0 L60 0 C 10 30, 10 70, 60 100 L100 100 Z" fill="var(--card)" />
+          <path d="M60 0 C 10 30, 10 70, 60 100" fill="none" stroke="var(--navy)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" opacity="0.6" />
+        </svg>
+        {/* curved transition (mobile, bottom edge) */}
+        <svg className="absolute inset-x-0 bottom-0 h-10 w-full lg:hidden" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0 100 L0 60 C 30 10, 70 10, 100 60 L100 100 Z" fill="var(--card)" />
+        </svg>
+        <div className="absolute bottom-12 right-8 left-8 hidden text-navy-foreground lg:block lg:right-28">
+          <p className="font-display text-2xl font-extrabold">Barchi Identity Insight</p>
+          <p className="mt-1 text-sm opacity-90">خصوصي اداري تحلیلي سیستم — دشت برچي، کابل</p>
+        </div>
       </section>
     </main>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden>
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
+    </svg>
   );
 }
