@@ -8,7 +8,7 @@ import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
-import { selectDailyTab, selectTodayDailyTab } from "./daily-forms";
+import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
@@ -127,7 +127,7 @@ export const getDailyCoordination = createServerFn({ method: "POST" })
     if (!metaResponse.ok) throw new Error(`COORDINATION_SHEETS_ERROR_${metaResponse.status}`);
     const meta=await metaResponse.json() as {sheets?:{properties?:{title?:string}}[]};
     const names=(meta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>typeof x==="string");
-    const match=selectTodayDailyTab(names,todayJalali());
+    const match=selectTodayCoordinationTab(names,todayJalali()).today;
     if (!match) return {tabName:null,date:null,count:null,cell:null,fetchedAt:Date.now()};
     const escaped=match.name.replace(/'/g,"''");
     const range=encodeURIComponent(`'${escaped}'!A1:AZ20`);
@@ -245,27 +245,40 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   setResponseHeader("Cache-Control","private, no-store");
   const headers=authorizedSheetHeaders(context.claims);
   const today=todayJalali();
-  const meta=await Promise.all([
-   sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR"),
-   sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"COORDINATION_SHEETS_ERROR")
-  ]);
-  const intakeTitles=(meta[0].sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
-  const coordinationTitles=(meta[1].sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
+  const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR");
+  const intakeTitles=(intakeMeta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
   const month=MONTH_NAMES[today.m]??"";
   const collection=intakeTitles.find(title=>
    title.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(title)&&
    (title.includes(String(today.y))||title.includes("۱۴۰۵")));
-  const target=selectTodayDailyTab(coordinationTitles,today);
-  const [intakeData,registrationData]=await Promise.all([
-   collection?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
-   target?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${target.name.replace(/'/g,"''")}'!A1:L300`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
-  ]);
+  const intakeData=collection?await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
   const newReferrals=newestCollectedPeople(intakeData.values??[],today,50);
-  const registration=newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today,50);
+  // Registration is read independently so a coordination-sheet failure never hides intake data.
+  let coordinationTitles:string[]=[];
+  let registrationGrid:unknown[][]=[];
+  let registrationTarget:{name:string;date:JDate}|null=null;
+  let registrationError:string|null=null;
+  try{
+   const coordinationMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"COORDINATION_SHEETS_ERROR");
+   coordinationTitles=(coordinationMeta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
+   registrationTarget=selectTodayCoordinationTab(coordinationTitles,today).today;
+   if(registrationTarget){
+    const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${registrationTarget.name.replace(/'/g,"''")}'!A1:Z400`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR");
+    registrationGrid=data.values??[];
+   }
+  }catch(error){
+   registrationError=error instanceof Error&&/^COORDINATION_SHEETS_ERROR_\d+$/.test(error.message)?error.message:"COORDINATION_SHEETS_ERROR";
+   // Safe log: error code and Jalali date only, no sheet content.
+   console.error(`[recent-referrals] registration read failed: ${registrationError} for ${formatJ(today)}`);
+  }
+  const registrationLoad=registrationTarget?{date:registrationTarget.date,grid:registrationGrid}:null;
+  const registration=registrationError
+   ?{date:null,people:[],source:null,diagnostic:{status:"fetch_error" as const,today:formatJ(today),todayTab:null,latestTab:null,latestDate:null,headerRow:null,groups:0,rowsScanned:0,sheetDateCell:null,errorCode:registrationError}}
+   :newestRegisteredPeople(coordinationTitles,registrationLoad,today,50);
   // Server-only full daily collections: no full person lists are returned to the browser.
   const fullGroups={
     newReferrals:newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY),
-    registration:newestRegisteredPeople(coordinationTitles,target?{date:target.date,grid:registrationData.values??[]}:null,today,Number.POSITIVE_INFINITY),
+    registration:newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),
     fetchedAt:Date.now()
   };
   const db=context.supabase as unknown as SupabaseClient;
@@ -274,7 +287,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   if(watchError) throw new Error("PROBLEM_VISITORS_READ_FAILED");
   const matches=findPotentialProblemMatches(watchList as ProblemVisitor[],fullGroups);
   return {
-    newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationData.values??[]),fetchedAt:Date.now(),
+    newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),fetchedAt:Date.now(),
     potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
   };
  });
