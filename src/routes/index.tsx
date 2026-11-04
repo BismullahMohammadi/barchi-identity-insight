@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, LineChart, Lock, Fingerprint } from "lucide-react";
-const officePhoto = "https://raw.githubusercontent.com/BismullahMohammadi/barchi-identity-insight/491a5151f3c2fc1c11bc78b2335420345ac864cd/src/assets/kabul-office-login.webp";
+const officePhoto = "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=85";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
@@ -134,7 +134,7 @@ function Landing() {
       </section>
 
       {/* Photo panel — left side on desktop, top banner on mobile */}
-      <section className="relative order-first h-full min-h-0 overflow-hidden lg:order-none" aria-hidden>
+      <section className="relative order-first h-full min-h-0 overflow-hidden bg-[#173451] lg:order-none" aria-hidden>
         <img src={officePhoto} alt="" width={1152} height={1536} fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover object-[50%_60%] lg:object-[45%_center]" />
         <div className="absolute inset-0 [background-image:var(--gradient-login-photo)]" />
