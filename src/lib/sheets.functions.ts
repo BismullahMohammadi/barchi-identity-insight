@@ -8,7 +8,7 @@ import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
-import { selectDailyTab } from "./daily-forms";
+import { selectDailyTab, selectTodayDailyTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
@@ -255,7 +255,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const collection=intakeTitles.find(title=>
    title.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(title)&&
    (title.includes(String(today.y))||title.includes("۱۴۰۵")));
-  const target=selectDailyTab(coordinationTitles,today);
+  const target=selectTodayDailyTab(coordinationTitles,today);
   const [intakeData,registrationData]=await Promise.all([
    collection?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
    target?sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${target.name.replace(/'/g,"''")}'!A1:L300`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR"):Promise.resolve({values:[] as unknown[][]}),
