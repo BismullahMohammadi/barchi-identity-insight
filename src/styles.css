@@ -39,6 +39,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-navy-soft: var(--navy-soft);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -87,6 +90,11 @@
   --sidebar-border: oklch(0.36 0.05 200);
   --sidebar-ring: oklch(0.8 0.14 75);
   --gradient-hero: linear-gradient(135deg, oklch(0.27 0.05 200), oklch(0.38 0.08 195) 60%, oklch(0.5 0.1 170));
+  --navy: oklch(0.32 0.1 258);
+  --navy-foreground: oklch(0.98 0.01 250);
+  --navy-soft: oklch(0.95 0.02 255);
+  --gradient-login-photo: linear-gradient(to left, oklch(0.24 0.09 260 / 0.85), oklch(0.28 0.1 258 / 0.35) 45%, oklch(0.22 0.08 260 / 0.15));
+  --shadow-login-card: 0 1px 2px oklch(0.32 0.1 258 / 6%), 0 24px 48px -20px oklch(0.32 0.1 258 / 28%);
   --shadow-card: 0 1px 2px oklch(0.24 0.035 210 / 6%), 0 8px 24px -12px oklch(0.24 0.035 210 / 18%);
 }
 
