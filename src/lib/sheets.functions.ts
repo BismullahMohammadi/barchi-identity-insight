@@ -3,7 +3,7 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
 import { SPREADSHEET_ID, TABS } from "./tabs";
-import { todayJalali, yesterdayJalali } from "./jalali";
+import { todayJalali, yesterdayJalali, formatJ, type JDate } from "./jalali";
 import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
