@@ -74,7 +74,7 @@ function Landing() {
   }
 
   return (
-    <main className="grid h-[100dvh] w-full grid-rows-[minmax(0,1fr)_minmax(0,130px)] overflow-hidden bg-card text-foreground lg:grid-rows-1 lg:grid-cols-[45fr_55fr]">
+    <main className="grid h-[100dvh] w-full grid-rows-[minmax(0,130px)_minmax(0,1fr)] overflow-hidden bg-card text-foreground lg:grid-rows-1 lg:grid-cols-[45fr_55fr]">
       {/* Login panel — first in DOM → right side in RTL */}
       <section className="relative z-10 flex min-h-0 flex-col justify-center overflow-hidden px-5 py-3 sm:px-10 lg:px-14">
         <div className="mx-auto w-full max-w-md">
