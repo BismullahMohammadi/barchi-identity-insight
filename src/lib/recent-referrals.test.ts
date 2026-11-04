@@ -41,7 +41,6 @@ describe("recent referrals from source sheet layouts",()=>{
   expect(newestCollectedPeople([["تاریخ 07-08-1405"],["1","Future","Father",1,1]],today).people).toEqual([]);
  });
 });
-});
 
 // Real coordination layout on 1405/08/13 (names replaced by placeholders): row 2 in-sheet date,
 // row 3 total, row 4 team totals, row 5 headers, people from row 6; father often blank.
