@@ -127,7 +127,7 @@ export const getDailyCoordination = createServerFn({ method: "POST" })
     if (!metaResponse.ok) throw new Error(`COORDINATION_SHEETS_ERROR_${metaResponse.status}`);
     const meta=await metaResponse.json() as {sheets?:{properties?:{title?:string}}[]};
     const names=(meta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>typeof x==="string");
-    const match=selectDailyTab(names,todayJalali());
+    const match=selectTodayDailyTab(names,todayJalali());
     if (!match) return {tabName:null,date:null,count:null,cell:null,fetchedAt:Date.now()};
     const escaped=match.name.replace(/'/g,"''");
     const range=encodeURIComponent(`'${escaped}'!A1:AZ20`);
