@@ -29,6 +29,10 @@ describe("recent referrals from source sheet layouts",()=>{
   expect(result.people[0]?.father).toBe("Fh");
   expect(result.people[0]?.familyMembers).toBe(8);
  });
+ it("does not return yesterday's registration records when today is absent",()=>{
+  const grid=[[],[],[],[],[],["Yesterday","Father","3"]];
+  expect(newestRegisteredPeople(["5 عقرب 1405"],{date:{y:1405,m:8,d:5},grid},today)).toEqual({date:null,people:[],source:null});
+ });
  it("never accidentally shows a future or mismatched sheet as today",()=>{
   expect(newestRegisteredPeople(["7 عقرب 1405"],{date:today,grid:[]},today).people).toEqual([]);
   expect(newestCollectedPeople([["تاریخ 07-08-1405"],["1","Future","Father",1,1]],today).people).toEqual([]);
