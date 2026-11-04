@@ -26,3 +26,7 @@ Project requirements override generic presets: Pashto RTL, legible Vazirmatn, Af
 ## Generator diesel model
 - Generator stock is modeled separately (`generator_meter_readings`, `generator_diesel_deliveries`, logic in `src/lib/generator-model.ts`) from `fuel_entries` and the Google Sheet — why: prevents double-counting; only separately confirmed post-baseline deliveries count.
 - Both generator tables are append-only (triggers block UPDATE/DELETE) and validate baseline/chronology/monotonic meter in BEFORE INSERT triggers — why: audit trail and integrity even if the client is bypassed.
+
+## Registration referrals (coordination workbook)
+- Coordination tabs use the tolerant `parseCoordinationTabDate`/`selectTodayCoordinationTab` (look-alike letters, one-letter month typos, missing year = current year) and rows are located by detecting the «اسم/ولد/تعداد» header; the intake parser stays strict — why: hand-typed tab names broke today's lookup, while intake must not change.
+- Registration only ever shows today's tab and returns a safe diagnostic (status, dates, tab titles, counts — never person data) — why: never present yesterday as today and explain empty states.
