@@ -257,7 +257,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   // Daily verification sheets are dated separately from the monthly intake sheet.
   // Never borrow yesterday's rejection reasons for today's intake records.
   const dailyVerification=selectTodayCoordinationTab(intakeTitles,today).today;
-  if(dailyVerification&&newReferrals.people.length){
+  if(dailyVerification&&newReferrals.date===formatJ(today)&&newReferrals.people.length){
    try{
     const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR");
     const rejected=extractRejectedFiles(dailyGrid.values??[]);
