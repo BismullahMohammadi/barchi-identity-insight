@@ -44,6 +44,22 @@ export function newestCollectedPeople(grid:unknown[][],today:JDate,limit=5):Refe
    .sort((a,b)=>jKey(b.date)-jKey(a.date))[0];
  return {date:latest?formatJ(latest.date):null,people:latest?latest.people.slice(-limit).reverse():[],source:null};
 }
+/** Scan every dated section of the monthly intake tab. Birth-card approvals may
+ * arrive on a later day than the original intake, so latest-day-only is insufficient. */
+export function collectedPeopleThroughDate(grid:unknown[][],today:JDate):RecentReferral[]{
+ const people:RecentReferral[]=[];
+ let date:JDate|null=null;
+ for(const row of grid){
+  const section=parseSectionDate(row[0]);
+  if(section){date=section;continue;}
+  if(!date||jKey(date)>jKey(today))continue;
+  const serial=count(row[0]),name=clean(row[1]),father=clean(row[2]);
+  if(serial===null||serial<1||!name||!father)continue;
+  const left=count(row[4]),right=count(row[5]);
+  people.push({name,father,familyMembers:left!==null&&right!==null?left+right:left??right,fileCode:clean(row[6]),recordKey:`${formatJ(date)}:${serial}:${clean(row[6])}`});
+ }
+ return people;
+}
 export type RegistrationStatus="ok"|"no_today_tab"|"empty_today"|"no_header"|"fetch_error";
 /** Safe metadata only: dates, tab titles (which are dates), counts — never person data. */
 export type RegistrationDiagnostic={status:RegistrationStatus;today:string;todayTab:string|null;latestTab:string|null;latestDate:string|null;headerRow:number|null;groups:number;rowsScanned:number;sheetDateCell:string|null;errorCode?:string|undefined};
