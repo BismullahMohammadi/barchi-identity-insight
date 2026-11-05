@@ -238,7 +238,22 @@ function Overview() {
                 </span>
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
-              {item.source&&<p className="mt-1 text-[11px] text-muted-foreground">سرچینه: {item.source}</p>}
+              {!recent.isLoading&&!recent.error&&item.group?.people.length?(
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {item.key==="intake"?(()=>{
+                    const people=item.group.people;
+                    const registered=recent.data?.registration.people??[];
+                    const rejected=people.filter(p=>!!p.rejectionReason).length;
+                    const approved=people.filter(p=>!p.rejectionReason&&(p.birthCardConfirmed||matchesRegisteredPerson(p,registered))).length;
+                    return `رد شوي: ${rejected} · تایید شوي: ${approved} · منتظر: ${people.length-rejected-approved}`;
+                  })():(()=>{
+                    const people=item.group.people;
+                    const births=people.filter(p=>p.team==="ثبت تولد").length;
+                    return `ثبت تولد: ${births} · عادي: ${people.length-births}`;
+                  })()}
+                  <span className="ms-1 opacity-70">(په لېست کې)</span>
+                </p>
+              ):null}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
                 <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"} isRegistration={item.key==="registration"} registeredPeople={item.key==="intake"?recent.data?.registration.people??[]:[]}/>
               </div>}
