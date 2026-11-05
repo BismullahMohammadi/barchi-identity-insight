@@ -255,7 +255,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    title.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(title)&&
    (title.includes(String(today.y))||title.includes("۱۴۰۵")));
   const intakeData=collection?await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
-  const newReferrals=newestCollectedPeople(intakeData.values??[],today,50);
+  const newReferrals=newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY);
   // Daily verification sheets are dated separately from the monthly intake sheet.
   // Never borrow yesterday's rejection reasons for today's intake records.
   const dailyVerification=selectTodayCoordinationTab(intakeTitles,today).today;
@@ -296,7 +296,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const registrationLoad=registrationTarget?{date:registrationTarget.date,grid:registrationGrid}:null;
   const registration=registrationError
    ?{date:null,people:[],source:null,diagnostic:{status:"fetch_error" as const,today:formatJ(today),todayTab:null,latestTab:null,latestDate:null,headerRow:null,groups:0,rowsScanned:0,sheetDateCell:null,errorCode:registrationError}}
-   :newestRegisteredPeople(coordinationTitles,registrationLoad,today,50);
+   :newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY);
   // Match confirmed birth cards against the complete current-day intake section.
   // Only append to registration if not already present there, preventing double counting.
   const allIntake=collectedPeopleThroughDate(intakeData.values??[],today);
@@ -329,7 +329,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    return mixed;
   };
   if(extraConfirmed.length){
-   registration.people=mergeRegistrationKinds(registration.people,extraConfirmed).slice(0,50);
+   registration.people=mergeRegistrationKinds(registration.people,extraConfirmed);
   }
   const birthCardAddedCount=extraConfirmed.reduce((sum,p)=>sum+(p.familyMembers??0),0);
   // Server-only full daily collections: no full person lists are returned to the browser.
