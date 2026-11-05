@@ -311,7 +311,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    if(uniqueCodes.has(code)||matchesRegisteredPerson(person,allRegistered))return false;
    uniqueCodes.add(code);
    return true;
-  }).map(person=>({...person,birthCardConfirmed:true,familyMembers:birthConfirmed.get(normalizeFileCode(person.fileCode))??person.familyMembers}));
+  }).map(person=>({...person,birthCardConfirmed:true,team:"ثبت تولد",familyMembers:birthConfirmed.get(normalizeFileCode(person.fileCode))??person.familyMembers}));
   for(const person of newReferrals.people){
    const code=normalizeFileCode(person.fileCode);
    if(code&&birthConfirmed.has(code)&&!person.rejectionReason)person.birthCardConfirmed=true;
