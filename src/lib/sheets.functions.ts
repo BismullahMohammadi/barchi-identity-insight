@@ -316,14 +316,26 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    const code=normalizeFileCode(person.fileCode);
    if(code&&birthConfirmed.has(code)&&!person.rejectionReason)person.birthCardConfirmed=true;
   }
+  // Daily registration sheet does not provide a shared event timestamp with birth-card
+  // confirmations. Interleave both streams instead of always pinning birth-card cases
+  // to the beginning; preserve the existing order within each stream.
+  const mergeRegistrationKinds=<T,>(ordinary:T[],birth:T[]):T[]=>{
+   const mixed:T[]=[];
+   let i=0,j=0;
+   while(i<ordinary.length||j<birth.length){
+    if(i<ordinary.length)mixed.push(ordinary[i++]!);
+    if(j<birth.length)mixed.push(birth[j++]!);
+   }
+   return mixed;
+  };
   if(extraConfirmed.length){
-   registration.people=[...extraConfirmed,...registration.people].slice(0,50);
+   registration.people=mergeRegistrationKinds(registration.people,extraConfirmed).slice(0,50);
   }
   const birthCardAddedCount=extraConfirmed.reduce((sum,p)=>sum+(p.familyMembers??0),0);
   // Server-only full daily collections: no full person lists are returned to the browser.
   const fullGroups={
     newReferrals:newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY),
-    registration:{...newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),people:[...extraConfirmed,...allRegistered]},
+    registration:{...newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),people:mergeRegistrationKinds(allRegistered,extraConfirmed)},
     fetchedAt:Date.now()
   };
   const db=context.supabase as unknown as SupabaseClient;
