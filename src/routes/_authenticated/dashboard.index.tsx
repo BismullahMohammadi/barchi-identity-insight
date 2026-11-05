@@ -1,3 +1,4 @@
+import { toLatinDigits } from "@/lib/jalali";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -224,7 +225,7 @@ function Overview() {
           <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
             {([
               {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals,source:daily.data?.tabName&&daily.data?.cell?daily.data.tabName+" · "+daily.data.cell:null},
-              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":typeof coordination.data?.count==="number"?coordination.data.count+(recent.data?.birthCardAddedCount??0):coordination.data?.count??"—",error:coordination.error,group:recent.data?.registration,source:coordination.data?.tabName&&coordination.data?.cell?coordination.data.tabName+" · "+coordination.data.cell:null},
+              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count!=null?Number(toLatinDigits(coordination.data.count).replace(/[٬, ]/g,""))+(recent.data?.birthCardAddedCount??0):(recent.data?.birthCardAddedCount?recent.data.birthCardAddedCount:"—"),error:coordination.error,group:recent.data?.registration,source:coordination.data?.tabName&&coordination.data?.cell?coordination.data.tabName+" · "+coordination.data.cell:null},
             ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
               <button type="button" className="flex min-h-11 w-full flex-wrap items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={()=>setExpandedVisitors(current=>{const nextOpen=!current[item.key];return window.matchMedia("(min-width: 1024px)").matches?{...current,[item.key]:nextOpen}:{intake:item.key==="intake"&&nextOpen,registration:item.key==="registration"&&nextOpen};})}
