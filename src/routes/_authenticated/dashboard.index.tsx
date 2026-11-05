@@ -243,13 +243,17 @@ function Overview() {
                   {item.key==="intake"?(()=>{
                     const people=item.group.people;
                     const registered=recent.data?.registration.people??[];
-                    const rejected=people.filter(p=>!!p.rejectionReason).length;
-                    const approved=people.filter(p=>!p.rejectionReason&&(p.birthCardConfirmed||matchesRegisteredPerson(p,registered))).length;
-                    return `رد شوي: ${rejected} · تایید شوي: ${approved} · منتظر: ${people.length-rejected-approved}`;
+                    const sumMembers=(members:typeof people)=>members.reduce((total,p)=>total+(p.familyMembers??0),0);
+                    const rejected=people.filter(p=>!!p.rejectionReason);
+                    const approved=people.filter(p=>!p.rejectionReason&&(p.birthCardConfirmed||matchesRegisteredPerson(p,registered)));
+                    const pending=people.filter(p=>!p.rejectionReason&&!p.birthCardConfirmed&&!matchesRegisteredPerson(p,registered));
+                    return `رد شوي: ${sumMembers(rejected)} · تایید شوي: ${sumMembers(approved)} · منتظر: ${sumMembers(pending)}`;
                   })():(()=>{
                     const people=item.group.people;
-                    const births=people.filter(p=>p.team==="ثبت تولد").length;
-                    return `ثبت تولد: ${births} · عادي: ${people.length-births}`;
+                    const sumMembers=(members:typeof people)=>members.reduce((total,p)=>total+(p.familyMembers??0),0);
+                    const births=people.filter(p=>p.team==="ثبت تولد");
+                    const ordinary=people.filter(p=>p.team!=="ثبت تولد");
+                    return `ثبت تولد: ${sumMembers(births)} · عادي: ${sumMembers(ordinary)}`;
                   })()}
                   <span className="ms-1 opacity-70">(په لېست کې)</span>
                 </p>
