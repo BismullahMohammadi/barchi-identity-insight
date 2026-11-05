@@ -64,14 +64,14 @@ function RegistrationDiagnosticNote({d}:{d:RegistrationDiagnostic}) {
  </div>;
 }
 
-function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false,registeredPeople=[]}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean;registeredPeople?:RecentReferral[]}) {
+function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false,registeredPeople=[],isRegistration=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean;registeredPeople?:RecentReferral[];isRegistration?:boolean}) {
  const [shown,setShown]=useState(5);
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
    !group?.people.length?(group?.diagnostic?<RegistrationDiagnosticNote d={group.diagnostic}/>:<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>):
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
-    <ol className="space-y-2">{group.people.slice(0,shown).map((person,i)=><li key={i} className={"rounded-lg border px-3 py-2 text-sm "+(person.rejectionReason?"border-red-300/80 bg-red-50/80 dark:border-red-800 dark:bg-red-950/30":(person.birthCardConfirmed||registeredPeople.length&&matchesRegisteredPerson(person,registeredPeople))?"border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30":"border-border/60 bg-card/80")}>
+    <ol className="space-y-2">{group.people.slice(0,shown).map((person,i)=><li key={i} className={"rounded-lg border px-3 py-2 text-sm "+(isRegistration?"border-border/60 bg-card/80":person.rejectionReason?"border-red-300/80 bg-red-50/80 dark:border-red-800 dark:bg-red-950/30":(person.birthCardConfirmed||registeredPeople.length&&matchesRegisteredPerson(person,registeredPeople))?"border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30":"border-border/60 bg-card/80")}>
      <div className="flex items-start justify-between gap-3"><p className="min-w-0 font-bold">{person.name}</p><div className="flex max-w-[55%] shrink-0 flex-col items-end gap-1 text-left">{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.rejectionReason&&<p className="rounded-md bg-red-100/70 px-2 py-1 text-xs leading-5 text-red-800 dark:bg-red-950/50 dark:text-red-200">{person.rejectionReason}</p>}{person.team&&<span className={person.team==="ثبت تولد"?"rounded-md border border-border/60 bg-muted px-2 py-1 text-xs font-medium text-foreground":"rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary"}>{person.team}</span>}</div></div>
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
      <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
@@ -240,7 +240,7 @@ function Overview() {
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
               {item.source&&<p className="mt-1 text-[11px] text-muted-foreground">سرچینه: {item.source}</p>}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
-                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"} registeredPeople={item.key==="intake"?recent.data?.registration.people??[]:[]}/>
+                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"} isRegistration={item.key==="registration"} registeredPeople={item.key==="intake"?recent.data?.registration.people??[]:[]}/>
               </div>}
             </div>)}
           </div>
