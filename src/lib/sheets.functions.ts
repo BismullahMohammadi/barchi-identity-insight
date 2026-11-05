@@ -12,6 +12,8 @@ import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
+import {birthCardConfirmations} from "./birth-card-confirmations";
+import {matchesRegisteredPerson} from "./registration-match";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
 import type {ProblemVisitor} from "./problem-visitors.functions";
 import type {SupabaseClient} from "@supabase/supabase-js";
@@ -257,10 +259,12 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   // Daily verification sheets are dated separately from the monthly intake sheet.
   // Never borrow yesterday's rejection reasons for today's intake records.
   const dailyVerification=selectTodayCoordinationTab(intakeTitles,today).today;
+  let birthConfirmed=new Map<string,number>();
   if(dailyVerification&&newReferrals.date===formatJ(today)&&newReferrals.people.length){
    try{
     const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR");
     const rejected=extractRejectedFiles(dailyGrid.values??[]);
+    birthConfirmed=birthCardConfirmations(dailyGrid.values??[]);
     for(const person of newReferrals.people){
      const key=normalizeFileCode(person.fileCode);
      if(key&&rejected.has(key))person.rejectionReason=rejected.get(key);
@@ -292,10 +296,33 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const registration=registrationError
    ?{date:null,people:[],source:null,diagnostic:{status:"fetch_error" as const,today:formatJ(today),todayTab:null,latestTab:null,latestDate:null,headerRow:null,groups:0,rowsScanned:0,sheetDateCell:null,errorCode:registrationError}}
    :newestRegisteredPeople(coordinationTitles,registrationLoad,today,50);
+  // Match confirmed birth cards against the complete current-day intake section.
+  // Only append to registration if not already present there, preventing double counting.
+  const allIntake=newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY);
+  const allRegistered=newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY).people;
+  const confirmedPeople=allIntake.date===formatJ(today)?allIntake.people.filter(person=>{
+   const code=normalizeFileCode(person.fileCode);
+   return !!code&&birthConfirmed.has(code)&&!person.rejectionReason;
+  }):[];
+  const uniqueCodes=new Set<string>();
+  const extraConfirmed=confirmedPeople.filter(person=>{
+   const code=normalizeFileCode(person.fileCode);
+   if(uniqueCodes.has(code)||matchesRegisteredPerson(person,allRegistered))return false;
+   uniqueCodes.add(code);
+   return true;
+  }).map(person=>({...person,birthCardConfirmed:true,familyMembers:birthConfirmed.get(normalizeFileCode(person.fileCode))??person.familyMembers}));
+  for(const person of newReferrals.people){
+   const code=normalizeFileCode(person.fileCode);
+   if(code&&birthConfirmed.has(code)&&!person.rejectionReason)person.birthCardConfirmed=true;
+  }
+  if(extraConfirmed.length){
+   registration.people=[...extraConfirmed,...registration.people].slice(0,50);
+  }
+  const birthCardAddedCount=extraConfirmed.reduce((sum,p)=>sum+(p.familyMembers??0),0);
   // Server-only full daily collections: no full person lists are returned to the browser.
   const fullGroups={
     newReferrals:newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY),
-    registration:newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),
+    registration:{...newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),people:[...extraConfirmed,...allRegistered]},
     fetchedAt:Date.now()
   };
   const db=context.supabase as unknown as SupabaseClient;
@@ -304,7 +331,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   if(watchError) throw new Error("PROBLEM_VISITORS_READ_FAILED");
   const matches=findPotentialProblemMatches(watchList as ProblemVisitor[],fullGroups);
   return {
-    newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),fetchedAt:Date.now(),
+    newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),birthCardAddedCount,fetchedAt:Date.now(),
     potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
   };
  });
