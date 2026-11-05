@@ -11,6 +11,7 @@ import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
+import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
 import type {ProblemVisitor} from "./problem-visitors.functions";
 import type {SupabaseClient} from "@supabase/supabase-js";
@@ -253,6 +254,22 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    (title.includes(String(today.y))||title.includes("۱۴۰۵")));
   const intakeData=collection?await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
   const newReferrals=newestCollectedPeople(intakeData.values??[],today,50);
+  // Daily verification sheets are dated separately from the monthly intake sheet.
+  // Never borrow yesterday's rejection reasons for today's intake records.
+  const dailyVerification=selectTodayCoordinationTab(intakeTitles,today).today;
+  if(dailyVerification&&newReferrals.date===formatJ(today)&&newReferrals.people.length){
+   try{
+    const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR");
+    const rejected=extractRejectedFiles(dailyGrid.values??[]);
+    for(const person of newReferrals.people){
+     const key=normalizeFileCode(person.fileCode);
+     if(key&&rejected.has(key))person.rejectionReason=rejected.get(key);
+    }
+   }catch{
+    // Preserve intake list when verification sheet is unavailable; never guess a reason.
+    console.error(`[recent-referrals] verification read failed for ${formatJ(today)}`);
+   }
+  }
   // Registration is read independently so a coordination-sheet failure never hides intake data.
   let coordinationTitles:string[]=[];
   let registrationGrid:unknown[][]=[];
