@@ -255,7 +255,7 @@ function Overview() {
                     const ordinary=people.filter(p=>p.team!=="ثبت تولد");
                     return `ثبت تولد: ${sumMembers(births)} · عادي: ${sumMembers(ordinary)}`;
                   })()}
-                  <span className="ms-1 opacity-70">(په لېست کې)</span>
+                  <span className="ms-1 opacity-70">(د فامیل غړي، په لېست کې)</span>
                 </p>
               ):null}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
