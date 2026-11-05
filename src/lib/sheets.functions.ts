@@ -10,7 +10,7 @@ import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
-import {newestCollectedPeople,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
+import {newestCollectedPeople,collectedPeopleThroughDate,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
 import {birthCardConfirmations} from "./birth-card-confirmations";
 import {matchesRegisteredPerson} from "./registration-match";
@@ -260,14 +260,15 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   // Never borrow yesterday's rejection reasons for today's intake records.
   const dailyVerification=selectTodayCoordinationTab(intakeTitles,today).today;
   let birthConfirmed=new Map<string,number>();
-  if(dailyVerification&&newReferrals.date===formatJ(today)&&newReferrals.people.length){
+  let rejectedToday=new Map<string,string>();
+  if(dailyVerification){
    try{
     const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR");
-    const rejected=extractRejectedFiles(dailyGrid.values??[]);
+    rejectedToday=extractRejectedFiles(dailyGrid.values??[]);
     birthConfirmed=birthCardConfirmations(dailyGrid.values??[]);
     for(const person of newReferrals.people){
      const key=normalizeFileCode(person.fileCode);
-     if(key&&rejected.has(key))person.rejectionReason=rejected.get(key);
+     if(key&&rejectedToday.has(key))person.rejectionReason=rejectedToday.get(key);
     }
    }catch{
     // Preserve intake list when verification sheet is unavailable; never guess a reason.
@@ -298,12 +299,12 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    :newestRegisteredPeople(coordinationTitles,registrationLoad,today,50);
   // Match confirmed birth cards against the complete current-day intake section.
   // Only append to registration if not already present there, preventing double counting.
-  const allIntake=newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY);
+  const allIntake=collectedPeopleThroughDate(intakeData.values??[],today);
   const allRegistered=newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY).people;
-  const confirmedPeople=allIntake.date===formatJ(today)?allIntake.people.filter(person=>{
+  const confirmedPeople=allIntake.filter(person=>{
    const code=normalizeFileCode(person.fileCode);
-   return !!code&&birthConfirmed.has(code)&&!person.rejectionReason;
-  }):[];
+   return !!code&&birthConfirmed.has(code)&&!rejectedToday.has(code);
+  });
   const uniqueCodes=new Set<string>();
   const extraConfirmed=confirmedPeople.filter(person=>{
    const code=normalizeFileCode(person.fileCode);
