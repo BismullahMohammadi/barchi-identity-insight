@@ -13,7 +13,8 @@ import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
 import { WeeklyActivityChart } from "@/components/dash/WeeklyActivityChart";
 import { recentReferralsQuery } from "@/lib/queries";
-import type { ReferralGroup, RegistrationDiagnostic } from "@/lib/recent-referrals";
+import type { ReferralGroup, RegistrationDiagnostic, RecentReferral } from "@/lib/recent-referrals";
+import { matchesRegisteredPerson } from "@/lib/registration-match";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
@@ -62,14 +63,14 @@ function RegistrationDiagnosticNote({d}:{d:RegistrationDiagnostic}) {
  </div>;
 }
 
-function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean}) {
+function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=false,registeredPeople=[]}:{group?:ReferralGroup|undefined;loading:boolean;error:unknown;firstSeenTimes?:Record<string,string>|undefined;showFetchTime?:boolean;registeredPeople?:RecentReferral[]}) {
  const [shown,setShown]=useState(5);
  return <div className="mt-3 border-t border-border/70 pt-3">
   {loading?<p role="status" className="text-sm text-muted-foreground">معلومات رااخیستل کېږي…</p>:
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
    !group?.people.length?(group?.diagnostic?<RegistrationDiagnosticNote d={group.diagnostic}/>:<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>):
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
-    <ol className="space-y-2">{group.people.slice(0,shown).map((person,i)=><li key={i} className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-sm">
+    <ol className="space-y-2">{group.people.slice(0,shown).map((person,i)=><li key={i} className={"rounded-lg border px-3 py-2 text-sm "+(registeredPeople.length&&matchesRegisteredPerson(person,registeredPeople)?"border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30":"border-border/60 bg-card/80")}>
      <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-bold">{person.name}</p>{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.team&&<span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{person.team}</span>}</div>
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
      <p className="text-xs text-muted-foreground">د کورنۍ غړي: {person.familyMembers??"—"}</p>
@@ -238,7 +239,7 @@ function Overview() {
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
               {item.source&&<p className="mt-1 text-[11px] text-muted-foreground">سرچینه: {item.source}</p>}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
-                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"}/>
+                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"} registeredPeople={item.key==="intake"?recent.data?.registration.people??[]:[]}/>
               </div>}
             </div>)}
           </div>
