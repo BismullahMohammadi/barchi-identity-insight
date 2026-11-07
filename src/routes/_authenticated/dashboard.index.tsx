@@ -71,7 +71,7 @@ function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=fals
    error?<p role="alert" className="text-sm text-destructive">{errorText(error)}</p>:
    !group?.people.length?(group?.diagnostic?<RegistrationDiagnosticNote d={group.diagnostic}/>:<p className="text-sm text-muted-foreground">د وروستیو مراجعینو معلومات نشته.</p>):
    <><p className="mb-2 text-xs text-muted-foreground">د راپور نېټه: {group.date??"نه ده موندل شوې"}</p>
-    <ol className="space-y-2">{group.people.slice(0,showAll?undefined:5).map((person,i)=><li key={i} className={"rounded-lg border px-3 py-2 text-sm "+(isRegistration?"border-border/60 bg-card/80":person.rejectionReason?"border-red-300/80 bg-red-50/80 dark:border-red-800 dark:bg-red-950/30":(person.birthCardConfirmed||registeredPeople.length&&matchesRegisteredPerson(person,registeredPeople))?"border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30":"border-border/60 bg-card/80")}>
+    <ol className="space-y-2">{group.people.slice(0,showAll?undefined:5).map((person,i)=><li key={i} className={"rounded-lg border px-3 py-2 text-sm "+(isRegistration?"border-border/60 bg-card/80":person.rejectionReason?"border-red-300/80 bg-red-50/80 dark:border-red-800 dark:bg-red-950/30":(person.dailyApproved||person.birthCardConfirmed||registeredPeople.length&&matchesRegisteredPerson(person,registeredPeople))?"border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30":"border-border/60 bg-card/80")}>
      <div className="flex items-start justify-between gap-3"><p className="min-w-0 font-bold">{person.name}</p><div className="flex max-w-[55%] shrink-0 flex-col items-end gap-1 text-left">{showFetchTime&&person.recordKey&&firstSeenTimes?.[person.recordKey]&&<span className="text-xs text-muted-foreground">{firstSeenTimes[person.recordKey]}</span>}{person.rejectionReason&&<p className="rounded-md bg-red-100/70 px-2 py-1 text-xs leading-5 text-red-800 dark:bg-red-950/50 dark:text-red-200">{person.rejectionReason}</p>}{person.team&&<span className={person.team==="ثبت تولد"?"rounded-md border border-border/60 bg-muted px-2 py-1 text-xs font-medium text-foreground":"rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-xs font-bold text-primary"}>{person.team}</span>}</div></div>
      {isRegistration&&person.team==="ثبت تولد"&&person.fileCode&&<p className="text-xs text-muted-foreground">د دوسیې کوډ: {person.fileCode}</p>}
      <p className="text-xs text-muted-foreground">د پلار نوم: {person.father}</p>
@@ -246,8 +246,8 @@ function Overview() {
                     const registered=recent.data?.registration.people??[];
                     const sumMembers=(members:typeof people)=>members.reduce((total,p)=>total+(p.familyMembers??0),0);
                     const rejected=people.filter(p=>!!p.rejectionReason);
-                    const approved=people.filter(p=>!p.rejectionReason&&(p.birthCardConfirmed||matchesRegisteredPerson(p,registered)));
-                    const pending=people.filter(p=>!p.rejectionReason&&!p.birthCardConfirmed&&!matchesRegisteredPerson(p,registered));
+                    const approved=people.filter(p=>!p.rejectionReason&&(p.dailyApproved||p.birthCardConfirmed||matchesRegisteredPerson(p,registered)));
+                    const pending=people.filter(p=>!p.rejectionReason&&!p.dailyApproved&&!p.birthCardConfirmed&&!matchesRegisteredPerson(p,registered));
                     return `رد شوي: ${sumMembers(rejected)} · تایید شوي: ${sumMembers(approved)} · منتظر: ${sumMembers(pending)}`;
                   })():(()=>{
                     const people=item.group.people;
