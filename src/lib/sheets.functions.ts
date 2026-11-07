@@ -306,18 +306,21 @@ export const getRecentReferrals=createServerFn({method:"GET"})
    return !!code&&birthConfirmed.has(code)&&!rejectedToday.has(code);
   });
   const uniqueCodes=new Set<string>();
+  // The file code is authoritative for a birth-card confirmation. A fuzzy name
+  // match must never silently suppress the confirmed entry (e.g. file 18705).
+  // Deduplicate only when the ordinary registration record carries that same code.
+  const registeredCodes=new Set(allRegistered.map(p=>normalizeFileCode(p.fileCode)).filter(Boolean));
   const extraConfirmed=confirmedPeople.filter(person=>{
    const code=normalizeFileCode(person.fileCode);
-   if(uniqueCodes.has(code))return false;
+   if(!code||uniqueCodes.has(code))return false;
    uniqueCodes.add(code);
-   // An ordinary registration may already contain this person under a slightly
-   // different spelling. Mark that row as birth registration instead of hiding
-   // the confirmed code entirely or counting the same person twice.
-   const existing=allRegistered.find(r=>matchesRegisteredPerson(person,[r]));
-   if(existing){
-    existing.birthCardConfirmed=true;
-    existing.team="ثبت تولد";
-    existing.fileCode=person.fileCode;
+   if(registeredCodes.has(code)){
+    for(const existing of allRegistered){
+     if(normalizeFileCode(existing.fileCode)===code){
+      existing.birthCardConfirmed=true;
+      existing.team="ثبت تولد";
+     }
+    }
     return false;
    }
    return true;
