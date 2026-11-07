@@ -308,8 +308,18 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const uniqueCodes=new Set<string>();
   const extraConfirmed=confirmedPeople.filter(person=>{
    const code=normalizeFileCode(person.fileCode);
-   if(uniqueCodes.has(code)||matchesRegisteredPerson(person,allRegistered))return false;
+   if(uniqueCodes.has(code))return false;
    uniqueCodes.add(code);
+   // An ordinary registration may already contain this person under a slightly
+   // different spelling. Mark that row as birth registration instead of hiding
+   // the confirmed code entirely or counting the same person twice.
+   const existing=allRegistered.find(r=>matchesRegisteredPerson(person,[r]));
+   if(existing){
+    existing.birthCardConfirmed=true;
+    existing.team="ثبت تولد";
+    existing.fileCode=person.fileCode;
+    return false;
+   }
    return true;
   }).map(person=>({...person,birthCardConfirmed:true,team:"ثبت تولد",familyMembers:birthConfirmed.get(normalizeFileCode(person.fileCode))??person.familyMembers}));
   for(const person of newReferrals.people){
@@ -330,6 +340,12 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   };
   if(extraConfirmed.length){
    registration.people=mergeRegistrationKinds(registration.people,extraConfirmed);
+  }
+  // Carry the birth-card label to the visible registration rows even when a
+  // matching ordinary row was already present in the daily registration sheet.
+  for(const person of registration.people){
+   const matched=allRegistered.find(r=>matchesRegisteredPerson(person,[r])&&r.birthCardConfirmed);
+   if(matched){person.birthCardConfirmed=true;person.team="ثبت تولد";person.fileCode=matched.fileCode;}
   }
   const birthCardAddedCount=extraConfirmed.reduce((sum,p)=>sum+(p.familyMembers??0),0);
   // Server-only full daily collections: no full person lists are returned to the browser.
