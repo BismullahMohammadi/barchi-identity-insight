@@ -12,7 +12,7 @@ import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,collectedPeopleThroughDate,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
-import {birthCardConfirmations} from "./birth-card-confirmations";
+import {birthCardConfirmations,dailyApprovalDetails} from "./birth-card-confirmations";
 import {matchesRegisteredPerson} from "./registration-match";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
 import type {ProblemVisitor} from "./problem-visitors.functions";
@@ -260,15 +260,18 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   // Never borrow yesterday's rejection reasons for today's intake records.
   const dailyVerification=selectTodayCoordinationTab(intakeTitles,today).today;
   let birthConfirmed=new Map<string,number>();
+  let dailyApprovals=new Map<string,import("./birth-card-confirmations").DailyApproval>();
   let rejectedToday=new Map<string,string>();
   if(dailyVerification){
    try{
     const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR");
     rejectedToday=extractRejectedFiles(dailyGrid.values??[]);
     birthConfirmed=birthCardConfirmations(dailyGrid.values??[]);
+    dailyApprovals=dailyApprovalDetails(dailyGrid.values??[]);
     for(const person of newReferrals.people){
      const key=normalizeFileCode(person.fileCode);
-     if(key&&rejectedToday.has(key))person.rejectionReason=rejectedToday.get(key);
+     if(key&&dailyApprovals.has(key))person.dailyApproved=true;
+     else if(key&&rejectedToday.has(key))person.rejectionReason=rejectedToday.get(key);
     }
    }catch{
     // Preserve intake list when verification sheet is unavailable; never guess a reason.
@@ -303,7 +306,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const allRegistered=newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY).people;
   const confirmedPeople=allIntake.filter(person=>{
    const code=normalizeFileCode(person.fileCode);
-   return !!code&&birthConfirmed.has(code)&&!rejectedToday.has(code);
+   return !!code&&birthConfirmed.has(code)&&(!rejectedToday.has(code)||dailyApprovals.has(code));
   });
   const uniqueCodes=new Set<string>();
   // The file code is authoritative for a birth-card confirmation. A fuzzy name
