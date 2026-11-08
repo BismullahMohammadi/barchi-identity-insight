@@ -398,6 +398,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
    const collection=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR");
    intake.push(...collectedPeopleInRange(collection.values??[],from,to));
   }
+  if(usedTabs.length!==months.length)throw new Error("HISTORICAL_INTAKE_MONTH_MISSING");
   const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR");
   const regTitles=(regMeta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
   const regDays=regTitles.map(name=>({name,date:parseCoordinationTabDate(name,to.y)})).filter((x):x is {name:string;date:JDate}=>!!x.date&&jKey(x.date)>=jKey(from)&&jKey(x.date)<=jKey(to));
