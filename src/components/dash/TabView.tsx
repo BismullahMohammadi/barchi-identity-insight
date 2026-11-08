@@ -38,7 +38,8 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
     ? { from: null, to: null }
     : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } }),
   [month,dateRange]);
-  const { rows } = useMemo(() => filterByDate(table, range), [table, range]);
+  const hasUndatedRange=!!dateRange&&table.dateCol<0;
+  const { rows } = useMemo(() => hasUndatedRange?{rows:[],dates:[]}:filterByDate(table, range), [table, range,hasUndatedRange]);
   const filteredRows = useMemo(() => {
     const q = search.trim().toLocaleLowerCase();
     return q ? rows.filter(row => row.some(cell => String(cell ?? "").toLocaleLowerCase().includes(q))) : rows;
@@ -72,6 +73,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
 
   return (
     <div className="space-y-4">
+      {hasUndatedRange&&<p role="status" className="rounded-lg border p-3 text-sm text-muted-foreground">په دې راپور کې د ورځې نېټه نشته؛ د ټاکلې مودې دقیقې شمېرې نه شي محاسبه کېدای. د ناسمو مجموعو د مخنیوي لپاره معلومات نه ښودل کېږي.</p>}
       {!detailsOnly && <section className="dashboard-panel flex flex-wrap items-end justify-between gap-4 p-4 sm:p-5">
         <div>
           <p className="text-sm text-muted-foreground">{primaryLabel ?? "د راپور قطارونه"}</p>
