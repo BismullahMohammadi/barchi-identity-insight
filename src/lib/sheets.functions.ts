@@ -8,7 +8,7 @@ import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
-import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
+import { selectDailyTab, selectTodayCoordinationTab, parseCoordinationTabDate } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
 import {newestCollectedPeople,collectedPeopleThroughDate,collectedPeopleInRange,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
@@ -400,7 +400,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   }
   const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR");
   const regTitles=(regMeta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
-  const regDays=regTitles.map(name=>selectTodayCoordinationTab([name],to).today).filter((x):x is {name:string;date:JDate}=>!!x&&jKey(x.date)>=jKey(from)&&jKey(x.date)<=jKey(to));
+  const regDays=regTitles.map(name=>({name,date:parseCoordinationTabDate(name,to.y)})).filter((x):x is {name:string;date:JDate}=>!!x.date&&jKey(x.date)>=jKey(from)&&jKey(x.date)<=jKey(to));
   if(regDays.length>93)throw new Error("HISTORICAL_RANGE_TOO_LARGE");
   const registration:import("./recent-referrals").RecentReferral[]=[];
   const teamCounts:[number,number,number,number]=[0,0,0,0];
