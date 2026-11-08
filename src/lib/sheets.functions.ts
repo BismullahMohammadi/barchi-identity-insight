@@ -3,14 +3,14 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
 import { SPREADSHEET_ID, TABS } from "./tabs";
-import { todayJalali, yesterdayJalali, formatJ, type JDate } from "./jalali";
+import { todayJalali, yesterdayJalali, formatJ, jKey, parseJalali, type JDate } from "./jalali";
 import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "./insijam-completeness";
 import {extractStateReport,type StateReport} from "./state-report-copy";
 import { selectDailyTab, selectTodayCoordinationTab } from "./daily-forms";
 import { cellIndex, findReferralTotal, normalizeReferralCell } from "./referral-cell";
-import {newestCollectedPeople,collectedPeopleThroughDate,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
+import {newestCollectedPeople,collectedPeopleThroughDate,collectedPeopleInRange,newestRegisteredPeople,registrationTeamCounts,type RecentReferrals} from "./recent-referrals";
 import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
 import {birthCardConfirmations,dailyApprovalDetails} from "./birth-card-confirmations";
 import {matchesRegisteredPerson} from "./registration-match";
@@ -369,4 +369,43 @@ export const getRecentReferrals=createServerFn({method:"GET"})
     newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),birthCardAddedCount,fetchedAt:Date.now(),
     potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
   };
+ });
+
+export const getHistoricalReferrals=createServerFn({method:"POST"})
+ .middleware([requireSupabaseAuth])
+ .inputValidator((input:{from:string;to:string})=>{
+  const from=parseJalali(input?.from??""),to=parseJalali(input?.to??"");
+  if(!from||!to||jKey(from)>jKey(to)||from.y!==to.y||from.m!==to.m)throw new Error("HISTORICAL_RANGE_ONE_MONTH");
+  return {from,to};
+ })
+ .handler(async({data,context})=>{
+  setResponseHeader("Cache-Control","private, no-store");
+  if(!ownerAuthorized(context.claims))throw new Error("ACCESS_DENIED");
+  const headers=authorizedSheetHeaders(context.claims);
+  const {from,to}=data;
+  const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
+  const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
+  const month=MONTH_NAMES[from.m]??"";
+  const tab=titles.find(t=>t.includes(month)&&/جمع\\s*آوری|جمع\\s*اوری|جمع\\s*آوري/.test(t)&&t.includes(String(from.y)));
+  const path=tab?"'"+tab.replace(/'/g,"''")+"'!A1:H5000":"";
+  const collection=tab?await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
+  const intake=collectedPeopleInRange(collection.values??[],from,to);
+  const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR");
+  const regTitles=(regMeta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
+  const regDays=regTitles.map(name=>selectTodayCoordinationTab([name],to).today).filter((x):x is {name:string;date:JDate}=>!!x&&jKey(x.date)>=jKey(from)&&jKey(x.date)<=jKey(to));
+  if(regDays.length>31)throw new Error("HISTORICAL_RANGE_TOO_LARGE");
+  const registration:import("./recent-referrals").RecentReferral[]=[];
+  const teamCounts:[number,number,number,number]=[0,0,0,0];
+  for(const day of regDays){
+   const tabPath="'"+day.name.replace(/'/g,"''")+"'!A1:Z400";
+   const result=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"/values/"+encodeURIComponent(tabPath)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"COORDINATION_SHEETS_ERROR");
+   const grid=result.values??[];
+   const group=newestRegisteredPeople([day.name],{date:day.date,grid},day.date,Number.POSITIVE_INFINITY);
+   registration.push(...group.people.map(p=>({...p,recordKey:formatJ(day.date)+":"+p.name+":"+p.father})));
+   const counts=registrationTeamCounts(grid);
+   counts.forEach((n,i)=>{teamCounts[i]=(teamCounts[i]??0)+n;});
+  }
+  return {newReferrals:{date:formatJ(from)+" — "+formatJ(to),people:intake,source:tab??null},
+   registration:{date:formatJ(from)+" — "+formatJ(to),people:registration,source:null},
+   teamCounts,fetchedAt:Date.now(),historical:true};
  });
