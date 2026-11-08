@@ -9,13 +9,20 @@ export function SimpleDieselReport(){
  const f=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
  const deliveries=d?.deliveries??[];
  const periodDeliveries=range?deliveries.filter(x=>{const date=parseJalali(x.date);return date!==null&&inGlobalRange(date,range);}):deliveries;
- const periodRecords=range?(d?.records??[]).filter(r=>{const date=parseJalali(r.startDate);return date!==null&&inGlobalRange(date,range);}):(d?.records??[]);
+ const periodRecords=range?(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate),end=parseJalali(r.endDate);return start!==null&&end!==null&&jKey(start)>=jKey(range.from)&&jKey(end)<=jKey(range.to);}):(d?.records??[]);
+ const partialMonths=range?(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate),end=parseJalali(r.endDate);return start!==null&&end!==null&&jKey(start)<=jKey(range.to)&&jKey(end)>=jKey(range.from)&&!(jKey(start)>=jKey(range.from)&&jKey(end)<=jKey(range.to));}):[];
+ const checkpoint=14050631;
+ const selectedEnd=range?jKey(range.to):null;
+ const endRecords=(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate);return start!==null&&jKey(start)>checkpoint&&(selectedEnd===null||jKey(start)<=selectedEnd);});
+ const endPartial=endRecords.some(r=>{const end=parseJalali(r.endDate);return !end||(selectedEnd!==null&&jKey(end)>selectedEnd)||r.consumedLiters===null;});
+ const endDelivered=deliveries.filter(x=>{const dt=parseJalali(x.date);return !x.isCarryover&&dt!==null&&jKey(dt)>checkpoint&&(selectedEnd===null||jKey(dt)<=selectedEnd);}).reduce((sum,x)=>sum+x.liters,0);
+ const endConsumed=endRecords.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
+ const historicalStock=selectedEnd!==null&&selectedEnd>=checkpoint&&!endPartial&&d?.reconciliation.physicalStock!=null?d.reconciliation.physicalStock+endDelivered-endConsumed:null;
  const allDelivered=deliveries.reduce((s,x)=>s+x.liters,0);
  const undated=deliveries.filter(x=>!x.isCarryover&&!x.date.trim());
  const undatedLiters=undated.reduce((s,x)=>s+x.liters,0);
  // Last 400L treated as after physical count based on user confirmation; other old deliveries excluded.
  const addedAfter=deliveries.filter(x=>{const dt=parseJalali(x.date);return !x.isCarryover&&dt!==null&&jKey(dt)>14050631;}).reduce((s,x)=>s+x.liters,0);
- const checkpoint=14050631;
  const laterMonths=(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate);return start!==null&&jKey(start)>checkpoint;});
  const postConsumed=laterMonths.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
  const physical=d?.reconciliation.physicalStock;
@@ -30,10 +37,12 @@ export function SimpleDieselReport(){
  <button type="button" className="mt-3 rounded-lg border border-current px-3 py-2 font-bold" onClick={()=>void q.refetch()}>بیا هڅه وکړئ</button>
  {d&&<p className="mt-2 text-xs">لاندې معلومات د وروستي بریالي اتصال دي.</p>}
  </div>}
+ {range&&partialMonths.length>0&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې له سر یا پای سره {partialMonths.length} میاشتني مصرف ثبتونه نیمګړي تداخل لري؛ د ورځنیو ساعتونو د نشتوالي له امله یې ټول مصرف د دې مودې په مجموعه کې نه دی شامل شوی.</p>}
  {range&&<p className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې مصرف او راوړل شوي ډیزل د ثبت شوې نېټې له مخې فلټر کېږي. د موجودۍ اټکل د وروستۍ فزیکي شمېرنې څخه تر اوسه حسابېږي؛ د ټاکلې مودې موجودي نه ده. بې نېټې ثبتونه د مودې په شمېر کې نه راځي.</p>}
  {d&&<>
  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["مصرف",periodRecords.reduce((s,r)=>s+(r.consumedLiters??0),0)],["د جنراتور ساعتونه",periodRecords.reduce((s,r)=>s+(r.hours??0),0)],["ټول راوړل شوي",periodDeliveries.reduce((sum,x)=>sum+x.liters,0)],["د تېر کال پاتې",d.deliveries.filter(x=>x.isCarryover).reduce((s,x)=>s+x.liters,0)]].map(([label,n])=><article key={String(label)} className="dashboard-panel p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{f(Number(n))}</p></article>)}</div>
  {undated.length>0&&<div role="status" className="rounded-xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-200"><strong>نوي ډیزل له نیمګړو معلوماتو سره ثبت شوي:</strong> {f(undatedLiters)} لیتره ({undated.length} ثبتونه). په ټول راوړل شوي حساب کې شامل دي، خو تر هغې چې په Google Sheet کې یې نېټه نه وي ثبت شوې، د فزیکي موجودۍ وروسته حساب کې نه جمع کېږي.</div>}
+ {range&&<section className="dashboard-panel p-5"><h2 className="font-bold">د ټاکلې مودې د پای موجودي</h2><p className="mt-2 text-2xl font-bold">{historicalStock===null?"دقیق حساب ممکن نه دی":f(historicalStock)+" لیتره (اټکل)"}</p><p className="mt-2 text-xs text-muted-foreground">له ۱۴۰۵/۰۶/۳۱ وروسته د ثبت شوو راوړنو او بشپړو میاشتنیو مصرفونو پر بنسټ؛ که ټاکلې نېټه د مصرف د یوې میاشتې په منځ کې وي، د ورځنیو ساعتونو له نشتوالي موجودي نه اټکل کېږي.</p></section>}
  <section className="dashboard-panel border-primary/30 p-5"><h2 className="font-bold">له وروستۍ فزیکي شمېرنې وروسته اټکلي موجودي</h2>
  <p className="mt-2 text-3xl font-black">{estimate===null?"نامعلومه":f(estimate)+" لیتره"}</p>
  <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
