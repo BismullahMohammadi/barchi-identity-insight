@@ -109,7 +109,7 @@ export function ManagementReport({kind,title,grid,dateRange}: {kind:Kind;title:s
   const parsed=useMemo(()=>{
     try {return {data:normalizeRows(grid,title,month,archiveRange), error:null};}
     catch (e) {return {data:null,error:e instanceof Error?e.message:"د Google Sheet د کالمونو جوړښت له ثبت شوې نقشې سره برابر نه دی."};}
-  },[grid,title,month,kind,archivePeriod]);
+  },[grid,title,month,kind,archivePeriod,dateRange]);
   if (parsed.error || !parsed.data) {
     return <div role="alert" className="rounded-xl border border-destructive/30 bg-card p-4 text-sm text-destructive">
       <AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}
