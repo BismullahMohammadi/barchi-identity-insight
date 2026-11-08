@@ -1,3 +1,4 @@
+import {useGlobalDateRange} from "@/lib/global-date-range";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SyncBar } from "@/components/dash/SyncBar";
@@ -40,6 +41,7 @@ function TabPage() {
 function ReportPage({slug}:{slug:string}) {
   const tab = getTab(slug)!;
   const settings = useDashboardSettings();
+  const {range}=useGlobalDateRange();
   const q = useQuery(sheetQuery([slug], settingsRefreshMs(settings)));
   const grid = q.data?.tabs[0]?.grid;
 
@@ -50,8 +52,8 @@ function ReportPage({slug}:{slug:string}) {
       </div>
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={settingsRefreshMs(settings)} />
       {grid ? (isManagementReport(slug)
-        ? <ManagementReport key={slug} kind={slug} title={tab.title} grid={grid}/>
-        : <TabView key={slug} title={tab.title} grid={grid}/>) : q.isLoading ? (
+        ? <ManagementReport key={slug} kind={slug} title={tab.title} grid={grid} dateRange={range??undefined}/>
+        : <TabView key={slug} title={tab.title} grid={grid} dateRange={range??undefined}/>) : q.isLoading ? (
         <div className="h-64 animate-pulse rounded-xl bg-muted" />
       ) : q.error ? <p role="alert" className="text-sm text-destructive">{errorText(q.error)}</p> : <p className="text-sm text-muted-foreground">د راپور معلومات نه دي ترلاسه شوي.</p>}
     </div>
