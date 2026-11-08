@@ -1,4 +1,5 @@
 import {useGlobalDateRange} from "@/lib/global-date-range";
+import {jKey} from "@/lib/jalali";
 import { toLatinDigits } from "@/lib/jalali";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
@@ -96,6 +97,7 @@ function Overview() {
   const [period, setPeriod] = useState<OverviewPeriod>("all");
   const [expandedVisitors, setExpandedVisitors] = useState<Record<"intake"|"registration",boolean>>({intake:false,registration:false});
   const today = todayJalali();
+  const currentDayInRange=!range||(jKey(today)>=jKey(range.from)&&jKey(today)<=jKey(range.to));
   const yesterday = yesterdayJalali();
   const refreshMs = settingsRefreshMs(settings);
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
@@ -213,7 +215,8 @@ function Overview() {
         {mainCards.map(renderCard)}
       </div>
 
-      {settings.showDailyVisitors && (
+      {range&&!currentDayInRange&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو تفصیلي لېست او ورځنۍ شمېرې یوازې د نن ورځې لپاره له Google Sheets څخه لوستل کېږي. د ټاکلې تاریخي مودې لپاره یې معلومات لا نه دي نښلول شوي؛ د نن ورځې شمېرې د پخوانۍ مودې په نوم نه ښودل کېږي.</p>}
+      {settings.showDailyVisitors && currentDayInRange && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
           <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2" aria-label="ټیمونو ته د ورځې معرفي شوي مراجعین">
