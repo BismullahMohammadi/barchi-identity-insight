@@ -102,7 +102,7 @@ function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Ce
   );
 }
 
-export function ManagementReport({kind,title,grid,dateRange}: {kind:Kind;title:string;grid:string[][];dateRange?:DateFilter}) {
+export function ManagementReport({kind,title,grid,dateRange}: {kind:Kind;title:string;grid:string[][];dateRange?:DateFilter|undefined}) {
   const [month,setMonth]=useState("all");
   const [archivePeriod,setArchivePeriod]=useState<ArchivePeriod>("thisMonth");
   const archiveRange=dateRange??(kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined);
