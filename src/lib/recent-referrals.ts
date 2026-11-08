@@ -124,7 +124,7 @@ export function collectedPeopleInRange(grid:unknown[][],from:JDate,to:JDate):Rec
  const all=collectedPeopleThroughDate(grid,to);
  return all.filter(p=>{
   const raw=p.recordKey?.split(":")[0]??"";
-  const match=raw.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  const match=raw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
   if(!match)return false;
   const key=Number(match[1])*10000+Number(match[2])*100+Number(match[3]);
   return key>=jKey(from)&&key<=jKey(to);
