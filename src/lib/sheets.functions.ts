@@ -375,7 +375,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
  .middleware([requireSupabaseAuth])
  .inputValidator((input:{from:string;to:string})=>{
   const from=parseJalali(input?.from??""),to=parseJalali(input?.to??"");
-  if(!from||!to||jKey(from)>jKey(to)||from.y!==to.y||from.m!==to.m)throw new Error("HISTORICAL_RANGE_ONE_MONTH");
+  if(!from||!to||jKey(from)>jKey(to)||(to.y-from.y)*12+to.m-from.m>2)throw new Error("HISTORICAL_RANGE_MAX_THREE_MONTHS");
   return {from,to};
  })
  .handler(async({data,context})=>{
@@ -385,15 +385,23 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   const {from,to}=data;
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
-  const month=MONTH_NAMES[from.m]??"";
-  const tab=titles.find(t=>t.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(t)&&t.includes(String(from.y)));
-  const path=tab?"'"+tab.replace(/'/g,"''")+"'!A1:H5000":"";
-  const collection=tab?await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
-  const intake=collectedPeopleInRange(collection.values??[],from,to);
+  const months:{y:number;m:number}[]=[];
+  for(let y=from.y,m=from.m;y<to.y||(y===to.y&&m<=to.m);){months.push({y,m});m++;if(m>12){m=1;y++;}}
+  const intake:import("./recent-referrals").RecentReferral[]=[];
+  const usedTabs:string[]=[];
+  for(const item of months){
+   const month=MONTH_NAMES[item.m]??"";
+   const tab=titles.find(t=>t.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(t)&&(t.includes(String(item.y))||t.includes(String(item.y).replace(/[0-9]/g,d=>"۰۱۲۳۴۵۶۷۸۹"[Number(d)]))));
+   if(!tab)continue;
+   usedTabs.push(tab);
+   const path="'"+tab.replace(/'/g,"''")+"'!A1:H5000";
+   const collection=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR");
+   intake.push(...collectedPeopleInRange(collection.values??[],from,to));
+  }
   const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR");
   const regTitles=(regMeta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
   const regDays=regTitles.map(name=>selectTodayCoordinationTab([name],to).today).filter((x):x is {name:string;date:JDate}=>!!x&&jKey(x.date)>=jKey(from)&&jKey(x.date)<=jKey(to));
-  if(regDays.length>31)throw new Error("HISTORICAL_RANGE_TOO_LARGE");
+  if(regDays.length>93)throw new Error("HISTORICAL_RANGE_TOO_LARGE");
   const registration:import("./recent-referrals").RecentReferral[]=[];
   const teamCounts:[number,number,number,number]=[0,0,0,0];
   for(const day of regDays){
@@ -405,7 +413,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
    const counts=registrationTeamCounts(grid);
    counts.forEach((n,i)=>{teamCounts[i]=(teamCounts[i]??0)+n;});
   }
-  return {newReferrals:{date:formatJ(from)+" — "+formatJ(to),people:intake,source:tab??null},
+  return {newReferrals:{date:formatJ(from)+" — "+formatJ(to),people:intake,source:usedTabs.join("، ")||null},
    registration:{date:formatJ(from)+" — "+formatJ(to),people:registration,source:null},
    teamCounts,birthCardAddedCount:0,fetchedAt:Date.now(),historical:true};
  });
