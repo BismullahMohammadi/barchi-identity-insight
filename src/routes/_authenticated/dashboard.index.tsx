@@ -105,11 +105,11 @@ function Overview() {
   const daily = useQuery(dailyFormsQuery(refreshMs));
   const coordination = useQuery(dailyCoordinationQuery(refreshMs));
   const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors});
-  const historicalSupported=!!range&&range.from.y===range.to.y&&range.from.m===range.to.m;
+  const historicalSupported=!!range&&(range.to.y-range.from.y)*12+range.to.m-range.from.m<=2;
   const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
   const recentData=range?(historicalSupported?historical.data:undefined):recent.data;
   const recentLoading=range?historical.isLoading:recent.isLoading;
-  const recentError=range?(historicalSupported?historical.error:new Error("د څو میاشتو تاریخي لېست لا نه دی ملاتړ شوی")):recent.error;
+  const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
   const [firstSeenTimes,setFirstSeenTimes]=useState<Record<string,string>>({});
   useEffect(()=>{
     const people=recentData?.newReferrals.people;
@@ -221,7 +221,7 @@ function Overview() {
         {mainCards.map(renderCard)}
       </div>
 
-      {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو تاریخي تفصیلي لېست د یوې میاشتې په محدوده کې ترلاسه کېږي. د څو میاشتو لپاره د هرې میاشتې موده جلا وټاکئ.</p>}
+      {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو تاریخي تفصیلي لېست تر درېیو میاشتو پورې ترلاسه کېږي. د اوږدې مودې لپاره درې میاشتې یا کمه موده وټاکئ.</p>}
       {range&&historicalSupported&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې د مراجعینو شمېرې د ثبت او جمع‌آورۍ له شیټونو څخه دي؛ د تایید او رد تاریخي حالتونه لا په دې مودې کې نه دي محاسبه شوي.</p>}
       {settings.showDailyVisitors && (!range||historicalSupported) && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
