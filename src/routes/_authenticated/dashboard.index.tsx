@@ -1,3 +1,4 @@
+import {useGlobalDateRange} from "@/lib/global-date-range";
 import { toLatinDigits } from "@/lib/jalali";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
@@ -90,6 +91,7 @@ function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=fals
 }
 
 function Overview() {
+  const {range}=useGlobalDateRange();
   const settings = useDashboardSettings();
   const [period, setPeriod] = useState<OverviewPeriod>("all");
   const [expandedVisitors, setExpandedVisitors] = useState<Record<"intake"|"registration",boolean>>({intake:false,registration:false});
@@ -120,7 +122,7 @@ function Overview() {
   },[recent.data?.newReferrals]);
 
 
-  const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
+  const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday,range) : null;
   const unavailable = !overview;
   const mainCards:SummaryMetric[] = overview ? [
     {...PLACEHOLDERS[0]!,...overview.individual},
