@@ -407,5 +407,5 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   }
   return {newReferrals:{date:formatJ(from)+" — "+formatJ(to),people:intake,source:tab??null},
    registration:{date:formatJ(from)+" — "+formatJ(to),people:registration,source:null},
-   teamCounts,fetchedAt:Date.now(),historical:true};
+   teamCounts,birthCardAddedCount:0,fetchedAt:Date.now(),historical:true};
  });
