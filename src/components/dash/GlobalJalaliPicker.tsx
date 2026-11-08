@@ -14,8 +14,8 @@ export function GlobalJalaliPicker(){
  const [start,setStart]=useState<JDate|null>(null);
  const [end,setEnd]=useState<JDate|null>(null);
  const activeFrom=start??range?.from??today;
- const activeTo=end??range?.to??today;
- const days=view.m<=6?31:view.m===12?30:30;
+ const activeTo=end??(start?start:range?.to??today);
+ const days=view.m<=6?31:view.m===12?(new Intl.DateTimeFormat("en-US-u-ca-persian",{timeZone:"UTC",year:"numeric",month:"numeric",day:"numeric"}).format(new Date(Date.UTC(view.y+621,2,20))).includes("1/1")?30:29):30;
  function select(day:number){
   const picked={...view,d:day};
   if(!start||end){setStart(picked);setEnd(null);}
