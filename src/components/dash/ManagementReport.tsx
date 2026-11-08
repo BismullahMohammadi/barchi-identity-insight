@@ -102,14 +102,14 @@ function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Ce
   );
 }
 
-export function ManagementReport({kind,title,grid}: {kind:Kind;title:string;grid:string[][]}) {
+export function ManagementReport({kind,title,grid,dateRange}: {kind:Kind;title:string;grid:string[][];dateRange?:DateFilter|undefined}) {
   const [month,setMonth]=useState("all");
   const [archivePeriod,setArchivePeriod]=useState<ArchivePeriod>("thisMonth");
-  const archiveRange=kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined;
+  const archiveRange=dateRange??(kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined);
   const parsed=useMemo(()=>{
-    try {return {data:normalizeRows(grid,title,month,kind==="archive-scan"?archivePeriodRange(archivePeriod):undefined), error:null};}
+    try {return {data:normalizeRows(grid,title,month,archiveRange), error:null};}
     catch (e) {return {data:null,error:e instanceof Error?e.message:"د Google Sheet د کالمونو جوړښت له ثبت شوې نقشې سره برابر نه دی."};}
-  },[grid,title,month,kind,archivePeriod]);
+  },[grid,title,month,kind,archivePeriod,dateRange]);
   if (parsed.error || !parsed.data) {
     return <div role="alert" className="rounded-xl border border-destructive/30 bg-card p-4 text-sm text-destructive">
       <AlertTriangle className="me-2 inline h-4 w-4"/>{parsed.error}

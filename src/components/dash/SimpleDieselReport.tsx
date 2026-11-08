@@ -1,17 +1,28 @@
+import {useGlobalDateRange,inGlobalRange} from "@/lib/global-date-range";
 import {parseJalali,jKey} from '@/lib/jalali';
 import {useQuery} from "@tanstack/react-query";
 import {getDieselSheetReport} from "@/lib/diesel-sheet.functions";
 export function SimpleDieselReport(){
+ const {range}=useGlobalDateRange();
  const q=useQuery({queryKey:["diesel-sheet-report"],queryFn:()=>getDieselSheetReport({data:{nonce:Date.now()}}),refetchInterval:60000,refetchOnWindowFocus:true,refetchOnReconnect:true,staleTime:0,retry:1});
  const d=q.data;
  const f=(n:number)=>n.toLocaleString("fa-AF",{maximumFractionDigits:2});
  const deliveries=d?.deliveries??[];
+ const periodDeliveries=range?deliveries.filter(x=>{const date=parseJalali(x.date);return date!==null&&inGlobalRange(date,range);}):deliveries;
+ const periodRecords=range?(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate),end=parseJalali(r.endDate);return start!==null&&end!==null&&jKey(start)>=jKey(range.from)&&jKey(end)<=jKey(range.to);}):(d?.records??[]);
+ const partialMonths=range?(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate),end=parseJalali(r.endDate);return start!==null&&end!==null&&jKey(start)<=jKey(range.to)&&jKey(end)>=jKey(range.from)&&!(jKey(start)>=jKey(range.from)&&jKey(end)<=jKey(range.to));}):[];
+ const checkpoint=14050631;
+ const selectedEnd=range?jKey(range.to):null;
+ const endRecords=(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate);return start!==null&&jKey(start)>checkpoint&&(selectedEnd===null||jKey(start)<=selectedEnd);});
+ const endPartial=endRecords.some(r=>{const end=parseJalali(r.endDate);return !end||(selectedEnd!==null&&jKey(end)>selectedEnd)||r.consumedLiters===null;});
+ const endDelivered=deliveries.filter(x=>{const dt=parseJalali(x.date);return !x.isCarryover&&dt!==null&&jKey(dt)>checkpoint&&(selectedEnd===null||jKey(dt)<=selectedEnd);}).reduce((sum,x)=>sum+x.liters,0);
+ const endConsumed=endRecords.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
+ const historicalStock=selectedEnd!==null&&selectedEnd>=checkpoint&&!endPartial&&d?.reconciliation.physicalStock!=null?d.reconciliation.physicalStock+endDelivered-endConsumed:null;
  const allDelivered=deliveries.reduce((s,x)=>s+x.liters,0);
  const undated=deliveries.filter(x=>!x.isCarryover&&!x.date.trim());
  const undatedLiters=undated.reduce((s,x)=>s+x.liters,0);
  // Last 400L treated as after physical count based on user confirmation; other old deliveries excluded.
  const addedAfter=deliveries.filter(x=>{const dt=parseJalali(x.date);return !x.isCarryover&&dt!==null&&jKey(dt)>14050631;}).reduce((s,x)=>s+x.liters,0);
- const checkpoint=14050631;
  const laterMonths=(d?.records??[]).filter(r=>{const start=parseJalali(r.startDate);return start!==null&&jKey(start)>checkpoint;});
  const postConsumed=laterMonths.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
  const physical=d?.reconciliation.physicalStock;
@@ -26,9 +37,12 @@ export function SimpleDieselReport(){
  <button type="button" className="mt-3 rounded-lg border border-current px-3 py-2 font-bold" onClick={()=>void q.refetch()}>بیا هڅه وکړئ</button>
  {d&&<p className="mt-2 text-xs">لاندې معلومات د وروستي بریالي اتصال دي.</p>}
  </div>}
+ {range&&partialMonths.length>0&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې له سر یا پای سره {partialMonths.length} میاشتني مصرف ثبتونه نیمګړي تداخل لري؛ د ورځنیو ساعتونو د نشتوالي له امله یې ټول مصرف د دې مودې په مجموعه کې نه دی شامل شوی.</p>}
+ {range&&<p className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې مصرف او راوړل شوي ډیزل د ثبت شوې نېټې له مخې فلټر کېږي. د موجودۍ اټکل د وروستۍ فزیکي شمېرنې څخه تر اوسه حسابېږي؛ د ټاکلې مودې موجودي نه ده. بې نېټې ثبتونه د مودې په شمېر کې نه راځي.</p>}
  {d&&<>
- <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["مصرف",d.records.reduce((s,r)=>s+(r.consumedLiters??0),0)],["د جنراتور ساعتونه",d.records.reduce((s,r)=>s+(r.hours??0),0)],["ټول راوړل شوي",allDelivered],["د تېر کال پاتې",d.deliveries.filter(x=>x.isCarryover).reduce((s,x)=>s+x.liters,0)]].map(([label,n])=><article key={String(label)} className="dashboard-panel p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{f(Number(n))}</p></article>)}</div>
+ <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["مصرف",periodRecords.reduce((s,r)=>s+(r.consumedLiters??0),0)],["د جنراتور ساعتونه",periodRecords.reduce((s,r)=>s+(r.hours??0),0)],["ټول راوړل شوي",periodDeliveries.reduce((sum,x)=>sum+x.liters,0)],["د تېر کال پاتې",d.deliveries.filter(x=>x.isCarryover).reduce((s,x)=>s+x.liters,0)]].map(([label,n])=><article key={String(label)} className="dashboard-panel p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold">{f(Number(n))}</p></article>)}</div>
  {undated.length>0&&<div role="status" className="rounded-xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-200"><strong>نوي ډیزل له نیمګړو معلوماتو سره ثبت شوي:</strong> {f(undatedLiters)} لیتره ({undated.length} ثبتونه). په ټول راوړل شوي حساب کې شامل دي، خو تر هغې چې په Google Sheet کې یې نېټه نه وي ثبت شوې، د فزیکي موجودۍ وروسته حساب کې نه جمع کېږي.</div>}
+ {range&&<section className="dashboard-panel p-5"><h2 className="font-bold">د ټاکلې مودې د پای موجودي</h2><p className="mt-2 text-2xl font-bold">{historicalStock===null?"دقیق حساب ممکن نه دی":f(historicalStock)+" لیتره (اټکل)"}</p><p className="mt-2 text-xs text-muted-foreground">له ۱۴۰۵/۰۶/۳۱ وروسته د ثبت شوو راوړنو او بشپړو میاشتنیو مصرفونو پر بنسټ؛ که ټاکلې نېټه د مصرف د یوې میاشتې په منځ کې وي، د ورځنیو ساعتونو له نشتوالي موجودي نه اټکل کېږي.</p></section>}
  <section className="dashboard-panel border-primary/30 p-5"><h2 className="font-bold">له وروستۍ فزیکي شمېرنې وروسته اټکلي موجودي</h2>
  <p className="mt-2 text-3xl font-black">{estimate===null?"نامعلومه":f(estimate)+" لیتره"}</p>
  <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
@@ -41,8 +55,8 @@ export function SimpleDieselReport(){
  </div>
  <p className="mt-2 text-xs text-muted-foreground">اټکلي حساب د ۱۴۰۵/۰۶/۳۱ له فزیکي شمېرنې څخه؛ د نن ورځې تایید شوې موجودي نه ده.</p></section>
  <section className="dashboard-panel p-4"><h2 className="font-bold">وروستۍ فزیکي شمېرنه</h2><p className="text-xl font-bold">{d.reconciliation.physicalStock===null?"نامعلومه":f(d.reconciliation.physicalStock)+" لیتره"}</p><p className="text-sm text-muted-foreground">{d.reconciliation.physicalStockDate??"نېټه نه ده ثبت شوې"} — د نن ورځې موجودي نه ده</p></section>
- <section className="dashboard-panel overflow-x-auto p-4"><h2 className="mb-3 font-bold">میاشتنی مصرف</h2><table className="w-full min-w-[520px] text-sm"><thead className="sticky top-0 z-10 bg-muted"><tr>{["میاشت","ساعتونه","لیتر/ساعت","مصرف","سند"].map(x=><th key={x} className="p-2 text-start">{x}</th>)}</tr></thead><tbody>{d.records.map(r=><tr key={r.code} className="border-t"><td className="p-2">{r.month}</td><td>{r.hours===null?"—":f(r.hours)}</td><td>{r.litersPerHour===null?"—":f(r.litersPerHour)}</td><td>{r.consumedLiters===null?"نه دی ثبت":f(r.consumedLiters)}</td><td>{r.document||"—"}</td></tr>)}</tbody><tfoot className="sticky bottom-0 bg-secondary font-bold"><tr className="border-t-2"><td className="p-2">جمع</td><td>{f(d.records.reduce((s,r)=>s+(r.hours??0),0))}</td><td>—</td><td>{f(d.records.reduce((s,r)=>s+(r.consumedLiters??0),0))}</td><td>—</td></tr></tfoot></table></section>
- <section className="dashboard-panel overflow-x-auto p-4"><h2 className="mb-3 font-bold">راوړل شوي ډیزل</h2><table className="w-full min-w-[540px] text-sm"><thead className="sticky top-0 z-10 bg-muted"><tr>{["نېټه","لیتره","بیه","مبلغ","سند"].map(x=><th key={x} className="p-2 text-start">{x}</th>)}</tr></thead><tbody>{d.deliveries.map(x=><tr key={x.sequence} className="border-t"><td className="p-2">{x.date||"—"}</td><td>{f(x.liters)}</td><td>{x.unitPrice===null?"—":f(x.unitPrice)}</td><td>{x.totalAmount===null?"نامعلوم":f(x.totalAmount)}</td><td>{x.document||x.note||"—"}</td></tr>)}</tbody><tfoot className="sticky bottom-0 bg-secondary font-bold"><tr className="border-t-2"><td className="p-2">جمع</td><td>{f(allDelivered)}</td><td>—</td><td>{f(d.deliveries.reduce((s,x)=>s+(x.totalAmount??0),0))}</td><td>—</td></tr></tfoot></table></section>
+ <section className="dashboard-panel overflow-x-auto p-4"><h2 className="mb-3 font-bold">میاشتنی مصرف</h2><table className="w-full min-w-[520px] text-sm"><thead className="sticky top-0 z-10 bg-muted"><tr>{["میاشت","ساعتونه","لیتر/ساعت","مصرف","سند"].map(x=><th key={x} className="p-2 text-start">{x}</th>)}</tr></thead><tbody>{periodRecords.map(r=><tr key={r.code} className="border-t"><td className="p-2">{r.month}</td><td>{r.hours===null?"—":f(r.hours)}</td><td>{r.litersPerHour===null?"—":f(r.litersPerHour)}</td><td>{r.consumedLiters===null?"نه دی ثبت":f(r.consumedLiters)}</td><td>{r.document||"—"}</td></tr>)}</tbody><tfoot className="sticky bottom-0 bg-secondary font-bold"><tr className="border-t-2"><td className="p-2">جمع</td><td>{f(periodRecords.reduce((s,r)=>s+(r.hours??0),0))}</td><td>—</td><td>{f(periodRecords.reduce((s,r)=>s+(r.consumedLiters??0),0))}</td><td>—</td></tr></tfoot></table></section>
+ <section className="dashboard-panel overflow-x-auto p-4"><h2 className="mb-3 font-bold">راوړل شوي ډیزل</h2><table className="w-full min-w-[540px] text-sm"><thead className="sticky top-0 z-10 bg-muted"><tr>{["نېټه","لیتره","بیه","مبلغ","سند"].map(x=><th key={x} className="p-2 text-start">{x}</th>)}</tr></thead><tbody>{periodDeliveries.map(x=><tr key={x.sequence} className="border-t"><td className="p-2">{x.date||"—"}</td><td>{f(x.liters)}</td><td>{x.unitPrice===null?"—":f(x.unitPrice)}</td><td>{x.totalAmount===null?"نامعلوم":f(x.totalAmount)}</td><td>{x.document||x.note||"—"}</td></tr>)}</tbody><tfoot className="sticky bottom-0 bg-secondary font-bold"><tr className="border-t-2"><td className="p-2">جمع</td><td>{f(periodDeliveries.reduce((s,x)=>s+x.liters,0))}</td><td>—</td><td>{f(periodDeliveries.reduce((s,x)=>s+(x.totalAmount??0),0))}</td><td>—</td></tr></tfoot></table></section>
 
  </>}
  </main>;

@@ -1,3 +1,6 @@
+import {getHistoricalReferrals} from "@/lib/sheets.functions";
+import {formatJ} from "@/lib/jalali";
+import {useGlobalDateRange} from "@/lib/global-date-range";
 import { toLatinDigits } from "@/lib/jalali";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
@@ -90,19 +93,26 @@ function DailyVisitorList({group,loading,error,firstSeenTimes,showFetchTime=fals
 }
 
 function Overview() {
+  const {range}=useGlobalDateRange();
   const settings = useDashboardSettings();
   const [period, setPeriod] = useState<OverviewPeriod>("all");
   const [expandedVisitors, setExpandedVisitors] = useState<Record<"intake"|"registration",boolean>>({intake:false,registration:false});
   const today = todayJalali();
+  
   const yesterday = yesterdayJalali();
   const refreshMs = settingsRefreshMs(settings);
   const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
   const daily = useQuery(dailyFormsQuery(refreshMs));
   const coordination = useQuery(dailyCoordinationQuery(refreshMs));
   const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors});
+  const historicalSupported=!!range&&(range.to.y-range.from.y)*12+range.to.m-range.from.m<=2;
+  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
+  const recentData=range?(historicalSupported?historical.data:undefined):recent.data;
+  const recentLoading=range?historical.isLoading:recent.isLoading;
+  const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
   const [firstSeenTimes,setFirstSeenTimes]=useState<Record<string,string>>({});
   useEffect(()=>{
-    const people=recent.data?.newReferrals.people;
+    const people=recentData?.newReferrals.people;
     if(!people?.length)return;
     // Keep first observation per stable Sheet record, not each refresh timestamp.
     try {
@@ -117,10 +127,10 @@ function Overview() {
       if(changed)window.localStorage.setItem(storageKey,JSON.stringify(next));
       setFirstSeenTimes(next);
     }catch { /* Private browser storage may be disabled. */ }
-  },[recent.data?.newReferrals]);
+  },[recentData?.newReferrals]);
 
 
-  const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday) : null;
+  const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday,range) : null;
   const unavailable = !overview;
   const mainCards:SummaryMetric[] = overview ? [
     {...PLACEHOLDERS[0]!,...overview.individual},
@@ -211,22 +221,24 @@ function Overview() {
         {mainCards.map(renderCard)}
       </div>
 
-      {settings.showDailyVisitors && (
+      {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو تاریخي تفصیلي لېست تر درېیو میاشتو پورې ترلاسه کېږي. د اوږدې مودې لپاره درې میاشتې یا کمه موده وټاکئ.</p>}
+      {range&&historicalSupported&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې د مراجعینو شمېرې د ثبت او جمع‌آورۍ له شیټونو څخه دي؛ د تایید او رد تاریخي حالتونه لا په دې مودې کې نه دي محاسبه شوي.</p>}
+      {settings.showDailyVisitors && (!range||historicalSupported) && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
           <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2" aria-label="ټیمونو ته د ورځې معرفي شوي مراجعین">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold">ټیمونو ته د ورځې معرفي شوي د فامیل غړي</p><span className="text-[11px] text-muted-foreground">{recent.data?.registration.date??"د وروستۍ ورځې راپور"}</span></div>
-            {recent.isLoading?<p className="text-xs text-muted-foreground">رااخیستل کېږي…</p>:recent.error?<p className="text-xs text-destructive">د ټیمونو شمېرې ونه لوستل شوې.</p>:recent.data?.registration.date?
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold">ټیمونو ته د ورځې معرفي شوي د فامیل غړي</p><span className="text-[11px] text-muted-foreground">{recentData?.registration.date??"د وروستۍ ورځې راپور"}</span></div>
+            {recentLoading?<p className="text-xs text-muted-foreground">رااخیستل کېږي…</p>:recentError?<p className="text-xs text-destructive">د ټیمونو شمېرې ونه لوستل شوې.</p>:recentData?.registration.date?
             <div className="grid grid-cols-4 gap-1.5">
              {(["درېیم","څلورم","پنځم","شپږم"] as const).map((label,i)=><div key={label} className="rounded-md bg-background px-1.5 py-2 text-center">
-              <p className="text-[11px] text-muted-foreground">{label}</p><p className="text-lg font-black tabular-nums">{recent.data?.teamCounts?.[i]??"—"}</p>
+              <p className="text-[11px] text-muted-foreground">{label}</p><p className="text-lg font-black tabular-nums">{recentData?.teamCounts?.[i]??"—"}</p>
              </div>)}
             </div>:<p className="text-xs text-muted-foreground">د نن ورځې د ټیمونو راپور نشته.</p>}
           </div>
           <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
             {([
-              {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recent.data?.newReferrals,source:daily.data?.tabName&&daily.data?.cell?daily.data.tabName+" · "+daily.data.cell:null},
-              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:coordination.isLoading?"…":coordination.data?.count!=null?Number(toLatinDigits(coordination.data.count).replace(/[٬, ]/g,""))+(recent.data?.birthCardAddedCount??0):(recent.data?.birthCardAddedCount?recent.data.birthCardAddedCount:"—"),error:coordination.error,group:recent.data?.registration,source:coordination.data?.tabName&&coordination.data?.cell?coordination.data.tabName+" · "+coordination.data.cell:null},
+              {key:"intake" as const,title:"نوي معرفي شوي مراجعین",value:range?(recentLoading?"…":recentData?.newReferrals.people.reduce((n,p)=>n+(p.familyMembers??0),0)??"—"):daily.isLoading?"…":daily.data?.ah2??"—",error:daily.error,group:recentData?.newReferrals,source:daily.data?.tabName&&daily.data?.cell?daily.data.tabName+" · "+daily.data.cell:null},
+              {key:"registration" as const,title:"ثبت‌نام ته معرفي شوي مراجعین",value:range?(recentLoading?"…":recentData?.registration.people.reduce((n,p)=>n+(p.familyMembers??0),0)??"—"):coordination.isLoading?"…":coordination.data?.count!=null?Number(toLatinDigits(coordination.data.count).replace(/[٬, ]/g,""))+(recentData?.birthCardAddedCount??0):(recentData?.birthCardAddedCount?recentData.birthCardAddedCount:"—"),error:coordination.error,group:recentData?.registration,source:coordination.data?.tabName&&coordination.data?.cell?coordination.data.tabName+" · "+coordination.data.cell:null},
             ]).map(item=><div key={item.key} className="min-w-0 rounded-lg bg-muted/50 px-4 py-3">
               <button type="button" className="flex min-h-11 w-full flex-wrap items-center justify-between gap-3 rounded-md text-start outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={()=>setExpandedVisitors(current=>{const nextOpen=!current[item.key];return window.matchMedia("(min-width: 1024px)").matches?{...current,[item.key]:nextOpen}:{intake:item.key==="intake"&&nextOpen,registration:item.key==="registration"&&nextOpen};})}
@@ -239,11 +251,11 @@ function Overview() {
                 </span>
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
-              {!recent.isLoading&&!recent.error&&item.group?.people.length?(
+              {!range&&!recentLoading&&!recentError&&item.group?.people.length?(
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.key==="intake"?(()=>{
                     const people=item.group.people;
-                    const registered=recent.data?.registration.people??[];
+                    const registered=recentData?.registration.people??[];
                     const sumMembers=(members:typeof people)=>members.reduce((total,p)=>total+(p.familyMembers??0),0);
                     const rejected=people.filter(p=>!!p.rejectionReason);
                     const approved=people.filter(p=>!p.rejectionReason&&(p.dailyApproved||p.birthCardConfirmed||matchesRegisteredPerson(p,registered)));
@@ -260,7 +272,7 @@ function Overview() {
                 </p>
               ):null}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
-                <DailyVisitorList group={item.group} loading={recent.isLoading} error={recent.error} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"} isRegistration={item.key==="registration"} registeredPeople={item.key==="intake"?recent.data?.registration.people??[]:[]}/>
+                <DailyVisitorList group={item.group} loading={recentLoading} error={recentError} firstSeenTimes={firstSeenTimes} showFetchTime={item.key==="intake"} isRegistration={item.key==="registration"} registeredPeople={item.key==="intake"?recentData?.registration.people??[]:[]}/>
               </div>}
             </div>)}
           </div>
