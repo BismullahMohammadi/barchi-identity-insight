@@ -222,6 +222,7 @@ function Overview() {
       </div>
 
       {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو تاریخي تفصیلي لېست د یوې میاشتې په محدوده کې ترلاسه کېږي. د څو میاشتو لپاره د هرې میاشتې موده جلا وټاکئ.</p>}
+      {range&&historicalSupported&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې د مراجعینو شمېرې د ثبت او جمع‌آورۍ له شیټونو څخه دي؛ د تایید او رد تاریخي حالتونه لا په دې مودې کې نه دي محاسبه شوي.</p>}
       {settings.showDailyVisitors && (!range||historicalSupported) && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
@@ -250,7 +251,7 @@ function Overview() {
                 </span>
               </button>
               {item.error&&<p role="alert" className="mt-1 text-xs text-destructive">{errorText(item.error)}</p>}
-              {!recentLoading&&!recentError&&item.group?.people.length?(
+              {!range&&!recentLoading&&!recentError&&item.group?.people.length?(
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.key==="intake"?(()=>{
                     const people=item.group.people;
