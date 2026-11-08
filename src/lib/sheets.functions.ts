@@ -386,7 +386,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
   const month=MONTH_NAMES[from.m]??"";
-  const tab=titles.find(t=>t.includes(month)&&/جمع\\s*آوری|جمع\\s*اوری|جمع\\s*آوري/.test(t)&&t.includes(String(from.y)));
+  const tab=titles.find(t=>t.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(t)&&t.includes(String(from.y)));
   const path=tab?"'"+tab.replace(/'/g,"''")+"'!A1:H5000":"";
   const collection=tab?await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
   const intake=collectedPeopleInRange(collection.values??[],from,to);
