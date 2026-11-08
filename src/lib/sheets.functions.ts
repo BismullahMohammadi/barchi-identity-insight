@@ -391,7 +391,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   const usedTabs:string[]=[];
   for(const item of months){
    const month=MONTH_NAMES[item.m]??"";
-   const tab=titles.find(t=>t.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(t)&&(t.includes(String(item.y))||t.includes(String(item.y).replace(/[0-9]/g,d=>"۰۱۲۳۴۵۶۷۸۹"[Number(d)]))));
+   const tab=titles.find(t=>t.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(t)&&(t.includes(String(item.y))||t.includes(String(item.y).replace(/[0-9]/g,d=>"۰۱۲۳۴۵۶۷۸۹".charAt(Number(d))))));
    if(!tab)continue;
    usedTabs.push(tab);
    const path="'"+tab.replace(/'/g,"''")+"'!A1:H5000";
