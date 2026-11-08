@@ -1,3 +1,5 @@
+import {GlobalDateProvider} from "@/lib/global-date-range";
+import {GlobalJalaliPicker} from "@/components/dash/GlobalJalaliPicker";
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -79,7 +81,8 @@ function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function DashboardLayout() {
+function DashboardLayout(){return <GlobalDateProvider><DashboardLayoutContent/></GlobalDateProvider>;}
+function DashboardLayoutContent() {
   // Watch completion while authenticated even if the tools drawer is closed.
   const pathname = useLocation({ select: (location) => location.pathname });
   const currentSlug = pathname.split("/").filter(Boolean).at(-1);
@@ -169,10 +172,7 @@ function DashboardLayout() {
               <p className="hidden truncate text-xs text-muted-foreground md:block">د دشت برچي د الکترونیکي تذکرو مرکز</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-              <time className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-xl border border-border bg-secondary/60 px-2 text-xs font-bold text-secondary-foreground sm:px-3 sm:text-sm" aria-label="نننۍ هجري شمسي نېټه">
-                <CalendarRange aria-hidden="true" className="hidden h-4 w-4 sm:block"/>
-                {today?`${today.d} ${JALALI_MONTHS[today.m-1]} ${today.y}`:"…"}
-              </time>
+              <GlobalJalaliPicker />
               {access.data?.allowed && <ProblemNotificationBell matches={matchesQuery.data?.potentialMatches??[]}/>}
               {access.data?.allowed && showTools && (
                 <Button variant="outline" size="icon" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه" aria-haspopup="dialog" aria-expanded={toolsOpen}
