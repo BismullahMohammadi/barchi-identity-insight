@@ -30,3 +30,7 @@ Project requirements override generic presets: Pashto RTL, legible Vazirmatn, Af
 ## Registration referrals (coordination workbook)
 - Coordination tabs use the tolerant `parseCoordinationTabDate`/`selectTodayCoordinationTab` (look-alike letters, one-letter month typos, missing year = current year) and rows are located by detecting the «اسم/ولد/تعداد» header; the intake parser stays strict — why: hand-typed tab names broke today's lookup, while intake must not change.
 - Registration only ever shows today's tab and returns a safe diagnostic (status, dates, tab titles, counts — never person data) — why: never present yesterday as today and explain empty states.
+
+## Report reconciliation
+- Keep workbook configuration and raw snapshots in server-only modules; authorize the owner before per-user cache reads and return only aggregate comparisons and authenticated source-cell links — why: private read-only reconciliation must not expose raw workbooks or credentials.
+- Discover month/day headings dynamically and map metrics semantically; blanks, holidays, future dates and ambiguous mappings remain unavailable, never zero or mismatches — why: missing provincial evidence must not become a false discrepancy.

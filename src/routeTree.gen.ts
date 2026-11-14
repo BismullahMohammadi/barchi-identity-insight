@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as AuthenticatedDashboardSlugRouteImport } from './routes/_authenticated/dashboard.$slug'
+import { Route as AuthenticatedDashboardReconciliationRouteImport } from './routes/_authenticated/dashboard.reconciliation'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,16 +42,24 @@ const AuthenticatedDashboardSlugRoute =
     path: '/$slug',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardReconciliationRoute =
+  AuthenticatedDashboardReconciliationRouteImport.update({
+    id: '/reconciliation',
+    path: '/reconciliation',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
+  '/dashboard/reconciliation': typeof AuthenticatedDashboardReconciliationRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
+  '/dashboard/reconciliation': typeof AuthenticatedDashboardReconciliationRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -59,19 +68,26 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
+  '/_authenticated/dashboard/reconciliation': typeof AuthenticatedDashboardReconciliationRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/dashboard/$slug' | '/dashboard/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/dashboard/$slug'
+    | '/dashboard/reconciliation'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard/$slug' | '/dashboard'
+  to: '/' | '/dashboard/$slug' | '/dashboard/reconciliation' | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/dashboard'
     | '/_authenticated/dashboard/$slug'
+    | '/_authenticated/dashboard/reconciliation'
     | '/_authenticated/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -117,17 +133,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardSlugRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/reconciliation': {
+      id: '/_authenticated/dashboard/reconciliation'
+      path: '/reconciliation'
+      fullPath: '/dashboard/reconciliation'
+      preLoaderRoute: typeof AuthenticatedDashboardReconciliationRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
   }
 }
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardSlugRoute: typeof AuthenticatedDashboardSlugRoute
+  AuthenticatedDashboardReconciliationRoute: typeof AuthenticatedDashboardReconciliationRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardSlugRoute: AuthenticatedDashboardSlugRoute,
+    AuthenticatedDashboardReconciliationRoute:
+      AuthenticatedDashboardReconciliationRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   }
 
