@@ -51,7 +51,7 @@ async function sourceSnapshot(source: keyof typeof SOURCES, userId: string, head
       const data = await readJson<{ valueRanges?: { values?: unknown[][] }[] }>(`${GATEWAY}/spreadsheets/${config.id}/values:batchGet?${query}`, headers);
       return { snapshot: { grid: data.valueRanges?.[0]?.values ?? [], gid: sheet.sheetId, fetchedAt: Date.now() }, expires: Date.now() + 120000 };
     } catch (error) {
-      const details = error instanceof ReadError ? error.details : { code: 'network_error', status: null, retryAt: null };
+      const details: SourceError = error instanceof ReadError ? error.details : { code: 'network_error', status: null, retryAt: null };
       return { snapshot: previous?.snapshot, error: details, expires: details.retryAt ?? Date.now() + 60000 };
     }
   })();
