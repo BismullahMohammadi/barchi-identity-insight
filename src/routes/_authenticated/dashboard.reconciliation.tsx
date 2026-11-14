@@ -111,42 +111,42 @@ function ReconciliationPage() {
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border border-emerald-500/30 bg-emerald-500/10"/>برابر</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border bg-muted"/>معلومات نشته</span>
       </div>
-      <div className="max-h-[68vh] overflow-auto rounded-xl border bg-card shadow-sm" role="region" aria-label="د ورځو او برخو د مطابقت جدول" tabIndex={0}>
+      <div className="max-h-[68vh] overflow-auto rounded-xl border bg-card shadow-sm" role="region" aria-label="د برخو او ورځو د مطابقت جدول" tabIndex={0}>
         <table className="w-max min-w-full border-separate border-spacing-0 text-center text-xs">
           <thead>
             <tr>
-              <th scope="col" className="sticky right-0 top-0 z-30 min-w-[96px] border-b border-l bg-muted px-3 py-3 text-right font-semibold shadow-[inset_0_-1px_0_hsl(var(--border))]">نېټه</th>
-              {visibleMetrics.map(([key,label])=><th key={key} scope="col" className="sticky top-0 z-20 min-w-[112px] max-w-[150px] border-b border-l bg-muted px-3 py-3 font-semibold leading-5">{label}</th>)}
-              <th scope="col" className="sticky top-0 z-20 min-w-[96px] border-b bg-muted px-3 py-3 font-semibold">ټول توپیرونه</th>
+              <th scope="col" className="sticky right-0 top-0 z-30 min-w-[190px] border-b border-l bg-muted px-3 py-3 text-right font-semibold">برخه</th>
+              {visibleDays.map(day=><th key={day} scope="col" className="sticky top-0 z-20 min-w-[78px] whitespace-nowrap border-b border-l bg-muted px-2 py-3 font-semibold tabular-nums">{day} {JALALI_MONTHS[month-1]}</th>)}
+              <th scope="col" className="sticky top-0 z-20 min-w-[94px] border-b bg-muted px-3 py-3 font-semibold">ټول توپیرونه</th>
             </tr>
           </thead>
           <tbody>
-            {visibleDays.map((day,index)=>{
-              const dayErrors = visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length;
-              return <tr key={day} className={index%2===0?'bg-card':'bg-muted/20'}>
-                <th scope="row" className={`sticky right-0 z-10 whitespace-nowrap border-b border-l px-3 py-2 text-right font-semibold ${index%2===0?'bg-card':'bg-muted'}`}>{day} {JALALI_MONTHS[month-1]}</th>
-                {visibleMetrics.map(([key,label])=>{
+            {visibleMetrics.map(([key,label],index)=>{
+              const sectionErrors = visibleDays.filter(day=>matrix.get(`${day}:${key}`)?.status==='mismatch').length;
+              return <tr key={key} className={index%2===0?'bg-card':'bg-muted/20'}>
+                <th scope="row" className={`sticky right-0 z-10 min-w-[190px] max-w-[240px] border-b border-l px-3 py-2 text-right font-semibold ${index%2===0?'bg-card':'bg-muted'}`}>{label}</th>
+                {visibleDays.map(day=>{
                   const row=matrix.get(`${day}:${key}`);
                   const status=row?.status??'missing';
                   const active=selected===`${key}:${day}`;
-                  return <td key={key} className="border-b border-l p-0">
+                  return <td key={day} className="border-b border-l p-0">
                     <button type="button" disabled={!row} onClick={()=>row&&setSelected(`${row.metric}:${row.day}`)}
-                      title={`${day} ${JALALI_MONTHS[month-1]} — ${label}: ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
-                      aria-label={`${day} ${JALALI_MONTHS[month-1]}، ${label}، ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
+                      title={`${label} — ${day} ${JALALI_MONTHS[month-1]}: ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
+                      aria-label={`${label}، ${day} ${JALALI_MONTHS[month-1]}، ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
                       aria-pressed={active}
                       className={`min-h-11 w-full border-2 border-transparent px-2 font-medium tabular-nums transition-colors hover:border-primary/40 focus-visible:relative focus-visible:z-10 focus-visible:border-primary focus-visible:outline-none ${status==='mismatch'?'bg-destructive/10 text-destructive':status==='equal'?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':'text-muted-foreground'} ${active?'!border-primary bg-primary/10':''}`}>
                       {status==='mismatch'?number(row?.delta??null):status==='equal'?'✓':'—'}
                     </button>
                   </td>;
                 })}
-                <td className={`border-b px-3 py-2 font-bold tabular-nums ${dayErrors?'bg-destructive/5 text-destructive':'text-muted-foreground'}`}>{number(dayErrors)}</td>
+                <td className={`border-b px-3 py-2 font-bold tabular-nums ${sectionErrors?'bg-destructive/5 text-destructive':'text-muted-foreground'}`}>{number(sectionErrors)}</td>
               </tr>;
             })}
-            {!visibleDays.length && <tr><td colSpan={visibleMetrics.length+2} className="p-8 text-center text-muted-foreground">د ټاکل شوي فلټر لپاره ورځې ونه موندل شوې.</td></tr>}
+            {!visibleMetrics.length && <tr><td colSpan={visibleDays.length+2} className="p-8 text-center text-muted-foreground">د لټون مطابق برخه ونه موندل شوه.</td></tr>}
           </tbody>
-          {visibleDays.length>0 && <tfoot><tr>
+          {visibleMetrics.length>0 && <tfoot><tr>
             <th scope="row" className="sticky bottom-0 right-0 z-20 border-t border-l bg-muted px-3 py-3 text-right font-bold">د توپیرونو مجموعه</th>
-            {visibleMetrics.map(([key])=><td key={key} className="sticky bottom-0 z-10 border-t border-l bg-muted px-2 py-3 font-semibold tabular-nums text-destructive">{number(visibleDays.filter(day=>matrix.get(`${day}:${key}`)?.status==='mismatch').length)}</td>)}
+            {visibleDays.map(day=><td key={day} className="sticky bottom-0 z-10 border-t border-l bg-muted px-2 py-3 font-semibold tabular-nums text-destructive">{number(visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length)}</td>)}
             <td className="sticky bottom-0 z-10 border-t bg-muted px-3 py-3 font-bold tabular-nums text-destructive">{number(visibleDays.reduce((sum,day)=>sum+visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length,0))}</td>
           </tr></tfoot>}
         </table>
