@@ -31,7 +31,6 @@ export const Route = createFileRoute('/_authenticated/dashboard/reconciliation')
   component: ReconciliationPage,
 });
 const number = (value: number | null) => value === null ? '—' : value.toLocaleString('fa-AF');
-const tone = (status: string) => status === 'mismatch' ? 'bg-destructive/10 text-destructive' : status === 'equal' ? 'bg-success/10 text-foreground' : 'bg-warning/15 text-foreground';
 function ReconciliationPage() {
   const search = Route.useSearch(), navigate = Route.useNavigate(), today = todayJalali();
   const year = search.year ?? today.y, month = search.month ?? today.m;
