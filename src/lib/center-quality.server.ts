@@ -16,19 +16,25 @@ export async function readCenterQuality(year:number,month:number,claims:unknown,
  if(!response.ok) throw new Error(response.status===429?'GOOGLE_RATE_LIMIT':'CENTER_REPORT_UNAVAILABLE');
  const body = await response.json() as {valueRanges?:{values?:unknown[][]}[]};
  const today = todayJalali();
- const days = month<=6?31:month<=11?30:30;
+ const months = month===0 ? Array.from({length:12},(_,i)=>i+1) : [month];
  const centers = CENTERS.map((name,index)=>{
    const grid=body.valueRanges?.[index]?.values??[];
-   const block=findMonthlyBlock(grid,year,month,'province',today.y);
-   const quality=block.metrics.get('quality');
-   const daily=Array.from({length:days},(_,i)=>{
-     const day=i+1, col=block.days.get(day);
-     const future=year>today.y || (year===today.y&&(month>today.m||(month===today.m&&day>today.d)));
-     const value=quality&&col!==undefined&&!future?reportNumber(quality.cells[col]):null;
-     return {day,value:value?.value??null};
+   const monthly = months.map(m=>{
+     const block=findMonthlyBlock(grid,year,m,'province',today.y);
+     const quality=block.metrics.get('quality');
+     const days=m<=6?31:m<=11?30:30;
+     const daily=Array.from({length:days},(_,i)=>{
+       const day=i+1, col=block.days.get(day);
+       const future=year>today.y || (year===today.y&&(m>today.m||(m===today.m&&day>today.d)));
+       const value=quality&&col!==undefined&&!future?reportNumber(quality.cells[col]):null;
+       return {day,value:value?.value??null};
+     });
+     const reported=daily.filter(x=>x.value!==null);
+     return {month:m,status:block.status,days:daily,total:reported.reduce((sum,x)=>sum+(x.value??0),0),reportedDays:reported.length,complete:block.status==='available'&&!!quality};
    });
-   const reported=daily.filter(x=>x.value!==null);
-   return {name,status:block.status,days:daily,total:reported.reduce((sum,x)=>sum+(x.value??0),0),reportedDays:reported.length,complete:block.status==='available'&&!!quality};
+   const reportedDays=monthly.reduce((sum,m)=>sum+m.reportedDays,0);
+   return {name,status:monthly.some(m=>m.complete)?'available':'month_missing',days:month===0?[]:monthly[0]?.days??[],total:monthly.reduce((sum,m)=>sum+m.total,0),reportedDays,complete:monthly.every(m=>m.complete),reportedMonths:monthly.filter(m=>m.reportedDays>0).length};
+
  });
  const result={year,month,centers,checkedAt:Date.now()};
  if(cache.size>12) cache.clear();
