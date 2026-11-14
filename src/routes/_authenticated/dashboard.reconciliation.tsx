@@ -39,11 +39,13 @@ function ReconciliationPage() {
   const client = useQueryClient(), fetchReport = useServerFn(getReconciliation);
   const [view, setView] = useState<'days' | 'sections'>('days');
   const [selected, setSelected] = useState<string | null>(null);
+  const [showIncomplete, setShowIncomplete] = useState(false);
   const [refreshing, setRefreshing] = useState(false), [refreshError, setRefreshError] = useState(false);
   const counts = { mismatch: 0, equal: 0, missing: 0 };
   data.rows.forEach(row => counts[row.status]++);
   const hasSourceError = !!data.local.error || !!data.province.error;
   const mismatches = data.rows.filter(row => row.status === 'mismatch');
+  const tableRows = data.rows.filter(row => row.status === 'mismatch' || (showIncomplete && row.status === 'missing' && row.reason !== 'future' && row.reason !== 'holiday')).sort((a,b)=>a.day-b.day || a.label.localeCompare(b.label));
   const days = Array.from(new Set(data.rows.map(row => row.day))).sort((a,b) => a-b);
   const metricRows = metricDefinitions.map(([key, label]) => ({ key, label, rows: data.rows.filter(row => row.metric === key), errors: mismatches.filter(row => row.metric === key) }));
   const detail = selected ? data.rows.find(row => `${row.metric}:${row.day}` === selected) : null;
@@ -80,11 +82,40 @@ function ReconciliationPage() {
       <button type="button" role="tab" aria-selected={view==='days'} onClick={()=>{setView('days');setSelected(null);}} className={`min-h-10 flex-1 rounded-md px-3 text-sm font-medium ${view==='days'?'bg-background shadow-sm':''}`}>د ورځو مطابقت</button>
       <button type="button" role="tab" aria-selected={view==='sections'} onClick={()=>{setView('sections');setSelected(null);}} className={`min-h-10 flex-1 rounded-md px-3 text-sm font-medium ${view==='sections'?'bg-background shadow-sm':''}`}>د برخو مطابقت</button>
     </div>
-    {view==='days' ? <section className="overflow-x-auto rounded-lg border" aria-label="د ورځو مطابقت">
-      <table className="w-full text-right text-sm"><thead className="bg-muted/50"><tr><th className="p-3">ورځ</th><th className="p-3">برخه</th><th className="p-3">توپیر</th></tr></thead><tbody>
-        {mismatches.sort((a,b)=>a.day-b.day).map(row=><tr key={`${row.metric}:${row.day}`} className="cursor-pointer border-t hover:bg-muted/40" onClick={()=>setSelected(`${row.metric}:${row.day}`)}><td className="p-3">{row.day} {JALALI_MONTHS[month-1]}</td><td className="p-3">{row.label}</td><td className="p-3 font-semibold text-destructive" dir="ltr">{number(row.delta)}</td></tr>)}
-        {!mismatches.length && <tr><td colSpan={3} className="p-6 text-center text-muted-foreground">{hasSourceError || counts.missing ? 'تایید شوي اختلافونه نشته؛ ځینې معلومات لا نه دي بشپړ.' : 'هیڅ اختلاف ونه موندل شو.'}</td></tr>}
-      </tbody></table>
+    {view==='days' ? <section className="space-y-2" aria-label="د راپورونو د توپیرونو جدول">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">د راپورونو د توپیرونو جدول</h2>
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+          <input type="checkbox" className="h-4 w-4 accent-primary" checked={showIncomplete} onChange={e=>setShowIncomplete(e.target.checked)}/>
+          نیمګړي معلومات هم ښکاره کړئ
+        </label>
+      </div>
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="w-full min-w-[740px] text-right text-sm">
+          <thead className="sticky top-0 z-10 bg-muted/90 text-foreground">
+            <tr>
+              <th scope="col" className="whitespace-nowrap p-3">نېټه</th>
+              <th scope="col" className="p-3">برخه</th>
+              <th scope="col" className="whitespace-nowrap p-3">د مرکز راپور</th>
+              <th scope="col" className="whitespace-nowrap p-3">د ریاست راپور</th>
+              <th scope="col" className="whitespace-nowrap p-3">توپیر (مرکز − ریاست)</th>
+              <th scope="col" className="p-3">حالت</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map(row=><tr key={`${row.metric}:${row.day}`} className={`cursor-pointer border-t hover:bg-muted/40 ${selected===`${row.metric}:${row.day}`?'bg-muted/50':''}`} onClick={()=>setSelected(`${row.metric}:${row.day}`)}>
+              <td className="whitespace-nowrap p-3 tabular-nums">{row.day} {JALALI_MONTHS[month-1]} {year}</td>
+              <td className="p-3 font-medium">{row.label}</td>
+              <td className="p-3 tabular-nums">{number(row.local)}</td>
+              <td className="p-3 tabular-nums">{number(row.province)}</td>
+              <td className={`p-3 font-semibold tabular-nums ${row.status==='mismatch'?'text-destructive':'text-muted-foreground'}`} dir="ltr">{number(row.delta)}</td>
+              <td className="p-3"><span className={`inline-flex whitespace-nowrap rounded-md px-2 py-1 text-xs ${tone(row.status)}`}>{row.status==='mismatch'?'توپیر':'نیمګړی'}</span></td>
+            </tr>)}
+            {!tableRows.length && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">{hasSourceError || counts.missing ? 'تایید شوي اختلافونه نشته؛ ځینې معلومات لا نه دي بشپړ.' : 'هیڅ اختلاف ونه موندل شو.'}</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground">د توپیر محاسبه: د مرکز شمېره منفي د ریاست شمېره. د قطار په ټاکلو سره تفصیل ښکاري.</p>
     </section> : <section className="space-y-2" aria-label="د برخو مطابقت">
       {metricRows.map(item=><details key={item.key} className="rounded-lg border p-3"><summary className="flex cursor-pointer items-center justify-between gap-2 font-medium"><span>{item.label}</span><span className={`rounded px-2 py-1 text-xs ${item.errors.length?'bg-destructive/10 text-destructive':item.rows.some(r=>r.status==='missing')?'bg-warning/15':'bg-success/10'}`}>{item.errors.length ? `${item.errors.length} توپیر` : item.rows.some(r=>r.status==='missing')?'نیمګړي معلومات':'برابر'}</span></summary><div className="mt-3 flex flex-wrap gap-1">{days.map(day=>{const row=item.rows.find(r=>r.day===day);return <button type="button" key={day} onClick={()=>row&&setSelected(`${row.metric}:${row.day}`)} className={`min-h-9 min-w-9 rounded border px-2 text-xs ${tone(row?.status??'missing')}`} title={row?.status==='mismatch'?'توپیر':row?.status==='equal'?'برابر':'معلومات نشته'}>{day}</button>})}</div></details>)}
     </section>}
