@@ -56,6 +56,7 @@ function ReconciliationPage() {
   const visibleMetrics = metricDefinitions.filter(([,label]) => label.toLocaleLowerCase().includes(searchText.trim().toLocaleLowerCase()));
   const visibleDays = onlyDifferences ? days.filter(day => data.rows.some(row => row.day===day && row.status==='mismatch' && visibleMetrics.some(([key])=>key===row.metric))) : days;
   const matrix = new Map(data.rows.map(row=>[`${row.day}:${row.metric}`,row]));
+  const totals = new Map(data.totals.map(row => [row.metric, row]));
   const detail = selected ? data.rows.find(row => `${row.metric}:${row.day}` === selected) : null;
   async function refresh() {
     setRefreshing(true); setRefreshError(false);
@@ -119,17 +120,21 @@ function ReconciliationPage() {
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border bg-muted"/>معلومات نشته</span>
       </div>
       <div className="relative z-0 max-w-full overflow-x-auto rounded-xl border bg-card shadow-sm" role="region" aria-label="د برخو او ورځو د مطابقت جدول" tabIndex={0}>
-        <table className="w-full min-w-[540px] table-fixed border-collapse text-center text-[9px] leading-none sm:text-[10px]">
+        <table className="w-full min-w-[780px] table-fixed border-collapse text-center text-[9px] leading-none sm:text-[10px]">
           <thead>
             <tr>
               <th scope="col" className="w-[118px] border border-border bg-muted px-1 py-1.5 text-right font-semibold sm:w-[140px]">برخه</th>
               {visibleDays.map(day=><th key={day} scope="col" className="border border-border bg-muted px-0 py-1.5 font-semibold tabular-nums" title={`${day} ${JALALI_MONTHS[month-1]} ${year}`}>{number(day)}</th>)}
-              <th scope="col" className="w-[42px] break-words border border-border bg-muted px-0.5 py-1 font-semibold sm:w-[50px]">ټول توپیرونه</th>
+              {['د مرکز مجموعه', 'د ولایت مجموعه', 'د مجموعې توپیر'].map(label => <th key={label} scope="col" className="w-[76px] border border-border bg-secondary px-1 py-2 text-xs leading-5 font-semibold">{label}</th>)}
+              <th scope="col" className="w-[54px] break-words border border-border bg-muted px-0.5 py-1 font-semibold">د ورځنیو توپیرونو شمېر</th>
             </tr>
           </thead>
           <tbody>
             {visibleMetrics.map(([key,label],index)=>{
               const sectionErrors = visibleDays.filter(day=>matrix.get(`${day}:${key}`)?.status==='mismatch').length;
+              const total = totals.get(key);
+              const totalStatus = total?.status ?? 'missing';
+              const totalColor = totalStatus === 'mismatch' ? 'bg-destructive/10 text-destructive' : totalStatus === 'equal' ? 'bg-success/10 text-foreground' : 'bg-muted text-muted-foreground';
               return <tr key={key} className={index%2===0?'bg-card':'bg-muted/20'}>
                 <th scope="row" className={`break-words border border-border px-1 py-1 text-right font-semibold ${index%2===0?'bg-card':'bg-muted'}`}>{label}</th>
                 {visibleDays.map(day=>{
@@ -146,14 +151,24 @@ function ReconciliationPage() {
                     </button>
                   </td>;
                 })}
+                {(['local', 'province', 'delta'] as const).map(field => {
+                  const value = total?.[field] ?? null;
+                  const url = field === 'local' ? total?.localUrl : field === 'province' ? total?.provinceUrl : null;
+                  const statusLabel = totalStatus === 'equal' ? 'برابر' : totalStatus === 'mismatch' ? 'توپیر' : 'معلومات نشته';
+                  return <td key={field} className={`border border-border px-1 py-2 text-xs leading-5 font-semibold tabular-nums ${totalColor}`} title={statusLabel}>
+                    {url && value !== null ? <a href={url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted underline-offset-4" aria-label={`${label} — ${field === 'local' ? 'د مرکز مجموعه' : 'د ولایت مجموعه'}: ${number(value)}`}>{number(value)}</a> : <span>{number(value)}</span>}
+                    {field === 'delta' && <span className="sr-only"> {statusLabel}</span>}
+                  </td>;
+                })}
                 <td className={`border border-border px-0.5 py-0.5 font-bold tabular-nums ${sectionErrors?'bg-destructive/5 text-destructive':'text-muted-foreground'}`}>{number(sectionErrors)}</td>
               </tr>;
             })}
-            {!visibleMetrics.length && <tr><td colSpan={visibleDays.length+2} className="p-8 text-center text-muted-foreground">د لټون مطابق برخه ونه موندل شوه.</td></tr>}
+            {!visibleMetrics.length && <tr><td colSpan={visibleDays.length+5} className="p-8 text-center text-muted-foreground">د لټون مطابق برخه ونه موندل شوه.</td></tr>}
           </tbody>
           {visibleMetrics.length>0 && <tfoot><tr>
             <th scope="row" className="border border-border bg-muted px-1 py-1.5 text-right font-bold">د توپیرونو مجموعه</th>
             {visibleDays.map(day=><td key={day} className="border border-border bg-muted px-0 py-1 font-semibold tabular-nums text-destructive">{number(visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length)}</td>)}
+            <td colSpan={3} className="border border-border bg-secondary px-1 py-2 text-xs leading-5 text-muted-foreground">د میاشتني مجموعې اختلافونه: {number(visibleMetrics.filter(([key]) => totals.get(key)?.status === 'mismatch').length)}</td>
             <td className="border border-border bg-muted px-0.5 py-1 font-bold tabular-nums text-destructive">{number(visibleDays.reduce((sum,day)=>sum+visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length,0))}</td>
           </tr></tfoot>}
         </table>

@@ -46,9 +46,22 @@ export function columnName(index: number): string {
   while (n > 0) { n--; name = String.fromCharCode(65 + n % 26) + name; n = Math.floor(n / 26); }
   return name;
 }
-export type ReportBlock = { status: 'available' | 'month_missing' | 'ambiguous_month' | 'day_header_missing'; headingRow: number | null; days: Map<number, number>; metrics: Map<string, { row: number; cells: unknown[] }>; unmapped: number; ambiguous: string[] };
+export type ReportBlock = { status: 'available' | 'month_missing' | 'ambiguous_month' | 'day_header_missing'; headingRow: number | null; days: Map<number, number>; metrics: Map<string, { row: number; cells: unknown[] }>; unmapped: number; ambiguous: string[]; totalColumn: number | null; totalHeaderStatus: 'available' | 'missing' | 'ambiguous' };
+export function findTotalColumn(headers: unknown[][], days: Map<number, number>): { totalColumn: number | null; totalHeaderStatus: ReportBlock['totalHeaderStatus'] } {
+  if (!days.size) return { totalColumn: null, totalHeaderStatus: 'missing' };
+  const lastDay = Math.max(...days.values());
+  const candidates = new Set<number>();
+  for (const row of headers) row.forEach((cell, col) => {
+    // Only the adjacent end-of-row report area, not day cells or side tables.
+    const label = reportText(cell);
+    if (col > lastDay && col <= lastDay + 3 && /^(?:مجموعه|مجموع|جمله|جمع|جمع کل|مجموع کل|مجموعه کل|مجموع ماهانه|مجموعه ماهانه|مجموع ماه|مجموعه ماه|total|monthly total)$/i.test(label)) candidates.add(col);
+  });
+  return candidates.size === 1
+    ? { totalColumn: candidates.values().next().value ?? null, totalHeaderStatus: 'available' }
+    : { totalColumn: null, totalHeaderStatus: candidates.size ? 'ambiguous' : 'missing' };
+}
 export function findMonthlyBlock(grid: unknown[][], year: number, month: number, source: 'local' | 'province', currentYear: number): ReportBlock {
-  const empty = (status: ReportBlock['status'], headingRow: number | null = null): ReportBlock => ({ status, headingRow, days: new Map(), metrics: new Map(), unmapped: 0, ambiguous: [] });
+  const empty = (status: ReportBlock['status'], headingRow: number | null = null): ReportBlock => ({ status, headingRow, days: new Map(), metrics: new Map(), unmapped: 0, ambiguous: [], totalColumn: null, totalHeaderStatus: 'missing' });
   const monthName = JALALI_MONTHS[month - 1];
   if (!monthName) return empty('month_missing');
   const headings: number[] = [];
@@ -78,6 +91,7 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
     if (days.size >= 28 && !duplicates.size) { block.days = days; dayRow = index; break; }
   }
   if (dayRow < 0) return empty('day_header_missing', start + 1);
+  Object.assign(block, findTotalColumn(grid.slice(start, dayRow + 1), block.days));
   const firstDayCol = Math.min(...block.days.values());
   for (let index = dayRow + 1; index < end; index++) {
     const cells = grid[index] ?? [];
@@ -108,4 +122,18 @@ export function compareMonthlyReports(local: ReportBlock, province: ReportBlock,
     }
   }
   return rows;
+}
+
+export type MonthlyTotalRow = Omit<ReconciliationRow, 'day' | 'holiday'>;
+export function compareSourceMonthlyTotals(local: ReportBlock, province: ReportBlock, year: number, month: number, today: JDate, errors: { local: boolean; province: boolean } = { local: false, province: false }): MonthlyTotalRow[] {
+  const future = year > today.y || (year === today.y && month > today.m);
+  return metricDefinitions.map(([metric, label]) => {
+    const l = local.metrics.get(metric), p = province.metrics.get(metric);
+    const lc = local.totalColumn, pc = province.totalColumn;
+    const lv = reportNumber(!errors.local && !future && local.status === 'available' && l && lc !== null ? l.cells[lc] : null);
+    const pv = reportNumber(!errors.province && !future && province.status === 'available' && p && pc !== null ? p.cells[pc] : null);
+    const reason = future ? 'future' : errors.local || errors.province ? 'source_error' : !l || !p ? 'metric_missing' : lc === null || pc === null ? 'total_header_' + (local.totalHeaderStatus === 'ambiguous' || province.totalHeaderStatus === 'ambiguous' ? 'ambiguous' : 'missing') : lv.reason || pv.reason;
+    const delta = !reason && lv.value !== null && pv.value !== null ? Math.round((lv.value - pv.value) * 100) / 100 : null;
+    return { metric, label, local: lv.value, province: pv.value, delta, status: delta === null ? 'missing' : delta === 0 ? 'equal' : 'mismatch', reason, localCell: l && lc !== null ? `${columnName(lc)}${l.row}` : null, provinceCell: p && pc !== null ? `${columnName(pc)}${p.row}` : null };
+  });
 }

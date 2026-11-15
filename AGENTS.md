@@ -34,3 +34,4 @@ Project requirements override generic presets: Pashto RTL, legible Vazirmatn, Af
 ## Report reconciliation
 - Keep workbook configuration and raw snapshots in server-only modules; authorize the owner before per-user cache reads and return only aggregate comparisons and authenticated source-cell links — why: private read-only reconciliation must not expose raw workbooks or credentials.
 - Discover month/day headings dynamically and map metrics semantically; blanks, holidays, future dates and ambiguous mappings remain unavailable, never zero or mismatches — why: missing provincial evidence must not become a false discrepancy.
+- Detect source total headers only in the adjacent area after the last day column and compare semantically mapped source cells separately from daily rows — why: prevents day/side-table values and daily mismatch counts from being mistaken for monthly totals.

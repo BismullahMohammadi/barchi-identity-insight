@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareMonthlyReports, findMonthlyBlock, metricKey, reportNumber } from './reconciliation';
+import { compareMonthlyReports, compareSourceMonthlyTotals, findMonthlyBlock, findTotalColumn, metricKey, reportNumber } from './reconciliation';
 
 const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const today = { y: 1405, m: 8, d: 30 };
@@ -59,5 +59,46 @@ describe('report reconciliation', () => {
     expect(block.metrics.has('family')).toBe(false);
     expect(block.ambiguous).toContain('family');
     expect(findMonthlyBlock([['بخشونه (عقرب ۸)', ...days, '2']], 1405, 8, 'local', 1405).status).toBe('day_header_missing');
+  });
+});
+
+describe('source monthly totals', () => {
+  function blocks(localTotal: unknown = '۱٬۰۰۰', provinceTotal: unknown = '950') {
+    const { local, province } = fixture();
+    const lh = local[0], ph = province[1], lr = local[1], pr = province[2];
+    if (!lh || !ph || !lr || !pr) throw new Error('fixture missing');
+    lh[32] = 'جمله'; ph[37] = 'مجموع';
+    lr[32] = localTotal; pr[37] = provinceTotal;
+    return [findMonthlyBlock(local, 1405, 8, 'local', 1405), findMonthlyBlock(province, 1405, 8, 'province', 1405)] as const;
+  }
+  it('reads AG/AL source totals by metric instead of summing incomplete daily values', () => {
+    const [l,p] = blocks();
+    expect(l.totalColumn).toBe(32); expect(p.totalColumn).toBe(37);
+    expect(compareSourceMonthlyTotals(l,p,1405,8,today).find(r=>r.metric==='family')).toMatchObject({local:1000,province:950,delta:50,status:'mismatch',localCell:'AG2',provinceCell:'AL3'});
+  });
+  it('accepts normalized total labels only after days, ignoring day and distant side-table columns', () => {
+    const headers: unknown[][] = [['مجموعه', '1', '2', '3', 'مجموعه', '', '', '', 'مجموع']];
+    expect(findTotalColumn(headers,new Map([[1,1],[2,2],[3,3]]))).toEqual({totalColumn:4,totalHeaderStatus:'available'});
+    expect(findTotalColumn([['',1,2,3,'مــجــمــوع']],new Map([[1,1],[2,2],[3,3]]))).toMatchObject({totalColumn:4});
+  });
+  it('does not guess duplicate total columns or fall back to daily sums when header is absent', () => {
+    const days = new Map([[1,1],[2,2]]);
+    expect(findTotalColumn([['',1,2,'مجموع','مجموعه']],days)).toEqual({totalColumn:null,totalHeaderStatus:'ambiguous'});
+    const [l,p] = blocks(); l.totalColumn=null; l.totalHeaderStatus='missing';
+    expect(compareSourceMonthlyTotals(l,p,1405,8,today).find(r=>r.metric==='family')).toMatchObject({local:null,province:950,delta:null,status:'missing'});
+  });
+  it.each(['', '#REF!', 'رخصت'])('keeps missing or invalid total %s missing', value => {
+    const [l,p] = blocks(value);
+    expect(compareSourceMonthlyTotals(l,p,1405,8,today).find(r=>r.metric==='family')).toMatchObject({local:null,delta:null,status:'missing'});
+  });
+  it('compares explicit zeros as equal and masks unverified error/future totals', () => {
+    const [l,p] = blocks('۰','0');
+    expect(compareSourceMonthlyTotals(l,p,1405,8,today).find(r=>r.metric==='family')).toMatchObject({local:0,province:0,delta:0,status:'equal'});
+    expect(compareSourceMonthlyTotals(l,p,1405,8,today,{local:false,province:true}).find(r=>r.metric==='family')).toMatchObject({province:null,delta:null,status:'missing',reason:'source_error'});
+    expect(compareSourceMonthlyTotals(l,p,1405,8,{y:1405,m:7,d:30}).find(r=>r.metric==='family')).toMatchObject({local:null,province:null,delta:null,reason:'future'});
+  });
+  it('keeps missing or ambiguous metrics unavailable independently of total header', () => {
+    const [l,p] = blocks(); l.metrics.delete('family');
+    expect(compareSourceMonthlyTotals(l,p,1405,8,today).find(r=>r.metric==='family')).toMatchObject({local:null,status:'missing',reason:'metric_missing'});
   });
 });
