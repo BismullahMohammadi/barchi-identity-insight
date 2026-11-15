@@ -112,19 +112,19 @@ function ReconciliationPage() {
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border bg-muted"/>معلومات نشته</span>
       </div>
       <div className="relative z-0 max-w-full overflow-x-auto rounded-xl border bg-card shadow-sm" role="region" aria-label="د برخو او ورځو د مطابقت جدول" tabIndex={0}>
-        <table className="w-full min-w-[760px] table-fixed border-collapse text-center text-[10px] leading-tight sm:text-[11px]">
+        <table className="w-full min-w-[540px] table-fixed border-collapse text-center text-[9px] leading-none sm:text-[10px]">
           <thead>
             <tr>
-              <th scope="col" className="w-[155px] border border-border bg-muted px-2 py-2 text-right font-semibold sm:w-[180px]">برخه</th>
-              {visibleDays.map(day=><th key={day} scope="col" className="border border-border bg-muted px-0.5 py-2 font-semibold tabular-nums" title={`${day} ${JALALI_MONTHS[month-1]} ${year}`}>{number(day)</th>)}
-              <th scope="col" className="w-[52px] border border-border bg-muted px-1 py-2 font-semibold sm:w-[65px]">ټول توپیرونه</th>
+              <th scope="col" className="w-[118px] border border-border bg-muted px-1 py-1.5 text-right font-semibold sm:w-[140px]">برخه</th>
+              {visibleDays.map(day=><th key={day} scope="col" className="border border-border bg-muted px-0 py-1.5 font-semibold tabular-nums" title={`${day} ${JALALI_MONTHS[month-1]} ${year}`}>{number(day)</th>)}
+              <th scope="col" className="w-[42px] break-words border border-border bg-muted px-0.5 py-1 font-semibold sm:w-[50px]">ټول توپیرونه</th>
             </tr>
           </thead>
           <tbody>
             {visibleMetrics.map(([key,label],index)=>{
               const sectionErrors = visibleDays.filter(day=>matrix.get(`${day}:${key}`)?.status==='mismatch').length;
               return <tr key={key} className={index%2===0?'bg-card':'bg-muted/20'}>
-                <th scope="row" className={`break-words border border-border px-2 py-1.5 text-right font-semibold ${index%2===0?'bg-card':'bg-muted'}`}>{label}</th>
+                <th scope="row" className={`break-words border border-border px-1 py-1 text-right font-semibold ${index%2===0?'bg-card':'bg-muted'}`}>{label}</th>
                 {visibleDays.map(day=>{
                   const row=matrix.get(`${day}:${key}`);
                   const status=row?.status??'missing';
@@ -134,24 +134,24 @@ function ReconciliationPage() {
                       title={`${label} — ${day} ${JALALI_MONTHS[month-1]}: ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
                       aria-label={`${label}، ${day} ${JALALI_MONTHS[month-1]}، ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
                       aria-pressed={active}
-                      className={`min-h-8 w-full border border-transparent px-0.5 font-medium tabular-nums transition-colors hover:border-primary/40 focus-visible:relative focus-visible:z-10 focus-visible:border-primary focus-visible:outline-none ${status==='mismatch'?'bg-destructive/10 text-destructive':status==='equal'?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':'text-muted-foreground'} ${active?'!border-primary bg-primary/10':''}`}>
+                      className={`min-h-6 w-full border border-transparent px-0 font-medium tabular-nums transition-colors hover:border-primary/40 focus-visible:relative focus-visible:z-10 focus-visible:border-primary focus-visible:outline-none ${status==='mismatch'?'bg-destructive/10 text-destructive':status==='equal'?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':'text-muted-foreground'} ${active?'!border-primary bg-primary/10':''}`}>
                       {status==='mismatch'?number(row?.delta??null):status==='equal'?'✓':'—'}
                     </button>
                   </td>;
                 })}
-                <td className={`border border-border px-1 py-1 font-bold tabular-nums ${sectionErrors?'bg-destructive/5 text-destructive':'text-muted-foreground'}`}>{number(sectionErrors)}</td>
+                <td className={`border border-border px-0.5 py-0.5 font-bold tabular-nums ${sectionErrors?'bg-destructive/5 text-destructive':'text-muted-foreground'}`}>{number(sectionErrors)}</td>
               </tr>;
             })}
             {!visibleMetrics.length && <tr><td colSpan={visibleDays.length+2} className="p-8 text-center text-muted-foreground">د لټون مطابق برخه ونه موندل شوه.</td></tr>}
           </tbody>
           {visibleMetrics.length>0 && <tfoot><tr>
-            <th scope="row" className="border border-border bg-muted px-2 py-2 text-right font-bold">د توپیرونو مجموعه</th>
-            {visibleDays.map(day=><td key={day} className="border border-border bg-muted px-0.5 py-2 font-semibold tabular-nums text-destructive">{number(visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length)}</td>)}
-            <td className="border border-border bg-muted px-1 py-2 font-bold tabular-nums text-destructive">{number(visibleDays.reduce((sum,day)=>sum+visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length,0))}</td>
+            <th scope="row" className="border border-border bg-muted px-1 py-1.5 text-right font-bold">د توپیرونو مجموعه</th>
+            {visibleDays.map(day=><td key={day} className="border border-border bg-muted px-0 py-1 font-semibold tabular-nums text-destructive">{number(visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length)}</td>)}
+            <td className="border border-border bg-muted px-0.5 py-1 font-bold tabular-nums text-destructive">{number(visibleDays.reduce((sum,day)=>sum+visibleMetrics.filter(([key])=>matrix.get(`${day}:${key}`)?.status==='mismatch').length,0))}</td>
           </tr></tfoot>}
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">پر هره خانه کلیک وکړئ چې د مرکز او ریاست شمېرې وګورئ. په کوچنیو سکرینونو کې افقي سکرول ممکن دی؛ جدول یوازې د لوستلو لپاره دی.</p>
+      <p className="text-xs text-muted-foreground">پر هره خانه کلیک وکړئ چې د مرکز او ریاست شمېرې وګورئ. په کوچنیو سکرینونو کې جدول د لمس یا ټچ‌پډ له لارې خوځولای شئ؛ جدول یوازې د لوستلو لپاره دی.</p>
     </section>}
     {detail && <section className="rounded-lg border p-4" aria-live="polite"><div className="mb-3 flex items-center justify-between gap-2"><h2 className="font-semibold">{detail.day} {JALALI_MONTHS[month-1]} — {detail.label}</h2><Button size="sm" variant="ghost" onClick={()=>setSelected(null)}>بندول</Button></div><div className="grid grid-cols-3 gap-2 text-center text-sm"><div><p className="text-muted-foreground">زموږ راپور</p><strong>{number(detail.local)}</strong></div><div><p className="text-muted-foreground">ولایت</p><strong>{number(detail.province)}</strong></div><div><p className="text-muted-foreground">توپیر</p><strong className={detail.status==='mismatch'?'text-destructive':''}>{number(detail.delta)}</strong></div></div></section>}
   </main>;
