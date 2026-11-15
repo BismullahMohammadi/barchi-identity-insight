@@ -3,7 +3,7 @@ import { queryOptions, useSuspenseQuery, useQueryClient } from '@tanstack/react-
 import { useServerFn } from '@tanstack/react-start';
 import { useState } from 'react';
 import { z } from 'zod';
-import { RefreshCw, AlertTriangle, Search, X } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Search, X, Printer, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getReconciliation } from '@/lib/reconciliation.functions';
 import { JALALI_MONTHS, todayJalali } from '@/lib/jalali';
@@ -58,6 +58,26 @@ function ReconciliationPage() {
   const matrix = new Map(data.rows.map(row=>[`${row.day}:${row.metric}`,row]));
   const totals = new Map(data.totals.map(row => [row.metric, row]));
   const detail = selected ? data.rows.find(row => `${row.metric}:${row.day}` === selected) : null;
+  const printRows = metricDefinitions.map(([key, label]) => ({ key, label, total: data.totals.find(row => row.metric === key) }));
+  function exportSvg() {
+    // SVG is generated from report data, never from the on-screen application DOM.
+    const escapeXml = (value: unknown) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    const width = 1120, rowHeight = 37, top = 180, height = top + printRows.length * rowHeight + 100;
+    const labels = ['برخه', 'د مرکز مجموعه', 'د ولایت مجموعه', 'توپیر'];
+    const columns = [1060, 610, 390, 160];
+    const header = labels.map((label, index) => `<text x="${columns[index]}" y="160" text-anchor="end" font-size="17" font-weight="bold">${escapeXml(label)}</text>`).join('');
+    const rowsSvg = printRows.map((row, index) => {
+      const y = top + index * rowHeight;
+      const values = [row.label, number(row.total?.local ?? null), number(row.total?.province ?? null), number(row.total?.delta ?? null)];
+      const texts = values.map((value, col) => `<text x="${columns[col]}" y="${y + 24}" text-anchor="end" font-size="15" fill="${col === 3 && row.total?.status === 'mismatch' ? '#b91c1c' : '#172f38'}">${escapeXml(value)}</text>`).join('');
+      return `<rect x="45" y="${y}" width="1030" height="${rowHeight}" fill="${index % 2 ? '#f2f7f6' : '#ffffff'}"/><line x1="45" y1="${y + rowHeight}" x2="1075" y2="${y + rowHeight}" stroke="#d9e5e2"/>${texts}`;
+    }).join('');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#fff"/><g direction="rtl" font-family="Noto Naskh Arabic, Noto Sans Arabic, sans-serif" fill="#172f38"><text x="1060" y="55" font-size="28" font-weight="bold" text-anchor="end">د دشت برچي د الکترونیکي تذکرو مرکز</text><text x="1060" y="94" font-size="23" font-weight="bold" text-anchor="end">د راپورونو د میاشتنیو مجموعو مطابقت</text><text x="1060" y="125" font-size="17" text-anchor="end">${escapeXml(JALALI_MONTHS[month-1])} ${year}</text><line x1="45" y1="137" x2="1075" y2="137" stroke="#0b6b74" stroke-width="2"/>${header}${rowsSvg}<text x="1060" y="${height-32}" font-size="14" text-anchor="end">سرچینه: د مرکز او ولایت Google Sheets — یوازې د لوستلو راپور</text></g></svg>`;
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `reconciliation-${year}-${month}.svg`; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   async function refresh() {
     setRefreshing(true); setRefreshError(false);
     try {
@@ -80,6 +100,8 @@ function ReconciliationPage() {
         <select aria-label="میاشت" className="min-h-10 rounded-lg border bg-card px-3" value={`${year}-${month}`} onChange={e=>changeMonth(e.target.value)}>
           {months.map(m=><option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>{JALALI_MONTHS[m.month-1]} {m.year}</option>)}
         </select>
+        <Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}><Printer className="h-4 w-4" /> چاپ</Button>
+        <Button variant="outline" size="sm" className="print:hidden" onClick={exportSvg}><FileImage className="h-4 w-4" /> SVG</Button>
         <Button variant="outline" size="icon" aria-label="تازه کول" title="تازه کول" disabled={refreshing} onClick={refresh}><RefreshCw className={`h-4 w-4 ${refreshing?'animate-spin':''}`}/></Button>
       </div>
     </header>
@@ -175,6 +197,18 @@ function ReconciliationPage() {
       </div>
       <p className="text-xs text-muted-foreground">پر هره خانه کلیک وکړئ چې د مرکز او ریاست شمېرې وګورئ. په کوچنیو سکرینونو کې جدول د لمس یا ټچ‌پډ له لارې خوځولای شئ؛ جدول یوازې د لوستلو لپاره دی.</p>
     </section>}
+    <section id="reconciliation-print-report" className="reconciliation-print-report" dir="rtl" aria-label="د چاپ لپاره رسمي راپور">
+      <header className="report-print-heading">
+        <h1>د دشت برچي د الکترونیکي تذکرو مرکز</h1>
+        <h2>د راپورونو د میاشتنیو مجموعو مطابقت</h2>
+        <p>میاشت: {JALALI_MONTHS[month-1]} {number(year)} — سرچینې: د مرکز او ولایت راپورونه</p>
+      </header>
+      <table className="report-print-table">
+        <thead><tr><th>شمېره</th><th>برخه</th><th>د مرکز مجموعه</th><th>د ولایت مجموعه</th><th>توپیر</th><th>حالت</th></tr></thead>
+        <tbody>{printRows.map((row, index) => <tr key={row.key}><td>{number(index+1)}</td><th scope="row">{row.label}</th><td>{number(row.total?.local ?? null)}</td><td>{number(row.total?.province ?? null)}</td><td>{number(row.total?.delta ?? null)}</td><td>{row.total?.status === 'equal' ? 'برابر' : row.total?.status === 'mismatch' ? 'توپیر' : 'معلومات نشته'}</td></tr>)}</tbody>
+      </table>
+      <footer className="report-print-footer">دا راپور د Google Sheets له ثبت شویو مجموعو څخه جوړ شوی؛ نشتې شمېرې صفر نه ګڼل کېږي.</footer>
+    </section>
     {detail && <section className="rounded-lg border p-4" aria-live="polite"><div className="mb-3 flex items-center justify-between gap-2"><h2 className="font-semibold">{detail.day} {JALALI_MONTHS[month-1]} — {detail.label}</h2><Button size="sm" variant="ghost" onClick={()=>setSelected(null)}>بندول</Button></div><div className="grid grid-cols-3 gap-2 text-center text-sm"><div><p className="text-muted-foreground">زموږ راپور</p><strong>{number(detail.local)}</strong></div><div><p className="text-muted-foreground">ولایت</p><strong>{number(detail.province)}</strong></div><div><p className="text-muted-foreground">توپیر</p><strong className={detail.status==='mismatch'?'text-destructive':''}>{number(detail.delta)}</strong></div></div></section>}
   </main>;
 }
