@@ -52,7 +52,7 @@ async function sourceSnapshot(source: keyof typeof SOURCES, userId: string, head
       return { snapshot: { grid: data.valueRanges?.[0]?.values ?? [], gid: sheet.sheetId, fetchedAt: Date.now() }, expires: Date.now() + 120000 };
     } catch (error) {
       const details: SourceError = error instanceof ReadError ? error.details : { code: 'network_error', status: null, retryAt: null };
-      return { snapshot: previous?.snapshot, error: details, expires: details.retryAt ?? Date.now() + 60000 };
+      return { ...(previous?.snapshot ? { snapshot: previous.snapshot } : {}), error: details, expires: details.retryAt ?? Date.now() + 60000 };
     }
   })();
   pending.set(key, task);

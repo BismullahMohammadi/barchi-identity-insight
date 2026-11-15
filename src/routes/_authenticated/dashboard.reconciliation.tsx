@@ -25,7 +25,14 @@ export const Route = createFileRoute('/_authenticated/dashboard/reconciliation')
     const today = todayJalali();
     return context.queryClient.ensureQueryData(reportQuery(deps.year ?? today.y, deps.month ?? today.m));
   },
-  head: () => ({ meta: [{ title: 'د راپورونو مطابقت — Barchi Identity Insight' }] }),
+  head: () => ({ meta: [
+    { title: 'د راپورونو مطابقت — Barchi Identity Insight' },
+    { name: 'description', content: 'د مرکز او ولایت د میاشتنیو راپورونو خوندي، یوازې د لوستلو پرتله.' },
+    { property: 'og:title', content: 'د راپورونو مطابقت — Barchi Identity Insight' },
+    { property: 'og:description', content: 'د مرکز او ولایت د میاشتنیو راپورونو خوندي، یوازې د لوستلو پرتله.' },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary' },
+  ] }),
   pendingComponent: () => <p role="status" className="py-10 text-muted-foreground">راپورونه لوستل کېږي…</p>,
   errorComponent: () => <div role="alert" className="py-8">د راپورونو لوستل ممکن نه شول. مهرباني وکړئ وروسته بیا هڅه وکړئ.</div>,
   component: ReconciliationPage,
@@ -116,7 +123,7 @@ function ReconciliationPage() {
           <thead>
             <tr>
               <th scope="col" className="w-[118px] border border-border bg-muted px-1 py-1.5 text-right font-semibold sm:w-[140px]">برخه</th>
-              {visibleDays.map(day=><th key={day} scope="col" className="border border-border bg-muted px-0 py-1.5 font-semibold tabular-nums" title={`${day} ${JALALI_MONTHS[month-1]} ${year}`}>{number(day)</th>)}
+              {visibleDays.map(day=><th key={day} scope="col" className="border border-border bg-muted px-0 py-1.5 font-semibold tabular-nums" title={`${day} ${JALALI_MONTHS[month-1]} ${year}`}>{number(day)}</th>)}
               <th scope="col" className="w-[42px] break-words border border-border bg-muted px-0.5 py-1 font-semibold sm:w-[50px]">ټول توپیرونه</th>
             </tr>
           </thead>

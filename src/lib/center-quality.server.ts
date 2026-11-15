@@ -4,7 +4,21 @@ import { todayJalali } from './jalali';
 const ID = '1CQW-MelUxvRSGqbRMatozoVkrCZlhcgxluhBscsQM0Q';
 const GATEWAY = 'https://connector-gateway.lovable.dev/google_sheets/v4';
 const CENTERS = ['آسان خدمت دارالامان','آسان خدمت امکا','آسان خدمت (VIP)','آسان خدمت افشار','مرکز احمد شاه بابا مینه','مرکز سرای شمالی','مرکز دشت برچی','مرکز قصر دارالمان','مرکز خوشحال خان','مرکز سینما پامیر','مرکز کارته پروان','شهدا و معلولین','مرکز قره باغ'];
-const cache = new Map<string,{time:number;data:unknown}>();
+type CenterQualityReport = {
+ year: number;
+ month: number;
+ centers: {
+  name: string;
+  status: string;
+  days: { day: number; value: number | null }[];
+  total: number;
+  reportedDays: number;
+  complete: boolean;
+  reportedMonths: number;
+ }[];
+ checkedAt: number;
+};
+const cache = new Map<string,{time:number;data:CenterQualityReport}>();
 export async function readCenterQuality(year:number,month:number,claims:unknown,userId:string,refresh:boolean) {
  const headers = authorizedSheetHeaders(claims);
  const key = userId+':'+year+':'+month;
