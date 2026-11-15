@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as AuthenticatedDashboardSlugRouteImport } from './routes/_authenticated/dashboard.$slug'
+import { Route as AuthenticatedDashboardCenterQualityRouteImport } from './routes/_authenticated/dashboard.center-quality'
 import { Route as AuthenticatedDashboardReconciliationRouteImport } from './routes/_authenticated/dashboard.reconciliation'
 
 const IndexRoute = IndexRouteImport.update({
@@ -42,6 +43,12 @@ const AuthenticatedDashboardSlugRoute =
     path: '/$slug',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardCenterQualityRoute =
+  AuthenticatedDashboardCenterQualityRouteImport.update({
+    id: '/center-quality',
+    path: '/center-quality',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardReconciliationRoute =
   AuthenticatedDashboardReconciliationRouteImport.update({
     id: '/reconciliation',
@@ -53,12 +60,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
+  '/dashboard/center-quality': typeof AuthenticatedDashboardCenterQualityRoute
   '/dashboard/reconciliation': typeof AuthenticatedDashboardReconciliationRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
+  '/dashboard/center-quality': typeof AuthenticatedDashboardCenterQualityRoute
   '/dashboard/reconciliation': typeof AuthenticatedDashboardReconciliationRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
@@ -68,6 +77,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
+  '/_authenticated/dashboard/center-quality': typeof AuthenticatedDashboardCenterQualityRoute
   '/_authenticated/dashboard/reconciliation': typeof AuthenticatedDashboardReconciliationRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
@@ -77,16 +87,23 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dashboard/$slug'
+    | '/dashboard/center-quality'
     | '/dashboard/reconciliation'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard/$slug' | '/dashboard/reconciliation' | '/dashboard'
+  to:
+    | '/'
+    | '/dashboard/$slug'
+    | '/dashboard/center-quality'
+    | '/dashboard/reconciliation'
+    | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/dashboard'
     | '/_authenticated/dashboard/$slug'
+    | '/_authenticated/dashboard/center-quality'
     | '/_authenticated/dashboard/reconciliation'
     | '/_authenticated/dashboard/'
   fileRoutesById: FileRoutesById
@@ -133,6 +150,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardSlugRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/center-quality': {
+      id: '/_authenticated/dashboard/center-quality'
+      path: '/center-quality'
+      fullPath: '/dashboard/center-quality'
+      preLoaderRoute: typeof AuthenticatedDashboardCenterQualityRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/reconciliation': {
       id: '/_authenticated/dashboard/reconciliation'
       path: '/reconciliation'
@@ -145,6 +169,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardSlugRoute: typeof AuthenticatedDashboardSlugRoute
+  AuthenticatedDashboardCenterQualityRoute: typeof AuthenticatedDashboardCenterQualityRoute
   AuthenticatedDashboardReconciliationRoute: typeof AuthenticatedDashboardReconciliationRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
 }
@@ -152,6 +177,8 @@ interface AuthenticatedDashboardRouteChildren {
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardSlugRoute: AuthenticatedDashboardSlugRoute,
+    AuthenticatedDashboardCenterQualityRoute:
+      AuthenticatedDashboardCenterQualityRoute,
     AuthenticatedDashboardReconciliationRoute:
       AuthenticatedDashboardReconciliationRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
