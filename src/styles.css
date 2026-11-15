@@ -268,3 +268,37 @@
 [data-radix-scroll-area-scrollbar] {
   display: none !important;
 }
+
+/* Professional reconciliation printout: print only the dedicated report, never the app UI. */
+.reconciliation-print-report { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 13mm 14mm; }
+  html, body, #root { background: #fff !important; background-image: none !important; color: #172f38 !important; }
+  body * { visibility: hidden !important; }
+  .reconciliation-print-report, .reconciliation-print-report * { visibility: visible !important; }
+  .reconciliation-print-report {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, sans-serif !important;
+    color: #172f38 !important;
+    direction: rtl !important;
+    background: #fff !important;
+  }
+  .report-print-heading { text-align: center; border-bottom: 2px solid #0b6b74; padding-bottom: 12px; margin-bottom: 14px; }
+  .report-print-heading h1 { font-size: 19pt; font-weight: 800; margin: 0 0 5px; }
+  .report-print-heading h2 { font-size: 14pt; font-weight: 700; margin: 0 0 5px; }
+  .report-print-heading p { font-size: 10pt; margin: 0; }
+  .report-print-table { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: auto; }
+  .report-print-table thead { display: table-header-group; }
+  .report-print-table tfoot { display: table-footer-group; }
+  .report-print-table tr { break-inside: avoid; page-break-inside: avoid; }
+  .report-print-table th, .report-print-table td { border: 1px solid #cbd9d6; padding: 6px 8px; text-align: right; background: #fff !important; color: #172f38 !important; }
+  .report-print-table thead th { background: #e8f4f1 !important; font-weight: 700; }
+  .report-print-table tbody tr:nth-child(even) td, .report-print-table tbody tr:nth-child(even) th { background: #f6faf9 !important; }
+  .report-print-footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #cbd9d6; font-size: 9pt; color: #425c61; }
+  .reconciliation-print-report a { text-decoration: none !important; color: inherit !important; }
+}
