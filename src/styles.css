@@ -244,3 +244,44 @@
     border-top: 2px solid var(--border);
   }
 }
+
+
+/* Unified compact scrollbars across dashboard, tables, dialogs and sidebars.
+   Keep native touch scrolling on mobile; colors follow the active theme. */
+@media (hover: hover) and (pointer: fine) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+  :where(body, main, aside, nav, section, div, pre, textarea, ul, ol) {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 48%, transparent) transparent;
+  }
+  :where(body, main, aside, nav, section, div, pre, textarea, ul, ol)::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  :where(body, main, aside, nav, section, div, pre, textarea, ul, ol)::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  :where(body, main, aside, nav, section, div, pre, textarea, ul, ol)::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  :where(body, main, aside, nav, section, div, pre, textarea, ul, ol)::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--muted-foreground) 72%, transparent);
+  }
+  :where(body, main, aside, nav, section, div, pre, textarea, ul, ol)::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  /* Radix ScrollArea uses its own track; slim it without changing scroll behavior. */
+  [data-slot="scroll-area-scrollbar"] {
+    width: 8px;
+  }
+  [data-slot="scroll-area-scrollbar"][data-orientation="horizontal"] {
+    width: auto;
+    height: 8px;
+  }
+}
