@@ -16,7 +16,7 @@ export function PassedFilesLookup(){
  const [showDetails,setShowDetails]=useState(false);
  const [employee,setEmployee]=useState('ټول کارمندان');
  const [submitted,setSubmitted]=useState({from:'1405-08-24',to:'1405-08-24'});
- const report=useQuery({queryKey:['passed-files',submitted],queryFn:()=>getPassedFiles({data:{date:submitted}}),enabled:/^1[34]\d{2}-\d{2}-\d{2}$/.test(submitted),retry:false,staleTime:120000});
+ const report=useQuery({queryKey:['passed-files',submitted.from,submitted.to],queryFn:()=>getPassedFiles({data:submitted}),enabled:submitted.from<=submitted.to,retry:false,staleTime:120000});
  const rows=(report.data?.rows??[]).filter(r=>employee==='ټول کارمندان'||r.employee===employee);
  const incomplete=!!report.data?.warnings.length;
  const warningCount=report.data?.warnings.length??0;
@@ -31,7 +31,7 @@ export function PassedFilesLookup(){
    <div className="no-print flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
     <div className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><Popover open={calendarOpen} onOpenChange={setCalendarOpen}><PopoverTrigger asChild><Button variant="outline" className="h-10 gap-2"><CalendarRange className="h-4 w-4"/>{from.replace(/-/g,'/')} — {to.replace(/-/g,'/')}</Button></PopoverTrigger><PopoverContent align="start" dir="rtl" className="w-[min(94vw,340px)] p-3"><div className="mb-3 flex items-center justify-between"><Button size="icon" variant="ghost" aria-label="مخکینۍ میاشت" onClick={()=>moveMonth(-1)}><ChevronRight className="h-4 w-4"/></Button><strong>{JALALI_MONTHS[view.month-1]} {view.year}</strong><Button size="icon" variant="ghost" aria-label="راتلونکې میاشت" onClick={()=>moveMonth(1)}><ChevronLeft className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1">{Array.from({length:days},(_,i)=><button type="button" key={i} onClick={()=>chooseDay(i+1)} className={`h-9 rounded-md text-sm hover:bg-muted ${`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`>=from&&`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`<=to?'bg-primary text-primary-foreground':''}`}>{i+1}</button>)}</div><p className="mt-2 text-xs text-muted-foreground">{firstPick?'اوس د پای نېټه وټاکئ':'د پیل او پای نېټې د ټاکلو لپاره دوه ورځې وټاکئ'}</p></PopoverContent></Popover></div>
     <label className="space-y-1 text-sm"><span className="block">کارمند</span><select className="h-10 max-w-full rounded-md border bg-background px-3" value={employee} onChange={e=>setEmployee(e.target.value)}>{STAFF.map(n=><option key={n}>{n}</option>)}</select></label>
-    <Button onClick={()=>setSubmitted(date.trim().replace(/\//g,'-'))}>لټون</Button>
+    <Button onClick={()=>setSubmitted({from,to})}>لټون</Button>
     <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={()=>window.print()}><Printer className="h-4 w-4"/> چاپ</Button>
    </div>
    {report.isLoading&&<p role="status">د شیټونو معلومات لوستل کېږي…</p>}
