@@ -15,13 +15,12 @@ export function PassedFilesLookup(){
  const [view,setView]=useState({year:1405,month:8});
  const [showDetails,setShowDetails]=useState(false);
  const [search,setSearch]=useState('');
- const [globalSearch,setGlobalSearch]=useState(false);
  const [hasSearched,setHasSearched]=useState(false);
  const [employee,setEmployee]=useState('ټول کارمندان');
- const [submitted,setSubmitted]=useState({from:'1405-08-24',to:'1405-08-24'});
- const report=useQuery({queryKey:['passed-files',submitted.from,submitted.to],queryFn:()=>getPassedFiles({data:submitted}),enabled:hasSearched&&submitted.from<=submitted.to,retry:false,staleTime:120000});
+ const [submitted,setSubmitted]=useState({from:'1405-08-24',to:'1405-08-24',query:''});
+ const report=useQuery({queryKey:['passed-files',submitted.from,submitted.to,submitted.query],queryFn:()=>getPassedFiles({data:submitted}),enabled:hasSearched&&submitted.from<=submitted.to,retry:false,staleTime:120000});
  const normalizedSearch=search.trim().toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/\s+/g,'');
- const rows=(report.data?.rows??[]).filter(r=>(globalSearch||employee==='ټول کارمندان'||r.employee===employee)&&(!normalizedSearch||[r.name,r.familyCode].some(v=>v.toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/\s+/g,'').includes(normalizedSearch))));
+ const rows=(report.data?.rows??[]).filter(r=>(Boolean(submitted.query)||employee==='ټول کارمندان'||r.employee===employee));
  const showWorkType=employee==='محمد نبي بهزاد'||(employee==='ټول کارمندان'&&rows.some(r=>r.employee==='محمد نبي بهزاد'));
  const incomplete=!!report.data?.warnings.length;
  const warningCount=report.data?.warnings.length??0;
@@ -37,7 +36,7 @@ export function PassedFilesLookup(){
     <div className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><Popover open={calendarOpen} onOpenChange={setCalendarOpen}><PopoverTrigger asChild><Button variant="outline" className="h-10 gap-2"><CalendarRange className="h-4 w-4"/>{from.replace(/-/g,'/')} — {to.replace(/-/g,'/')}</Button></PopoverTrigger><PopoverContent align="start" dir="rtl" className="w-[min(94vw,340px)] p-3"><div className="mb-3 flex items-center justify-between"><Button size="icon" variant="ghost" aria-label="مخکینۍ میاشت" onClick={()=>moveMonth(-1)}><ChevronRight className="h-4 w-4"/></Button><strong>{JALALI_MONTHS[view.month-1]} {view.year}</strong><Button size="icon" variant="ghost" aria-label="راتلونکې میاشت" onClick={()=>moveMonth(1)}><ChevronLeft className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1">{Array.from({length:days},(_,i)=><button type="button" key={i} onClick={()=>chooseDay(i+1)} className={`h-9 rounded-md text-sm hover:bg-muted ${`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`>=from&&`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`<=to?'bg-primary text-primary-foreground':''}`}>{i+1}</button>)}</div><p className="mt-2 text-xs text-muted-foreground">{firstPick?'اوس د پای نېټه وټاکئ':'د پیل او پای نېټې د ټاکلو لپاره دوه ورځې وټاکئ'}</p></PopoverContent></Popover></div>
     <label className="space-y-1 text-sm"><span className="block">کارمند</span><select className="h-10 max-w-full rounded-md border bg-background px-3" value={employee} onChange={e=>setEmployee(e.target.value)}>{STAFF.map(n=><option key={n}>{n}</option>)}</select></label>
     <label className="space-y-1 text-sm"><span className="block">د مراجع نوم یا فامیلي کوډ</span><input className="h-10 rounded-md border bg-background px-3" value={search} onChange={e=>setSearch(e.target.value)} placeholder="نوم یا کوډ ولیکئ"/></label>
-    <Button disabled={report.isFetching} onClick={()=>{setGlobalSearch(Boolean(search.trim()));setHasSearched(true);setSubmitted({from,to});if(hasSearched&&submitted.from===from&&submitted.to===to)void report.refetch()}}>{report.isFetching?"لټون...":"لټون"}</Button>
+    <Button disabled={report.isFetching} onClick={()=>{setHasSearched(true);setSubmitted({from,to,query:search.trim()});if(hasSearched&&submitted.from===from&&submitted.to===to&&submitted.query===search.trim())void report.refetch()}}>{report.isFetching?"لټون...":"لټون"}</Button>
     <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={()=>window.print()}><Printer className="h-4 w-4"/> چاپ</Button>
    </div>
    {!hasSearched&&<p className="no-print text-sm text-muted-foreground">د ټاکلې مودې د دوسیو د کتلو لپاره «لټون» ووهئ.</p>}
