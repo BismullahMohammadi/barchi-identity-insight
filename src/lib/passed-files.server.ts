@@ -14,13 +14,27 @@ function valid(y:number,m:number,d:number){return y>=1300&&y<=1499&&m>=1&&m<=12&
 function fullDate(value:unknown){const m=norm(value).match(dateRegex);if(!m)return null;const [y,mo,d]=m.slice(1).map(Number);return valid(y,mo,d)?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
 function noteDate(value:unknown,year:number){const s=norm(value);const full=fullDate(s);if(full)return full;const m=s.match(/(?:^|\s)(\d{1,2})\s*[\/.-]\s*(\d{1,2})(?=\s|$)/);if(!m)return null;const mo=Number(m[1]),d=Number(m[2]);return valid(year,mo,d)?`${year}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
 function initialDate(title:string){const matches=[...norm(title).matchAll(/1[34]\d{2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*\d{1,2}/g)].map(m=>fullDate(m[0])).filter((x):x is string=>!!x);return matches[0]??null}
-async function read<T>(url:string,headers:Record<string,string>):Promise<T>{const r=await fetch(url,{headers,signal:AbortSignal.timeout(20000),cache:'no-store'});if(!r.ok)throw Error('SHEETS_READ_'+r.status);return r.json() as Promise<T>}
+const delay=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
+async function read<T>(url:string,headers:Record<string,string>):Promise<T>{
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000),cache:'no-store'});
+   if(r.ok)return r.json() as Promise<T>;
+   if(![429,500,502,503,504].includes(r.status)||attempt===2)throw Error('SHEETS_HTTP_'+r.status);
+  }catch(e){
+   if(attempt===2||String(e).includes('SHEETS_HTTP_4'))throw e;
+  }
+  await delay(500*(attempt+1));
+ }
+ throw Error('SHEETS_UNAVAILABLE');
+}
+
 export async function readPassedFiles(from:string,to:string,claims:unknown){
  const target=fullDate(to);const startDate=fullDate(from);if(!target||target!==to||!startDate||startDate!==from||startDate>target)throw Error('INVALID_DATE');
  const headers=authorizedSheetHeaders(claims);const [year,month]=target.split('-').map(Number);
  const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
  const warnings:string[]=[];let scanned=0;
- await Promise.all(SOURCES.map(async source=>{
+ for(const source of SOURCES){
   try{
    const meta=await read<{sheets?:{properties?:{title?:string;sheetId?:number}}[]}>(`${BASE}/spreadsheets/${source.id}?fields=sheets(properties(title,sheetId))`,headers);
    const tabs=(meta.sheets??[]).map(s=>s.properties).filter((p):p is {title:string;sheetId:number}=>typeof p?.title==='string'&&typeof p?.sheetId==='number');
@@ -31,7 +45,7 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
    if(unrecognized.length)warnings.push(`${source.name}: ${unrecognized.length} ټبونه د نېټې د نوم له مخې نه دي پېژندل شوي`);
    if(relevant.length>selected.length)warnings.push(`${source.name}: ${relevant.length-selected.length} زاړه ټبونه نه دي پلټل شوي`);
    if(!selected.length)warnings.push(`${source.name}: د ټاکلې میاشتې د نېټې لرونکی ټب ونه موندل شو`);
-   await Promise.all(selected.map(async tab=>{
+   for(const tab of selected){
     try{
      const range=`'${tab.title.replace(/'/g,"''")}'!A1:P600`;
      const data=await read<{values?:unknown[][]}>(`${BASE}/spreadsheets/${source.id}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`,headers);
@@ -61,9 +75,9 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
       if(!name||!familyCode||!/^\d+$/.test(norm(row[0])))continue;
       if(current&&current>=startDate&&current<=target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,date:current!,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
      }
-    }catch(e){warnings.push(`${source.name} / ${tab.title}: لوستل ناکام شول`)}
-   }));
-  }catch(e){warnings.push(`${source.name}: د شیټ لاسرسی ناکام شو`)}
- }));
+    }catch(e){warnings.push(`${source.name} / ${tab.title}: لوستل ناکام شول (${String(e).slice(0,100)})`)}
+   }
+  }catch(e){warnings.push(`${source.name}: د شیټ لاسرسی ناکام شو (${String(e).slice(0,100)})`)}
+ }
  return {date:target,from:startDate,to:target,rows:records.sort((a,b)=>a.employee.localeCompare(b.employee)||a.name.localeCompare(b.name)),count:records.length,scannedTabs:scanned,warnings};
 }
