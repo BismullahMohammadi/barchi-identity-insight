@@ -43,7 +43,7 @@ export async function readPassedFiles(date:string,claims:unknown){
      const second=grid[header]??[];
      const familyFormsCol=second.findIndex(x=>/فورم فامیلی/.test(norm(x)));
      const individualFormsCol=second.findIndex(x=>/فورم انفرادی/.test(norm(x)));
-     const qty=(v:unknown)=>/^\\d+$/.test(norm(v))?Number(norm(v)):null;
+     const qty=(v:unknown)=>/^\d+$/.test(norm(v))?Number(norm(v)):null;
      const notesCol=main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
      const start=initialDate(tab.title);
      let current=start;
