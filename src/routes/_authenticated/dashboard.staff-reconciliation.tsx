@@ -36,6 +36,27 @@ function StaffReconciliationPage(){
   {(report.isError||report.data?.error)&&<p role="alert" className="rounded-lg border border-destructive/30 p-3 text-destructive">د راپور معلومات ونه لوستل شول. د Google Sheets اړیکه او د میاشتې ټب وګورئ.</p>}
   {report.data?.tab&&<p className="text-xs text-muted-foreground">د کارمندانو ټب: {report.data.tab} · تخنیکي ټب: کنټرول</p>}
   <div className="grid grid-cols-3 gap-2">{([['مطابق',count('equal')],['توپیر',count('mismatch')],['نیمګړي',count('missing')]] as const).map(([label,value])=><div key={label} className="rounded-xl border p-3 text-center"><p className="text-2xl font-bold">{display(value)}</p><p className="text-xs text-muted-foreground">{label}</p></div>)}</div>
-  <div className="overflow-x-auto rounded-xl border"><table className="w-full min-w-[700px] text-right text-sm"><thead className="bg-muted"><tr>{['ورځ','کارمند','فعالیت','د کارمند راپور','تخنیکي راپور','توپیر','حالت'].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.day+':'+r.name} className="border-t"><td className="p-2">{r.day}</td><td className="p-2">{r.name}</td><td className="p-2">{r.activity}</td><td className="p-2">{display(r.reported)}</td><td className="p-2">{display(r.technical)}</td><td className="p-2" dir="ltr">{display(r.delta)}</td><td className={`p-2 ${r.status==='mismatch'?'text-destructive':r.status==='equal'?'text-emerald-700':'text-muted-foreground'}`}>{r.status==='equal'?'مطابق':r.status==='mismatch'?'توپیر':'معلومات نشته'}</td></tr>)}{!rows.length&&!report.isLoading&&<tr><td colSpan={7} className="p-6 text-center text-muted-foreground">د ټاکلي فلټر لپاره معلومات نشته.</td></tr>}</tbody></table></div>
+  <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3 print:hidden" role="tablist" aria-label="د مطابقت ډول">
+   <Link to="/dashboard/reconciliation" search={{}} role="tab" aria-selected={false} className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm">د ورځو مطابقت</Link>
+   <Link to="/dashboard/reconciliation" search={{}} role="tab" aria-selected={false} className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm">د توپیرونو مطابقت</Link>
+   <span role="tab" aria-selected={true} className="flex min-h-10 items-center justify-center rounded-md bg-background px-2 text-center text-sm font-medium shadow-sm">د کارمندانو او تخنیکي راپورونو مطابقت</span>
+  </div>
+  <div className="overflow-x-auto rounded-xl border bg-card" role="region" tabIndex={0} aria-label="د کارمندانو د ورځنیو توپیرونو جدول">
+   <table className="w-full min-w-[850px] table-fixed border-collapse text-center text-[10px]">
+    <thead><tr className="bg-muted"><th className="w-40 border p-2 text-right">کارمند</th>{Array.from({length:month<=6?31:30},(_,i)=>i+1).filter(d=>day===null||d===day).map(d=><th key={d} className="border p-1">{display(d)}</th>)}<th className="w-20 border p-1">د کارمند مجموعه</th><th className="w-20 border p-1">تخنیکي مجموعه</th><th className="w-20 border p-1">توپیر</th><th className="w-16 border p-1">توپیر لرونکې ورځې</th></tr></thead>
+    <tbody>{['نېک ولي خان ایمان','محمد نسیم هاشمي','عزیزالله الطاف','فاطمه علي رضایي','محمد نبي بهزاد'].map(name=>{
+     const personRows=rows.filter(r=>r.name===name);
+     const valid=personRows.filter(r=>r.status!=='missing');
+     const sum=(key:'reported'|'technical')=>valid.reduce((n,r)=>n+(r[key]??0),0);
+     const a=sum('reported'),b=sum('technical');
+     return <tr key={name}><th className="border bg-muted/30 p-2 text-right">{name}</th>{Array.from({length:month<=6?31:30},(_,i)=>i+1).filter(d=>day===null||d===day).map(d=>{
+      const item=personRows.find(r=>r.day===d);
+      return <td key={d} className={`border p-1 ${item?.status==='mismatch'?'bg-destructive/10 text-destructive':item?.status==='equal'?'bg-emerald-500/10 text-emerald-700':'bg-muted/30 text-muted-foreground'}`} title={item?.status==='missing'?'معلومات نشته':`کارمند: ${display(item?.reported??null)}، تخنیکي: ${display(item?.technical??null)}`}>{item?.status==='equal'?'✓':item?.status==='mismatch'?display(item.delta):'—'}</td>;
+     })}<td className="border p-2">{valid.length?display(a):'—'}</td><td className="border p-2">{valid.length?display(b):'—'}</td><td className="border p-2 font-semibold">{valid.length?display(a-b):'—'}</td><td className="border p-2 text-destructive">{display(personRows.filter(r=>r.status==='mismatch').length)}</td></tr>;
+    })}</tbody>
+    <tfoot><tr className="bg-muted font-bold"><th className="border p-2 text-right">د ورځنیو توپیرونو شمېر</th>{Array.from({length:month<=6?31:30},(_,i)=>i+1).filter(d=>day===null||d===day).map(d=><td key={d} className="border p-1">{display(rows.filter(r=>r.day===d&&r.status==='mismatch').length)}</td>)}<td colSpan={3} className="border p-2">یوازې د دواړو سرچینو موجودې شمېرې جمع شوي</td><td className="border p-2">{display(count('mismatch'))}</td></tr></tfoot>
+   </table>
+  </div>
+  <p className="text-xs text-muted-foreground">✓ برابر، سور عدد د کارمند د راپور او تخنیکي راپور توپیر دی، او — د معلوماتو نشتوالی ښيي. مجموعه یوازې د هغو ورځو لپاره محاسبه کېږي چې دواړه شمېرې موجودې وي.</p>
  </main>;
 }
