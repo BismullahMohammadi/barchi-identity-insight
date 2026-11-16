@@ -42,8 +42,6 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
    // Include date-bearing tabs in the target month through the selected day, plus the most recent preceding tab.
    const relevant=tabs.filter(t=>{const d=initialDate(t.title);return d&&d<=target&&d.slice(0,4)>=startDate.slice(0,4)&&d.slice(0,7)>=startDate.slice(0,7)}).sort((a,b)=>(initialDate(b.title)??'').localeCompare(initialDate(a.title)??''));
    const selected=relevant;
-   const unrecognized=tabs.filter(t=>!initialDate(t.title)&&!/sample|نمونه|merged|timeline|گزارش|راپور|عقرب|سنبله|میزان|ثور|حمل|جوزا|سرطان|اسد|قوس|جدی|دلو|حوت/i.test(t.title));
-   if(unrecognized.length)warnings.push(`${source.name}: ${unrecognized.length} ټبونه د نېټې د نوم له مخې نه دي پېژندل شوي`);
    if(relevant.length>selected.length)warnings.push(`${source.name}: ${relevant.length-selected.length} زاړه ټبونه نه دي پلټل شوي`);
    if(!selected.length)warnings.push(`${source.name}: د ټاکلې میاشتې د نېټې لرونکی ټب ونه موندل شو`);
    for(const tab of selected){
