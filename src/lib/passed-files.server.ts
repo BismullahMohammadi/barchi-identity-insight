@@ -15,19 +15,51 @@ function fullDate(value:unknown){const m=norm(value).match(dateRegex);if(!m)retu
 function noteDate(value:unknown,year:number){const s=norm(value);const full=fullDate(s);if(full)return full;const m=s.match(/(?:^|\s)(\d{1,2})\s*[\/.-]\s*(\d{1,2})(?=\s|$)/);if(!m)return null;const mo=Number(m[1]),d=Number(m[2]);return valid(year,mo,d)?`${year}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
 function initialDate(title:string){const matches=[...norm(title).matchAll(/1[34]\d{2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*\d{1,2}/g)].map(m=>fullDate(m[0])).filter((x):x is string=>!!x);return matches[0]??null}
 const delay=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
+const cache=new Map<string,{expires:number;value:unknown}>();
+const pending=new Map<string,Promise<unknown>>();
+let queue:Promise<void>=Promise.resolve();
+let nextRequestAt=0;
 async function read<T>(url:string,headers:Record<string,string>):Promise<T>{
- for(let attempt=0;attempt<3;attempt++){
-  try{
-   const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000),cache:'no-store'});
-   if(r.ok)return r.json() as Promise<T>;
-   if(![429,500,502,503,504].includes(r.status))throw Error('SHEETS_HTTP_4'+String(r.status));
-   if(attempt===2)throw Error('SHEETS_HTTP_'+r.status);
-  }catch(e){
-   if(attempt===2||String(e).includes('SHEETS_HTTP_4'))throw e;
+ const hit=cache.get(url);
+ if(hit&&hit.expires>Date.now())return hit.value as T;
+ const existing=pending.get(url);
+ if(existing)return existing as Promise<T>;
+ const task=(async()=>{
+  let lastError:unknown;
+  for(let attempt=0;attempt<5;attempt++){
+   // Serialize gateway requests across simultaneous searches in this server process.
+   let release!:()=>void;
+   const previous=queue;
+   queue=new Promise<void>(resolve=>{release=resolve});
+   let response:Response|undefined;
+   try{
+    await previous;
+    await delay(Math.max(0,nextRequestAt-Date.now()));
+    nextRequestAt=Date.now()+300;
+    response=await fetch(url,{headers,signal:AbortSignal.timeout(30000),cache:'no-store'});
+   }catch(e){lastError=e}
+   finally{release()}
+   if(response?.ok){
+    const value=await response.json() as T;
+    cache.set(url,{value,expires:Date.now()+(url.includes('/values/')?60000:300000)});
+    if(cache.size>500)for(const [key,item] of cache)if(item.expires<Date.now())cache.delete(key);
+    return value;
+   }
+   if(response){
+    lastError=Error('SHEETS_HTTP_'+response.status);
+    if(![429,500,502,503,504].includes(response.status))throw lastError;
+   }
+   if(attempt<4){
+    const retryAfter=Number(response?.headers.get('retry-after')??'');
+    const wait=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,30000):Math.min(1500*2**attempt,15000);
+    nextRequestAt=Math.max(nextRequestAt,Date.now()+wait);
+    await delay(wait);
+   }
   }
-  await delay(500*(attempt+1));
- }
- throw Error('SHEETS_UNAVAILABLE');
+  throw lastError??Error('SHEETS_UNAVAILABLE');
+ })();
+ pending.set(url,task);
+ try{return await task as T}finally{pending.delete(url)}
 }
 
 export async function readPassedFiles(from:string,to:string,claims:unknown){
