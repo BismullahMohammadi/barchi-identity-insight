@@ -1,5 +1,6 @@
 import { authorizedSheetHeaders } from './sheets-access.server';
 import { MONTH_NAMES } from './monthly-staff-completeness';
+import { isFridayJalali } from './holidays';
 
 const BASE = 'https://connector-gateway.lovable.dev/google_sheets/v4';
 const CONTROL_ID = '1knIScHAUj052s0hpx58kpALJMTgG0VUGPx1kqG_fzbs';
@@ -41,7 +42,8 @@ export function compareStaff(control:unknown[][], staff:unknown[][], year:number
   const technical=controlIndex<0?null:number(control[controlIndex]?.[person.column]);
   const col=dayCols.get(day);
   const reported=activityRow&&col!==undefined?number(activityRow[col]):null;
-  const status=technical===null||reported===null?'missing':technical===reported?'equal':'mismatch';
+  const friday=isFridayJalali({y:year,m:month,d:day});
+  const status=technical===null||reported===null?(friday?'holiday':'missing'):technical===reported?'equal':'mismatch';
   return {day,name:person.name,activity:person.activity,technical,reported,delta:reported===null||technical===null?null:reported-technical,status,
     technicalCell:controlIndex>=0?`${'BCDEF'[person.column-1]}${controlIndex+1}`:null,
     staffCell:rowIndex>0&&col!==undefined?`${col<26?String.fromCharCode(65+col):'A'+String.fromCharCode(65+col-26)}${rowIndex}`:null};
