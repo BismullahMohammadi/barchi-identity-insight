@@ -62,7 +62,8 @@ async function read<T>(url:string,headers:Record<string,string>):Promise<T>{
  try{return await task as T}finally{pending.delete(url)}
 }
 
-export async function readPassedFiles(from:string,to:string,claims:unknown){
+export async function readPassedFiles(from:string,to:string,claims:unknown,query=''){
+ const search=norm(query).toLowerCase().replace(/\s+/g,'');
  const target=fullDate(to);const startDate=fullDate(from);if(!target||target!==to||!startDate||startDate!==from||startDate>target)throw Error('INVALID_DATE');
  const headers=authorizedSheetHeaders(claims);const [year,month]=target.split('-').map(Number);
  const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;workType:string;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
@@ -72,7 +73,10 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
    const meta=await read<{sheets?:{properties?:{title?:string;sheetId?:number}}[]}>(`${BASE}/spreadsheets/${source.id}?fields=sheets(properties(title,sheetId))`,headers);
    const tabs=(meta.sheets??[]).map(s=>s.properties).filter((p):p is {title:string;sheetId:number}=>typeof p?.title==='string'&&typeof p?.sheetId==='number');
    // Include date-bearing tabs in the target month through the selected day, plus the most recent preceding tab.
-   const relevant=tabs.filter(t=>{const d=initialDate(t.title);return d&&d<=target&&d.slice(0,4)>=startDate.slice(0,4)&&d.slice(0,7)>=startDate.slice(0,7)}).sort((a,b)=>(initialDate(b.title)??'').localeCompare(initialDate(a.title)??''));
+   const dated=tabs.filter(t=>initialDate(t.title)).sort((a,b)=>(initialDate(a.title)??'').localeCompare(initialDate(b.title)??''));
+   // Include tabs starting inside the interval and the preceding tab, which can contain later marked dates.
+   const preceding=dated.filter(t=>(initialDate(t.title)??'')<startDate).slice(-1);
+   const relevant=search?tabs:[...preceding,...dated.filter(t=>{const d=initialDate(t.title)!;return d>=startDate&&d<=target})];
    const selected=relevant;
    if(relevant.length>selected.length)warnings.push(`${source.name}: ${relevant.length-selected.length} زاړه ټبونه نه دي پلټل شوي`);
    if(!selected.length)warnings.push(`${source.name}: د ټاکلې میاشتې د نېټې لرونکی ټب ونه موندل شو`);
@@ -101,11 +105,11 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
      for(let i=header+1;i<grid.length;i++){
       const row=grid[i]??[];
       // A date marker changes the effective date for its own row and all following rows.
-      const marked=noteDate(row[noteIndex],year);
+      const marked=noteDate(row[noteIndex],Number((start??target).slice(0,4)));
       if(marked)current=marked;
       const name=norm(row[1]),father=norm(row[2]),familyCode=norm(row[familyCol]);
       if(!name||!familyCode||!/^\d+$/.test(norm(row[0])))continue;
-      if(current&&current>=startDate&&current<=target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,workType:source.name==='محمد نبي بهزاد'&&workTypeCol>=0?norm(row[workTypeCol]):'',date:current!,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
+      if((search?([name,familyCode].some(v=>norm(v).toLowerCase().replace(/\s+/g,'').includes(search))):(current&&current>=startDate&&current<=target)))records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,workType:source.name==='محمد نبي بهزاد'&&workTypeCol>=0?norm(row[workTypeCol]):'',date:current??'',sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
      }
     }catch(e){warnings.push(`${source.name} / ${tab.title}: لوستل ناکام شول (${String(e).slice(0,100)})`)}
    }
