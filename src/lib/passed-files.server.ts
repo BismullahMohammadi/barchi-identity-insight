@@ -75,15 +75,20 @@ export async function readPassedFiles(from:string,to:string,claims:unknown,query
    // Include date-bearing tabs in the target month through the selected day, plus the most recent preceding tab.
    const dated=tabs.filter(t=>initialDate(t.title)).sort((a,b)=>(initialDate(a.title)??'').localeCompare(initialDate(b.title)??''));
    // Include tabs starting inside the interval and the preceding tab, which can contain later marked dates.
-   const preceding=dated.filter(t=>(initialDate(t.title)??'')<startDate).slice(-1);
+   const preceding=dated.filter(t=>(initialDate(t.title)??'')<startDate).slice(-2);
    const relevant=search?tabs:[...preceding,...dated.filter(t=>{const d=initialDate(t.title)!;return d>=startDate&&d<=target})];
    const selected=relevant;
    if(relevant.length>selected.length)warnings.push(`${source.name}: ${relevant.length-selected.length} زاړه ټبونه نه دي پلټل شوي`);
    if(!selected.length)warnings.push(`${source.name}: د ټاکلې میاشتې د نېټې لرونکی ټب ونه موندل شو`);
-   for(const tab of selected){
+   const ranges=selected.map(tab=>`'${tab.title.replace(/'/g,"''")}'!A1:P600`);
+   let batch:{valueRanges?:{values?:unknown[][]}[]}|null=null;
+   if(ranges.length){
+    try{batch=await read<{valueRanges?:{values?:unknown[][]}[]}>(`${BASE}/spreadsheets/${source.id}/values:batchGet?${ranges.map(range=>`ranges=${encodeURIComponent(range)}`).join('&')}&valueRenderOption=FORMATTED_VALUE`,headers)}catch{batch=null}
+   }
+   for(const [tabIndex,tab] of selected.entries()){
     try{
-     const range=`'${tab.title.replace(/'/g,"''")}'!A1:P600`;
-     const data=await read<{values?:unknown[][]}>(`${BASE}/spreadsheets/${source.id}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`,headers);
+     const range=ranges[tabIndex];
+     const data=batch?.valueRanges?.[tabIndex]??await read<{values?:unknown[][]}>(`${BASE}/spreadsheets/${source.id}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`,headers);
      scanned++;const grid=data.values??[];
      let header=-1;
      for(let i=0;i<Math.min(grid.length,18);i++)if(grid[i]?.some(x=>/اسم و تخلص/.test(norm(x)))){header=i;break}
@@ -94,9 +99,9 @@ export async function readPassedFiles(from:string,to:string,claims:unknown,query
      const second=grid[header]??[];
      const familyFormsCol=second.findIndex(x=>/فورم فامیلی/.test(norm(x)));
      const individualFormsCol=second.findIndex(x=>/فورم انفرادی/.test(norm(x)));
-     const workTypeCol=[...main,...second].findIndex(x=>/نوع کار|د کار ډول/.test(norm(x)));
+     const workTypeCol=main.findIndex(x=>/نوع کار|د کار ډول/.test(norm(x)))>=0?main.findIndex(x=>/نوع کار|د کار ډول/.test(norm(x))):second.findIndex(x=>/نوع کار|د کار ډول/.test(norm(x)));
      const qty=(v:unknown)=>/^\d+$/.test(norm(v))?Number(norm(v)):null;
-     const notesCol=main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
+     const notesCol=[...main,...second].findIndex((x,i)=>i<main.length&&/ملاحظات|تاریخ/.test(norm(x)))>=0?main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x))):second.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
      const noteIndex=notesCol>=0?notesCol:(source.name==='محمد نبي بهزاد'?10:11);
      if(notesCol<0)warnings.push(`${source.name} / ${tab.title}: د نېټې یا ملاحظاتو ستون ونه موندل شو`);
      const start=initialDate(tab.title);
