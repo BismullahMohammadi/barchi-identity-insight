@@ -33,7 +33,7 @@ async function read<T>(url:string,headers:Record<string,string>):Promise<T>{
 export async function readPassedFiles(from:string,to:string,claims:unknown){
  const target=fullDate(to);const startDate=fullDate(from);if(!target||target!==to||!startDate||startDate!==from||startDate>target)throw Error('INVALID_DATE');
  const headers=authorizedSheetHeaders(claims);const [year,month]=target.split('-').map(Number);
- const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
+ const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;workType:string;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
  const warnings:string[]=[];let scanned=0;
  for(const source of SOURCES){
   try{
@@ -58,6 +58,7 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
      const second=grid[header]??[];
      const familyFormsCol=second.findIndex(x=>/فورم فامیلی/.test(norm(x)));
      const individualFormsCol=second.findIndex(x=>/فورم انفرادی/.test(norm(x)));
+     const workTypeCol=[...main,...second].findIndex(x=>/نوع کار|د کار ډول/.test(norm(x)));
      const qty=(v:unknown)=>/^\d+$/.test(norm(v))?Number(norm(v)):null;
      const notesCol=main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
      const noteIndex=notesCol>=0?notesCol:(source.name==='محمد نبي بهزاد'?10:11);
@@ -72,7 +73,7 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
       if(marked)current=marked;
       const name=norm(row[1]),father=norm(row[2]),familyCode=norm(row[familyCol]);
       if(!name||!familyCode||!/^\d+$/.test(norm(row[0])))continue;
-      if(current&&current>=startDate&&current<=target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,date:current!,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
+      if(current&&current>=startDate&&current<=target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,workType:source.name==='محمد نبي بهزاد'&&workTypeCol>=0?norm(row[workTypeCol]):'',date:current!,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
      }
     }catch(e){warnings.push(`${source.name} / ${tab.title}: لوستل ناکام شول (${String(e).slice(0,100)})`)}
    }
