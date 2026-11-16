@@ -44,7 +44,7 @@ function ReconciliationPage() {
   const year = search.year ?? today.y, month = search.month ?? today.m;
   const { data } = useSuspenseQuery(reportQuery(year, month));
   const client = useQueryClient(), fetchReport = useServerFn(getReconciliation);
-  const [view, setView] = useState<'days' | 'differences' | 'staff'>('differences');
+  const [view, setView] = useState<'differences' | 'staff'>('differences');
   const [onlyDifferences, setOnlyDifferences] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -110,16 +110,11 @@ function ReconciliationPage() {
     <div className="grid grid-cols-3 gap-2">
       {([['توپیرونه',counts.mismatch,'text-destructive'],['برابر',counts.equal,'text-foreground'],['معلومات نشته',counts.missing,'text-muted-foreground']] as const).map(([label,value,color])=><div key={label} className="rounded-xl border p-3 text-center"><p className={`text-2xl font-bold tabular-nums ${color}`}>{number(value)}</p><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>)}
     </div>
-    <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3" role="tablist" aria-label="د مطابقت ډول">
-      {([['days','د ورځو مطابقت'],['differences','د توپیرونو مطابقت']] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={view===key} onClick={()=>{setView(key);setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view===key?'bg-background shadow-sm':''}`}>{label}</button>)}
+    <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-2" role="tablist" aria-label="د مطابقت ډول">
+      {([['differences','د مرکز او ریاست راپورونو مطابقت']] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={view===key} onClick={()=>{setView(key);setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view===key?'bg-background shadow-sm':''}`}>{label}</button>)}
       <button type="button" role="tab" aria-selected={view==='staff'} onClick={()=>{setView('staff');setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view==='staff'?'bg-background shadow-sm':''}`}>د کارمندانو او تخنیکي راپورونو مطابقت</button>
     </div>
-    {view==='staff' ? <StaffReconciliationMatrix year={year} month={month}/> : view==='days' ? <section className="overflow-x-auto rounded-lg border" aria-label="د ورځو مطابقت">
-      <table className="w-full text-right text-sm"><thead className="bg-muted/50"><tr><th className="p-3">ورځ</th><th className="p-3">برخه</th><th className="p-3">توپیر</th></tr></thead><tbody>
-        {mismatches.sort((a,b)=>a.day-b.day).map(row=><tr key={`${row.metric}:${row.day}`} className="cursor-pointer border-t hover:bg-muted/40" onClick={()=>setSelected(`${row.metric}:${row.day}`)}><td className="p-3">{row.day} {JALALI_MONTHS[month-1]}</td><td className="p-3">{row.label}</td><td className="p-3 font-semibold text-destructive" dir="ltr">{number(row.delta)}</td></tr>)}
-        {!mismatches.length && <tr><td colSpan={3} className="p-6 text-center text-muted-foreground">{hasSourceError || counts.missing ? 'تایید شوي اختلافونه نشته؛ ځینې معلومات لا نه دي بشپړ.' : 'هیڅ اختلاف ونه موندل شو.'}</td></tr>}
-      </tbody></table>
-    </section> : <section className="space-y-3" aria-label="د توپیرونو مطابقت">
+    {view==='staff' ? <StaffReconciliationMatrix year={year} month={month}/> : <section className="space-y-3" aria-label="د مرکز او ریاست راپورونو مطابقت">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-3 py-3">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-sm font-semibold">د میاشتې د مطابقت جدول</h2>
