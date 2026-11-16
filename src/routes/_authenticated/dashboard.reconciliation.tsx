@@ -95,7 +95,7 @@ function ReconciliationPage() {
   if (year !== today.y) months.unshift(...Array.from({length:12},(_,i)=>({year,month:i+1})));
   return <main dir="rtl" className="space-y-4 pb-8">
     <header className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">د راپورونو مطابقت</h1><a href="/dashboard/staff-reconciliation" className="rounded-lg border px-3 py-2 text-sm hover:bg-muted">د کارمندانو او تخنیکي راپورونو مطابقت</a></div>
+      <h1 className="text-xl font-bold">د راپورونو مطابقت</h1>
       <div className="flex items-center gap-2">
         <select aria-label="میاشت" className="min-h-10 rounded-lg border bg-card px-3" value={`${year}-${month}`} onChange={e=>changeMonth(e.target.value)}>
           {months.map(m=><option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>{JALALI_MONTHS[m.month-1]} {m.year}</option>)}
@@ -109,8 +109,9 @@ function ReconciliationPage() {
     <div className="grid grid-cols-3 gap-2">
       {([['توپیرونه',counts.mismatch,'text-destructive'],['برابر',counts.equal,'text-foreground'],['معلومات نشته',counts.missing,'text-muted-foreground']] as const).map(([label,value,color])=><div key={label} className="rounded-xl border p-3 text-center"><p className={`text-2xl font-bold tabular-nums ${color}`}>{number(value)}</p><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>)}
     </div>
-    <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="tablist" aria-label="د مطابقت ډول">
+    <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3" role="tablist" aria-label="د مطابقت ډول">
       {([['days','د ورځو مطابقت'],['differences','د توپیرونو مطابقت']] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={view===key} onClick={()=>{setView(key);setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view===key?'bg-background shadow-sm':''}`}>{label}</button>)}
+      <a href="/dashboard/staff-reconciliation" role="tab" aria-selected="false" className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm font-medium hover:bg-background">د کارمندانو او تخنیکي راپورونو مطابقت</a>
     </div>
     {view==='days' ? <section className="overflow-x-auto rounded-lg border" aria-label="د ورځو مطابقت">
       <table className="w-full text-right text-sm"><thead className="bg-muted/50"><tr><th className="p-3">ورځ</th><th className="p-3">برخه</th><th className="p-3">توپیر</th></tr></thead><tbody>
