@@ -18,7 +18,7 @@ async function read<T>(url:string,headers:Record<string,string>):Promise<T>{cons
 export async function readPassedFiles(date:string,claims:unknown){
  const target=fullDate(date);if(!target||target!==date)throw Error('INVALID_DATE');
  const headers=authorizedSheetHeaders(claims);const [year,month]=target.split('-').map(Number);
- const records:{employee:string;name:string;father:string;familyCode:string;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
+ const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
  const warnings:string[]=[];let scanned=0;
  await Promise.all(SOURCES.map(async source=>{
   try{
@@ -39,6 +39,11 @@ export async function readPassedFiles(date:string,claims:unknown){
      if(header<0){warnings.push(`${source.name} / ${tab.title}: سرلیکونه ونه موندل شول`);return}
      const main=grid[header-1]??[];const codeCol=main.findIndex(x=>/ک[دو]د فامیلی/.test(norm(x)));
      const familyCol=codeCol>=0?codeCol:3;
+     const provinceCol=main.findIndex(x=>/ولایت/.test(norm(x)));
+     const second=grid[header]??[];
+     const familyFormsCol=second.findIndex(x=>/فورم فامیلی/.test(norm(x)));
+     const individualFormsCol=second.findIndex(x=>/فورم انفرادی/.test(norm(x)));
+     const qty=(v:unknown)=>/^\\d+$/.test(norm(v))?Number(norm(v)):null;
      const notesCol=main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
      const start=initialDate(tab.title);
      let current=start;
@@ -50,7 +55,7 @@ export async function readPassedFiles(date:string,claims:unknown){
       if(marked)current=marked;
       const name=norm(row[1]),father=norm(row[2]),familyCode=norm(row[familyCol]);
       if(!name||!familyCode||!/^\d+$/.test(norm(row[0])))continue;
-      if(current===target)records.push({employee:source.name,name,father,familyCode,date:target,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
+      if(current===target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,date:target,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
      }
     }catch(e){warnings.push(`${source.name} / ${tab.title}: لوستل ناکام شول`)}
    }));
