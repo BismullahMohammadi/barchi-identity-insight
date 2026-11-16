@@ -22,7 +22,7 @@ export const metricDefinitions = [
   ['divorce', 'ثبت طلاق', 'ثبت طلاق'],
   ['death', 'ثبت وفیات', 'ثبت وفیات'],
 ] as const;
-export type ReconciliationStatus = 'mismatch' | 'equal' | 'missing';
+export type ReconciliationStatus = 'mismatch' | 'equal' | 'missing' | 'holiday';
 export type CellValue = { value: number | null; reason: 'blank' | 'holiday' | 'invalid' | null };
 export function reportText(value: unknown): string {
   return toLatinDigits(String(value ?? '')).normalize('NFKC').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/[ـ\u200c\u200d\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
@@ -118,7 +118,7 @@ export function compareMonthlyReports(local: ReportBlock, province: ReportBlock,
       const reason = future ? 'future' : !l || !p ? 'metric_missing' : lc === undefined || pc === undefined ? 'day_missing' : holiday || lv.reason === 'holiday' || pv.reason === 'holiday' ? 'holiday' : lv.reason || pv.reason;
       const comparable = !reason && lv.value !== null && pv.value !== null;
       const delta = comparable ? Math.round(((lv.value ?? 0) - (pv.value ?? 0)) * 100) / 100 : null;
-      rows.push({ day, metric, label, local: lv.value, province: pv.value, delta, status: delta === null ? 'missing' : delta === 0 ? 'equal' : 'mismatch', holiday, reason, localCell: l && lc !== undefined ? `${columnName(lc)}${l.row}` : null, provinceCell: p && pc !== undefined ? `${columnName(pc)}${p.row}` : null });
+      rows.push({ day, metric, label, local: lv.value, province: pv.value, delta, status: holiday && delta === null ? 'holiday' : delta === null ? 'missing' : delta === 0 ? 'equal' : 'mismatch', holiday, reason, localCell: l && lc !== undefined ? `${columnName(lc)}${l.row}` : null, provinceCell: p && pc !== undefined ? `${columnName(pc)}${p.row}` : null });
     }
   }
   return rows;
