@@ -15,8 +15,8 @@ function fullDate(value:unknown){const m=norm(value).match(dateRegex);if(!m)retu
 function noteDate(value:unknown,year:number){const s=norm(value);const full=fullDate(s);if(full)return full;const m=s.match(/(?:^|\s)(\d{1,2})\s*[\/.-]\s*(\d{1,2})(?=\s|$)/);if(!m)return null;const mo=Number(m[1]),d=Number(m[2]);return valid(year,mo,d)?`${year}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
 function initialDate(title:string){const matches=[...norm(title).matchAll(/1[34]\d{2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*\d{1,2}/g)].map(m=>fullDate(m[0])).filter((x):x is string=>!!x);return matches[0]??null}
 async function read<T>(url:string,headers:Record<string,string>):Promise<T>{const r=await fetch(url,{headers,signal:AbortSignal.timeout(20000),cache:'no-store'});if(!r.ok)throw Error('SHEETS_READ_'+r.status);return r.json() as Promise<T>}
-export async function readPassedFiles(date:string,claims:unknown){
- const target=fullDate(date);if(!target||target!==date)throw Error('INVALID_DATE');
+export async function readPassedFiles(from:string,to:string,claims:unknown){
+ const target=fullDate(to);const startDate=fullDate(from);if(!target||target!==to||!startDate||startDate!==from||startDate>target)throw Error('INVALID_DATE');
  const headers=authorizedSheetHeaders(claims);const [year,month]=target.split('-').map(Number);
  const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
  const warnings:string[]=[];let scanned=0;
@@ -25,9 +25,9 @@ export async function readPassedFiles(date:string,claims:unknown){
    const meta=await read<{sheets?:{properties?:{title?:string;sheetId?:number}}[]}>(`${BASE}/spreadsheets/${source.id}?fields=sheets(properties(title,sheetId))`,headers);
    const tabs=(meta.sheets??[]).map(s=>s.properties).filter((p):p is {title:string;sheetId:number}=>typeof p?.title==='string'&&typeof p?.sheetId==='number');
    // Include date-bearing tabs in the target month through the selected day, plus the most recent preceding tab.
-   const relevant=tabs.filter(t=>{const d=initialDate(t.title);return d&&d.slice(0,7)===target.slice(0,7)&&d<=target}).sort((a,b)=>(initialDate(b.title)??'').localeCompare(initialDate(a.title)??''));
+   const relevant=tabs.filter(t=>{const d=initialDate(t.title);return d&&d<=target&&d.slice(0,4)>=startDate.slice(0,4)&&d.slice(0,7)>=startDate.slice(0,7)}).sort((a,b)=>(initialDate(b.title)??'').localeCompare(initialDate(a.title)??''));
    const selected=relevant;
-   const unrecognized=tabs.filter(t=>!initialDate(t.title)&&!/sample|نمونه|merged|timeline|گزارش|راپور|عقرب|سنبله|میزان/i.test(t.title));
+   const unrecognized=tabs.filter(t=>!initialDate(t.title)&&!/sample|نمونه|merged|timeline|گزارش|راپور|عقرب|سنبله|میزان|ثور|حمل|جوزا|سرطان|اسد|قوس|جدی|دلو|حوت/i.test(t.title));
    if(unrecognized.length)warnings.push(`${source.name}: ${unrecognized.length} ټبونه د نېټې د نوم له مخې نه دي پېژندل شوي`);
    if(relevant.length>selected.length)warnings.push(`${source.name}: ${relevant.length-selected.length} زاړه ټبونه نه دي پلټل شوي`);
    if(!selected.length)warnings.push(`${source.name}: د ټاکلې میاشتې د نېټې لرونکی ټب ونه موندل شو`);
@@ -40,13 +40,14 @@ export async function readPassedFiles(date:string,claims:unknown){
      for(let i=0;i<Math.min(grid.length,18);i++)if(grid[i]?.some(x=>/اسم و تخلص/.test(norm(x)))){header=i;break}
      if(header<0){warnings.push(`${source.name} / ${tab.title}: سرلیکونه ونه موندل شول`);return}
      const main=grid[header-1]??[];const codeCol=main.findIndex(x=>/ک[دو]د فامیلی/.test(norm(x)));
-     const familyCol=codeCol>=0?codeCol:3;
+     const familyCol=codeCol>=0?codeCol:(source.name==='محمد نسیم هاشمي'?4:3);
      const provinceCol=main.findIndex(x=>/ولایت/.test(norm(x)));
      const second=grid[header]??[];
      const familyFormsCol=second.findIndex(x=>/فورم فامیلی/.test(norm(x)));
      const individualFormsCol=second.findIndex(x=>/فورم انفرادی/.test(norm(x)));
      const qty=(v:unknown)=>/^\d+$/.test(norm(v))?Number(norm(v)):null;
      const notesCol=main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
+     const noteIndex=notesCol>=0?notesCol:(source.name==='محمد نبي بهزاد'?10:11);
      if(notesCol<0)warnings.push(`${source.name} / ${tab.title}: د نېټې یا ملاحظاتو ستون ونه موندل شو`);
      const start=initialDate(tab.title);
      let current=start;
@@ -54,15 +55,15 @@ export async function readPassedFiles(date:string,claims:unknown){
      for(let i=header+1;i<grid.length;i++){
       const row=grid[i]??[];
       // A date marker changes the effective date for its own row and all following rows.
-      const marked=notesCol>=0?noteDate(row[notesCol],year):null;
+      const marked=noteDate(row[noteIndex],year);
       if(marked)current=marked;
       const name=norm(row[1]),father=norm(row[2]),familyCode=norm(row[familyCol]);
       if(!name||!familyCode||!/^\d+$/.test(norm(row[0])))continue;
-      if(current===target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,date:target,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
+      if(current&&current>=startDate&&current<=target)records.push({employee:source.name,name,father,familyCode,province:provinceCol>=0?norm(row[provinceCol]):'',familyForms:familyFormsCol>=0?qty(row[familyFormsCol]):null,individualForms:individualFormsCol>=0?qty(row[individualFormsCol]):null,date:current!,sourceUrl:`https://docs.google.com/spreadsheets/d/${source.id}/edit?gid=${tab.sheetId}&range=A${i+1}:L${i+1}`,tab:tab.title,row:i+1,confidence:marked?'explicit':'inherited'});
      }
     }catch(e){warnings.push(`${source.name} / ${tab.title}: لوستل ناکام شول`)}
    }));
   }catch(e){warnings.push(`${source.name}: د شیټ لاسرسی ناکام شو`)}
  }));
- return {date:target,rows:records.sort((a,b)=>a.employee.localeCompare(b.employee)||a.name.localeCompare(b.name)),count:records.length,scannedTabs:scanned,warnings};
+ return {date:target,from:startDate,to:target,rows:records.sort((a,b)=>a.employee.localeCompare(b.employee)||a.name.localeCompare(b.name)),count:records.length,scannedTabs:scanned,warnings};
 }
