@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { getReconciliation } from '@/lib/reconciliation.functions';
 import { JALALI_MONTHS, todayJalali } from '@/lib/jalali';
 import { metricDefinitions } from '@/lib/reconciliation';
+import { StaffReconciliationMatrix } from '@/components/dash/StaffReconciliationMatrix';
 
 const searchSchema = z.object({
   year: z.coerce.number().int().min(1300).max(1499).optional(),
@@ -43,7 +44,7 @@ function ReconciliationPage() {
   const year = search.year ?? today.y, month = search.month ?? today.m;
   const { data } = useSuspenseQuery(reportQuery(year, month));
   const client = useQueryClient(), fetchReport = useServerFn(getReconciliation);
-  const [view, setView] = useState<'days' | 'differences'>('differences');
+  const [view, setView] = useState<'days' | 'differences' | 'staff'>('differences');
   const [onlyDifferences, setOnlyDifferences] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -111,9 +112,9 @@ function ReconciliationPage() {
     </div>
     <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3" role="tablist" aria-label="د مطابقت ډول">
       {([['days','د ورځو مطابقت'],['differences','د توپیرونو مطابقت']] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={view===key} onClick={()=>{setView(key);setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view===key?'bg-background shadow-sm':''}`}>{label}</button>)}
-      <a href="/dashboard/staff-reconciliation" role="tab" aria-selected="false" className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm font-medium hover:bg-background">د کارمندانو او تخنیکي راپورونو مطابقت</a>
+      <button type="button" role="tab" aria-selected={view==='staff'} onClick={()=>{setView('staff');setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view==='staff'?'bg-background shadow-sm':''}`}>د کارمندانو او تخنیکي راپورونو مطابقت</button>
     </div>
-    {view==='days' ? <section className="overflow-x-auto rounded-lg border" aria-label="د ورځو مطابقت">
+    {view==='staff' ? <StaffReconciliationMatrix year={year} month={month}/> : view==='days' ? <section className="overflow-x-auto rounded-lg border" aria-label="د ورځو مطابقت">
       <table className="w-full text-right text-sm"><thead className="bg-muted/50"><tr><th className="p-3">ورځ</th><th className="p-3">برخه</th><th className="p-3">توپیر</th></tr></thead><tbody>
         {mismatches.sort((a,b)=>a.day-b.day).map(row=><tr key={`${row.metric}:${row.day}`} className="cursor-pointer border-t hover:bg-muted/40" onClick={()=>setSelected(`${row.metric}:${row.day}`)}><td className="p-3">{row.day} {JALALI_MONTHS[month-1]}</td><td className="p-3">{row.label}</td><td className="p-3 font-semibold text-destructive" dir="ltr">{number(row.delta)}</td></tr>)}
         {!mismatches.length && <tr><td colSpan={3} className="p-6 text-center text-muted-foreground">{hasSourceError || counts.missing ? 'تایید شوي اختلافونه نشته؛ ځینې معلومات لا نه دي بشپړ.' : 'هیڅ اختلاف ونه موندل شو.'}</td></tr>}
