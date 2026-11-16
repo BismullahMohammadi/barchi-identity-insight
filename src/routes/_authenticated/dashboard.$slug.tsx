@@ -10,6 +10,7 @@ import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
 import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
 import { SimpleDieselReport } from "@/components/dash/SimpleDieselReport";
+import { PassedFilesLookup } from "@/components/dash/PassedFilesLookup";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
@@ -51,6 +52,7 @@ function ReportPage({slug}:{slug:string}) {
         <h1 className="font-display text-2xl font-extrabold md:text-3xl">{tab.label}</h1>
       </div>
       <SyncBar fetchedAt={q.data?.fetchedAt} isFetching={q.isFetching} error={q.error ? errorText(q.error) : null} onRefresh={() => q.refetch()} refreshMs={settingsRefreshMs(settings)} />
+      {slug === "control" && <PassedFilesLookup />}
       {grid ? (isManagementReport(slug)
         ? <ManagementReport key={slug} kind={slug} title={tab.title} grid={grid} dateRange={range??undefined}/>
         : <TabView key={slug} title={tab.title} grid={grid} dateRange={range??undefined}/>) : q.isLoading ? (
