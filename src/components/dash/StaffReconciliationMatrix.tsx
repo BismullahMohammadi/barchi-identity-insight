@@ -23,19 +23,19 @@ export function StaffReconciliationMatrix({year,month}:{year:number;month:number
   </div>
   {report.isLoading&&<p role="status" className="p-4">راپورونه لوستل کېږي…</p>}
   {(report.isError||report.data?.error)&&<p role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">د سرچینو معلومات ترلاسه نه شول. د میاشتې ټب او د Google Sheets لاسرسی وګورئ.</p>}
-  <div className="flex flex-wrap gap-4 text-xs text-muted-foreground"><span>✓ برابر</span><span>سور عدد: توپیر (د کارمند راپور − تخنیکي راپور)</span><span>— معلومات نشته</span></div>
+  <div className="flex flex-wrap gap-4 text-xs text-muted-foreground"><span>✓ برابر</span><span>سور عدد: توپیر (د کارمند راپور − تخنیکي راپور)</span><span>ج: جمعه ـ رخصتي</span><span>— معلومات نشته</span></div>
   <div className="max-w-full overflow-x-auto rounded-xl border bg-card shadow-sm" role="region" tabIndex={0} aria-label="د کارمندانو د توپیرونو میاشتنی جدول">
    <table className="w-full min-w-[780px] table-fixed border-collapse text-center text-[10px] leading-none">
     <thead><tr><th className="w-[140px] border border-border bg-muted p-2 text-right">کارمند / فعالیت</th>{days.map(d=><th key={d} className="border border-border bg-muted px-0 py-2">{fmt(d)}</th>)}{['د کارمند مجموعه','تخنیکي مجموعه','د مجموعې توپیر','د ورځنیو توپیرونو شمېر'].map(t=><th key={t} className="w-[75px] border border-border bg-secondary px-1 py-2 leading-4">{t}</th>)}</tr></thead>
     <tbody>{names.map((name,index)=>{
      const personRows=rows.filter(r=>r.name===name);
-     const complete=personRows.filter(r=>r.status!=='missing');
+     const complete=personRows.filter(r=>r.status==='equal'||r.status==='mismatch');
      const employee=complete.reduce((s,r)=>s+(r.reported??0),0);
      const technical=complete.reduce((s,r)=>s+(r.technical??0),0);
      const differences=personRows.filter(r=>r.status==='mismatch').length;
      return <tr key={name} className={index%2?'bg-muted/20':'bg-card'}>
       <th className="border border-border p-2 text-right font-semibold">{name}<span className="block text-[9px] font-normal text-muted-foreground">{index===4?'ثبت تولد':'تصدیق انفرادی'}</span></th>
-      {days.map(d=>{const r=lookup.get(`${name}:${d}`);const status=r?.status??'missing';return <td key={d} className="border border-border p-0"><button type="button" disabled={!r} onClick={()=>setSelected({name,day:d})} title={r?`کارمند: ${fmt(r.reported)}؛ تخنیکي: ${fmt(r.technical)}`:'معلومات نشته'} className={`min-h-7 w-full px-0 font-medium tabular-nums hover:ring-1 hover:ring-primary ${status==='mismatch'?'bg-destructive/10 text-destructive':status==='equal'?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':'text-muted-foreground'}`}>{status==='equal'?'✓':status==='mismatch'?fmt(r?.delta??null):'—'}</button></td>;})}
+      {days.map(d=>{const r=lookup.get(`${name}:${d}`);const status=r?.status??'missing';return <td key={d} className="border border-border p-0"><button type="button" disabled={!r} onClick={()=>setSelected({name,day:d})} title={r?`کارمند: ${fmt(r.reported)}؛ تخنیکي: ${fmt(r.technical)}`:'معلومات نشته'} className={`min-h-7 w-full px-0 font-medium tabular-nums hover:ring-1 hover:ring-primary ${status==='mismatch'?'bg-destructive/10 text-destructive':status==='equal'?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':status==='holiday'?'bg-muted/50 text-muted-foreground':'text-muted-foreground'}`}>{status==='equal'?'✓':status==='mismatch'?fmt(r?.delta??null):status==='holiday'?'ج':'—'}</button></td>;})}
       <td className="border border-border p-1 font-semibold">{complete.length?fmt(employee):'—'}</td><td className="border border-border p-1 font-semibold">{complete.length?fmt(technical):'—'}</td><td className={`border border-border p-1 font-semibold ${employee!==technical?'text-destructive':''}`}>{complete.length?fmt(employee-technical):'—'}</td><td className="border border-border p-1 font-semibold text-destructive">{fmt(differences)}</td>
      </tr>;
     })}</tbody>
