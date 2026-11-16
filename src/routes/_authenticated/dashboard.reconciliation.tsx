@@ -49,7 +49,7 @@ function ReconciliationPage() {
   const [searchText, setSearchText] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false), [refreshError, setRefreshError] = useState(false);
-  const counts = { mismatch: 0, equal: 0, missing: 0 };
+  const counts = { mismatch: 0, equal: 0, missing: 0, holiday: 0 };
   data.rows.forEach(row => counts[row.status]++);
   const hasSourceError = !!data.local.error || !!data.province.error;
   const mismatches = data.rows.filter(row => row.status === 'mismatch');
@@ -162,11 +162,11 @@ function ReconciliationPage() {
                   const active=selected===`${key}:${day}`;
                   return <td key={day} className="border border-border p-0">
                     <button type="button" disabled={!row} onClick={()=>row&&setSelected(`${row.metric}:${row.day}`)}
-                      title={`${label} — ${day} ${JALALI_MONTHS[month-1]}: ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
-                      aria-label={`${label}، ${day} ${JALALI_MONTHS[month-1]}، ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':'معلومات نشته'}`}
+                      title={`${label} — ${day} ${JALALI_MONTHS[month-1]}: ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':status==='holiday'?'جمعه ـ رخصتي':'معلومات نشته'}`}
+                      aria-label={`${label}، ${day} ${JALALI_MONTHS[month-1]}، ${status==='mismatch'?'توپیر '+number(row?.delta??null):status==='equal'?'برابر':status==='holiday'?'جمعه ـ رخصتي':'معلومات نشته'}`}
                       aria-pressed={active}
                       className={`min-h-6 w-full border border-transparent px-0 font-medium tabular-nums transition-colors hover:border-primary/40 focus-visible:relative focus-visible:z-10 focus-visible:border-primary focus-visible:outline-none ${status==='mismatch'?'bg-destructive/10 text-destructive':status==='equal'?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':'text-muted-foreground'} ${active?'!border-primary bg-primary/10':''}`}>
-                      {status==='mismatch'?number(row?.delta??null):status==='equal'?'✓':'—'}
+                      {status==='mismatch'?number(row?.delta??null):status==='equal'?'✓':status==='holiday'?'ج':'—'}
                     </button>
                   </td>;
                 })}
