@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { JALALI_MONTHS } from '@/lib/jalali';
 import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
 import { getPassedFiles } from '@/lib/passed-files.functions';
@@ -6,18 +9,25 @@ import { Button } from '@/components/ui/button';
 const STAFF=['ټول کارمندان','عزیزالله الطاف','فاطمه علي رضایي','نېک ولي خان ایمان','محمد نبي بهزاد','محمد نسیم هاشمي'];
 export function PassedFilesLookup(){
  const [date,setDate]=useState('1405-08-24');
+ const [calendarOpen,setCalendarOpen]=useState(false);
+ const [view,setView]=useState({year:1405,month:8});
+ const [showDetails,setShowDetails]=useState(false);
  const [employee,setEmployee]=useState('ټول کارمندان');
  const [submitted,setSubmitted]=useState('1405-08-24');
  const report=useQuery({queryKey:['passed-files',submitted],queryFn:()=>getPassedFiles({data:{date:submitted}}),enabled:/^1[34]\d{2}-\d{2}-\d{2}$/.test(submitted),retry:false,staleTime:120000});
  const rows=(report.data?.rows??[]).filter(r=>employee==='ټول کارمندان'||r.employee===employee);
  const incomplete=!!report.data?.warnings.length;
+ const warningCount=report.data?.warnings.length??0;
+ function moveMonth(delta:number){setView(v=>{const n=v.year*12+v.month-1+delta;return {year:Math.floor(n/12),month:((n%12)+12)%12+1};});}
+ function chooseDay(day:number){setDate(`${view.year}-${String(view.month).padStart(2,'0')}-${String(day).padStart(2,'0')}`);setCalendarOpen(false);}
+ const days=view.month<=6?31:view.month<=11?30:30;
  const sum=(key:'familyForms'|'individualForms')=>rows.reduce((n,r)=>n+(r[key]??0),0);
  return <section dir="rtl" className="space-y-4" aria-label="د پاس شوو دوسیو لټون">
   <style>{`@media print { @page { size:A4 landscape; margin:10mm; } body * { visibility:hidden!important; } #passed-print,#passed-print * {visibility:visible!important;} #passed-print {position:absolute!important;inset:0!important;width:100%!important;background:white!important;color:black!important;} #passed-print .no-print {display:none!important;} #passed-print table {width:100%!important;border-collapse:collapse!important;font-size:10px!important;} #passed-print th,#passed-print td {border:1px solid #777!important;padding:5px!important;color:black!important;} #passed-print thead {display:table-header-group!important;} #passed-print tr {break-inside:avoid!important;} #passed-print .overflow-x-auto {overflow:visible!important;} }`}</style>
   <div id="passed-print" className="space-y-4 rounded-xl bg-background p-2 print:p-0">
    <header className="text-center"><p className="text-xs font-medium">د افغانستان اسلامي امارت ـ د احصایې او معلوماتو ملي اداره</p><h2 className="text-lg font-bold">د دشت برچي د الکترونیکي تذکرو مرکز</h2><p className="font-semibold">د کنټرول برخې د پاس شوو دوسیو راپور</p><p className="text-sm">نېټه: {submitted.replace(/-/g,'/')} · کارمند: {employee}</p></header>
    <div className="no-print flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
-    <label className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><input className="h-10 rounded-md border bg-background px-3" value={date} onChange={e=>setDate(e.target.value)} placeholder="1405-08-24"/></label>
+    <div className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><Popover open={calendarOpen} onOpenChange={setCalendarOpen}><PopoverTrigger asChild><Button variant="outline" className="h-10 gap-2"><CalendarRange className="h-4 w-4"/>{date.replace(/-/g,'/')}</Button></PopoverTrigger><PopoverContent align="start" dir="rtl" className="w-[min(94vw,340px)] p-3"><div className="mb-3 flex items-center justify-between"><Button size="icon" variant="ghost" aria-label="مخکینۍ میاشت" onClick={()=>moveMonth(-1)}><ChevronRight className="h-4 w-4"/></Button><strong>{JALALI_MONTHS[view.month-1]} {view.year}</strong><Button size="icon" variant="ghost" aria-label="راتلونکې میاشت" onClick={()=>moveMonth(1)}><ChevronLeft className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1">{Array.from({length:days},(_,i)=><button type="button" key={i} onClick={()=>chooseDay(i+1)} className={`h-9 rounded-md text-sm hover:bg-muted ${date===`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`?'bg-primary text-primary-foreground':''}`}>{i+1}</button>)}</div></PopoverContent></Popover></div>
     <label className="space-y-1 text-sm"><span className="block">کارمند</span><select className="h-10 max-w-full rounded-md border bg-background px-3" value={employee} onChange={e=>setEmployee(e.target.value)}>{STAFF.map(n=><option key={n}>{n}</option>)}</select></label>
     <Button onClick={()=>setSubmitted(date.trim().replace(/\//g,'-'))}>لټون</Button>
     <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={()=>window.print()}><Printer className="h-4 w-4"/> چاپ</Button>
@@ -25,7 +35,7 @@ export function PassedFilesLookup(){
    {report.isLoading&&<p role="status">د شیټونو معلومات لوستل کېږي…</p>}
    {report.isError&&<p role="alert" className="text-destructive">د دوسیو لټون ناکام شو؛ اتصال او نېټه وګورئ.</p>}
    {report.data&&<>
-    {incomplete&&<div role="alert" className="rounded-lg border border-amber-500 p-3 text-sm"><strong>نا بشپړ راپور ـ چاپ بند دی.</strong><ul className="mt-1 list-disc pr-5">{report.data.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></div>}
+    {incomplete&&<div role="alert" className="no-print rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><span>ځینې معلومات ونه لوستل شول ({warningCount} خبرتیاوې). راپور ممکن نیمګړی وي.</span><button type="button" className="font-medium underline" onClick={()=>setShowDetails(v=>!v)}>{showDetails?'تفصیل پټول':'تفصیل کتل'}</button></div>{showDetails&&<ul className="mt-2 max-h-36 list-disc overflow-auto pr-5 text-xs">{report.data.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul>}</div>}
     <div className="overflow-x-auto rounded-lg border">
      <table className="w-full border-collapse text-right text-sm"><thead className="bg-muted"><tr>{['شمېره','د مراجع نوم او تخلص','د پلار نوم','فامیلي کوډ','ولایت','فامیلي فورم','انفرادي فورم','کارمند','د پاس نېټه','اصلي شیټ'].map(h=><th key={h} className="whitespace-nowrap border p-2">{h}</th>)}</tr></thead>
       <tbody>{rows.map((r,i)=><tr key={r.sourceUrl} className="border-b"><td className="p-2">{i+1}</td><td className="p-2">{r.name}</td><td className="p-2">{r.father}</td><td className="p-2 font-mono" dir="ltr">{r.familyCode}</td><td className="p-2">{r.province||"—"}</td><td className="p-2">{r.familyForms??"—"}</td><td className="p-2">{r.individualForms??"—"}</td><td className="p-2">{r.employee}</td><td className="p-2">{r.date.replace(/-/g,'/')}</td><td className="p-2"><a href={r.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">کتل</a></td></tr>)}
