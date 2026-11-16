@@ -20,7 +20,8 @@ async function read<T>(url:string,headers:Record<string,string>):Promise<T>{
   try{
    const r=await fetch(url,{headers,signal:AbortSignal.timeout(30000),cache:'no-store'});
    if(r.ok)return r.json() as Promise<T>;
-   if(![429,500,502,503,504].includes(r.status)||attempt===2)throw Error('SHEETS_HTTP_'+r.status);
+   if(![429,500,502,503,504].includes(r.status))throw Error('SHEETS_HTTP_4'+String(r.status));
+   if(attempt===2)throw Error('SHEETS_HTTP_'+r.status);
   }catch(e){
    if(attempt===2||String(e).includes('SHEETS_HTTP_4'))throw e;
   }
@@ -52,7 +53,7 @@ export async function readPassedFiles(from:string,to:string,claims:unknown){
      scanned++;const grid=data.values??[];
      let header=-1;
      for(let i=0;i<Math.min(grid.length,18);i++)if(grid[i]?.some(x=>/اسم و تخلص/.test(norm(x)))){header=i;break}
-     if(header<0){warnings.push(`${source.name} / ${tab.title}: سرلیکونه ونه موندل شول`);return}
+     if(header<0){warnings.push(`${source.name} / ${tab.title}: سرلیکونه ونه موندل شول`);continue}
      const main=grid[header-1]??[];const codeCol=main.findIndex(x=>/ک[دو]د فامیلی/.test(norm(x)));
      const familyCol=codeCol>=0?codeCol:(source.name==='محمد نسیم هاشمي'?4:3);
      const provinceCol=main.findIndex(x=>/ولایت/.test(norm(x)));
