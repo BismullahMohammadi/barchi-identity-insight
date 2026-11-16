@@ -26,12 +26,14 @@ export async function readPassedFiles(date:string,claims:unknown){
    const tabs=(meta.sheets??[]).map(s=>s.properties).filter((p):p is {title:string;sheetId:number}=>typeof p?.title==='string'&&typeof p?.sheetId==='number');
    // Include date-bearing tabs in the target month through the selected day, plus the most recent preceding tab.
    const relevant=tabs.filter(t=>{const d=initialDate(t.title);return d&&d.slice(0,7)===target.slice(0,7)&&d<=target}).sort((a,b)=>(initialDate(b.title)??'').localeCompare(initialDate(a.title)??''));
-   const selected=relevant.slice(0,18);
+   const selected=relevant;
+   const unrecognized=tabs.filter(t=>!initialDate(t.title)&&!/sample|نمونه|merged|timeline|گزارش|راپور|عقرب|سنبله|میزان/i.test(t.title));
+   if(unrecognized.length)warnings.push(`${source.name}: ${unrecognized.length} ټبونه د نېټې د نوم له مخې نه دي پېژندل شوي`);
    if(relevant.length>selected.length)warnings.push(`${source.name}: ${relevant.length-selected.length} زاړه ټبونه نه دي پلټل شوي`);
    if(!selected.length)warnings.push(`${source.name}: د ټاکلې میاشتې د نېټې لرونکی ټب ونه موندل شو`);
    await Promise.all(selected.map(async tab=>{
     try{
-     const range=`'${tab.title.replace(/'/g,"''")}'!A1:P150`;
+     const range=`'${tab.title.replace(/'/g,"''")}'!A1:P600`;
      const data=await read<{values?:unknown[][]}>(`${BASE}/spreadsheets/${source.id}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`,headers);
      scanned++;const grid=data.values??[];
      let header=-1;
@@ -45,6 +47,7 @@ export async function readPassedFiles(date:string,claims:unknown){
      const individualFormsCol=second.findIndex(x=>/فورم انفرادی/.test(norm(x)));
      const qty=(v:unknown)=>/^\d+$/.test(norm(v))?Number(norm(v)):null;
      const notesCol=main.findIndex(x=>/ملاحظات|تاریخ/.test(norm(x)));
+     if(notesCol<0)warnings.push(`${source.name} / ${tab.title}: د نېټې یا ملاحظاتو ستون ونه موندل شو`);
      const start=initialDate(tab.title);
      let current=start;
      if(!start){warnings.push(`${source.name} / ${tab.title}: لومړنۍ نېټه ناڅرګنده ده`)}
