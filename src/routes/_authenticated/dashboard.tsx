@@ -65,6 +65,7 @@ function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?
       ))}
       <div className="space-y-1 border-t border-sidebar-border pt-3">
         <p className="px-3 pb-1 text-xs font-semibold text-sidebar-foreground/60">اداري او مرستندویه برخې</p>
+        <Link to="/dashboard/$slug" params={{ slug: "admin-users" }} className={cls} activeProps={active} onClick={onNavigate}><ShieldAlert className="h-4 w-4 shrink-0" /> د کاروونکو مدیریت</Link>
         <Link to="/dashboard/reconciliation" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د راپورونو مطابقت</Link>
         <Link to="/dashboard/center-quality" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د مرکزونو د فعالیت پرتله</Link>
         <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت</Link>
@@ -88,7 +89,7 @@ function DashboardLayoutContent() {
   // Watch completion while authenticated even if the tools drawer is closed.
   const pathname = useLocation({ select: (location) => location.pathname });
   const currentSlug = pathname.split("/").filter(Boolean).at(-1);
-  const pageTitle = currentSlug === "center-quality" ? "د مرکزونو د فعالیت پرتله" : currentSlug === "reconciliation" ? "د راپورونو مطابقت" : currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
+  const pageTitle = currentSlug === "center-quality" ? "د مرکزونو د فعالیت پرتله" : currentSlug === "reconciliation" ? "د راپورونو مطابقت" : currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "admin-users" ? "د کاروونکو مدیریت" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
   const completion = useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
   const [today,setToday]=useState<ReturnType<typeof todayJalali>|null>(null);
