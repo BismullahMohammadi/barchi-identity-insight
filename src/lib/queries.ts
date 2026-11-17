@@ -62,7 +62,7 @@ export const stateReportQuery=(refreshMs=REFRESH_MS)=>queryOptions({
 });
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
-  if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: ستاسو ایمیل د مالک په لیست کې نشته.";
+  if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: دې برخې ته د لیدلو اجازه نه لرئ. له عمومي مدیر څخه صلاحیت وغواړئ.";
   if (m.includes("INSIJAM_SHEETS_ERROR_403") || m.includes("INSIJAM_SHEETS_ERROR_404")) return "د انسجام نوي Google Sheet ته د لوستلو اجازه نه ده ورکړل شوې.";
   if (m.includes("INSIJAM_SHEETS_ERROR")) return "د انسجام میاشتنی راپور ونه لوستل شو.";
   if (m.includes("STATE_REPORT_ERROR")) return "د «ریاست ته ګزارش» اصلي ټاب ونه لوستل شو.";
