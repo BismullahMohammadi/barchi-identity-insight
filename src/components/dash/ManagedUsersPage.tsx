@@ -39,8 +39,9 @@ export function ManagedUsersPage() {
  const [editing,setEditing]=useState<string|null>(null);
  const [active,setActive]=useState(true);
  const [error,setError]=useState('');
- const invite=useMutation({mutationFn:()=>inviteManagedUser({data:{email,displayName:name,permissions}}),onSuccess:async()=>{await qc.invalidateQueries({queryKey:['managed-users']});setEmail('');setName('');setPermissions(empty());setError('');},onError:e=>setError(String(e.message))});
- const update=useMutation({mutationFn:()=>updateManagedUser({data:{userId:editing!,displayName:name,active,permissions}}),onSuccess:async()=>{await qc.invalidateQueries({queryKey:['managed-users']});setEditing(null);setName('');setEmail('');setPermissions(empty());setError('');},onError:e=>setError(String(e.message))});
+ const [notice,setNotice]=useState('');
+ const invite=useMutation({mutationFn:()=>inviteManagedUser({data:{email,displayName:name,permissions}}),onSuccess:async(result)=>{setNotice(result.invitationStatus==='existing'?'دا ایمیل مخکې ثبت شوی و؛ صلاحیتونه یې فعال شول. نوی ایمیل نه دی لېږل شوی.':'د بلنې غوښتنه Supabase ومنله؛ د ایمیل رسېدل او د کاروونکي منل لا نه دي تایید شوي.');await qc.invalidateQueries({queryKey:['managed-users']});setEmail('');setName('');setPermissions(empty());setError('');},onError:e=>setError(String(e.message))});
+ const update=useMutation({mutationFn:()=>updateManagedUser({data:{userId:editing!,displayName:name,active,permissions}}),onSuccess:async()=>{await qc.invalidateQueries({queryKey:['managed-users']});setEditing(null);setName('');setEmail('');setPermissions(empty());setError('');setNotice('صلاحیتونه په بریالیتوب ثبت شول.');},onError:e=>setError(String(e.message))});
  const selected=users.data?.find(u=>u.user_id===editing);
  return <section dir="rtl" className="space-y-6">
   <div><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1><p className="text-sm text-muted-foreground">یوازې عمومي مدیر کولای شي د نورو مدیرانو حسابونه او صلاحیتونه تنظیم کړي.</p></div>
@@ -49,18 +50,19 @@ export function ManagedUsersPage() {
    <h2 className="font-bold">ثبت شوي مدیران</h2>
    {users.isLoading && <p>معلومات لوستل کېږي…</p>}
    {users.data?.map(u=><div key={u.user_id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2">
-    <div><p className="font-semibold">{u.display_name||u.email}</p><p className="text-xs text-muted-foreground" dir="ltr">{u.email}</p><p className="text-xs">{u.role==='super_admin'?'عمومي مدیر':u.active?'فعال مدیر':'غیرفعال مدیر'}</p></div>
+    <div><p className="font-semibold">{u.display_name||u.email}</p><p className="text-xs text-muted-foreground" dir="ltr">{u.email}</p><p className="text-xs">{u.role==='super_admin'?'عمومي مدیر':u.active?'فعال مدیر':'غیرفعال مدیر'}</p>{u.role==='manager'&&<p className="text-xs text-muted-foreground">{u.invitationStatus==='accepted'?'حساب ته ننوتلی — تایید شوی':u.invitationStatus==='pending'?'بلنه لا نه ده منل شوې':u.invitationStatus==='existing'?'مخکې ثبت شوی حساب': 'د بلنې حالت نامعلوم دی'}</p>}</div>
     {u.role==='manager'&&<Button variant="outline" onClick={()=>{setEditing(u.user_id);setEmail(u.email);setName(u.display_name);setActive(u.active);setPermissions(u.permissions??{});setError('');}}>صلاحیتونه بدل کړئ</Button>}
    </div>)}
   </div>
-  <form className="space-y-4 rounded-xl border bg-card p-4" onSubmit={e=>{e.preventDefault();setError('');if(editing)update.mutate();else invite.mutate();}}>
+  <form className="space-y-4 rounded-xl border bg-card p-4" onSubmit={e=>{e.preventDefault();setError('');setNotice('');if(editing)update.mutate();else invite.mutate();}}>
    <h2 className="font-bold">{editing?'د مدیر صلاحیتونه اصلاح کړئ':'نوی مدیر دعوت کړئ'}</h2>
    <label className="block text-sm">نوم<input className="mt-1 w-full rounded-lg border bg-background p-2" required maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label>
    <label className="block text-sm">ایمیل<input className="mt-1 w-full rounded-lg border bg-background p-2" dir="ltr" type="email" required disabled={!!editing} value={email} onChange={e=>setEmail(e.target.value)}/></label>
    {editing&&<label className="flex items-center gap-2"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/> حساب فعال دی</label>}
    <PermissionEditor value={permissions} onChange={setPermissions}/>
+   {notice&&<p role="status" className="rounded-lg border p-3 text-sm">{notice}</p>}
    {error&&<p role="alert" className="text-destructive">{error}</p>}
-   <div className="flex gap-2"><Button type="submit" disabled={invite.isPending||update.isPending}>{editing?'بدلونونه ثبت کړئ':'د بلنې ایمیل واستوئ'}</Button>
+   <div className="flex gap-2"><Button type="submit" disabled={invite.isPending||update.isPending}>{editing?'بدلونونه ثبت کړئ':'بلنه ثبت کړئ'}</Button>
    {editing&&<Button type="button" variant="outline" onClick={()=>{setEditing(null);setEmail('');setName('');setPermissions(empty());}}>لغوه کول</Button>}</div>
   </form>
   <p className="text-xs text-muted-foreground">امنیتي یادونه: د برخو د صلاحیتونو بشپړ پلي کېدل د ټولو سروري راپورونو له جلا امنیتي ارزونې وروسته فعالېږي.</p>
