@@ -48,7 +48,7 @@ function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { onNavigat
       {canView("problem-visitors") && <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
         <AlertTriangle className="h-4 w-4 shrink-0" /> <span className="min-w-0 flex-1">مشکلاتي مراجعین</span>{matchCount>0&&<span aria-label={`د احتمالي تطابق شمېر ${matchCount}`} className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-extrabold text-amber-950 dark:bg-amber-800 dark:text-white">{matchCount>99?"99+":matchCount}</span>}
       </Link>}
-      {groups.map((group) => (
+      {groups.filter(group => group.slugs.some(canView)).map((group) => (
         <div key={group.title} className="space-y-1">
           <p className="px-3 pb-1 pt-2 text-xs font-semibold text-sidebar-foreground/60">{group.title}</p>
           {group.slugs.map((slug) => {
@@ -64,13 +64,13 @@ function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { onNavigat
           })}
         </div>
       ))}
-      <div className="space-y-1 border-t border-sidebar-border pt-3">
+      {(owner || ["reconciliation","center-quality","fuel-management"].some(canView)) && <div className="space-y-1 border-t border-sidebar-border pt-3">
         <p className="px-3 pb-1 text-xs font-semibold text-sidebar-foreground/60">اداري او مرستندویه برخې</p>
         {owner && <Link to="/dashboard/$slug" params={{ slug: "admin-users" }} className={cls} activeProps={active} onClick={onNavigate}><ShieldAlert className="h-4 w-4 shrink-0" /> د کاروونکو مدیریت</Link>}
         {canView("reconciliation") && <Link to="/dashboard/reconciliation" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د راپورونو مطابقت</Link>}
         {canView("center-quality") && <Link to="/dashboard/center-quality" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د مرکزونو د فعالیت پرتله</Link>}
         {canView("fuel-management") && <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت</Link>}
-      </div>
+      </div>}
     </nav>
   );
 }
@@ -137,7 +137,7 @@ function DashboardLayoutContent() {
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
           <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} /></div>
-          <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>
+          {(access.data?.owner===true || access.data?.permissions?.settings?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>}
         </div>
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -145,8 +145,8 @@ function DashboardLayoutContent() {
           <SheetTitle className="sr-only">مینو</SheetTitle>
           <div className="flex max-h-full flex-col">
             {brand}
-            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} owner={access.data?.allowed===true} onNavigate={() => setOpen(false)} /></div>
-            <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>
+            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} onNavigate={() => setOpen(false)} /></div>
+            {(access.data?.owner===true || access.data?.permissions?.settings?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>}
           </div>
         </SheetContent>
       </Sheet>
