@@ -10,15 +10,16 @@ import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
 import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
 import { SimpleDieselReport } from "@/components/dash/SimpleDieselReport";
+import { ManagedUsersPage } from "@/components/dash/ManagedUsersPage";
 import { PassedFilesLookup } from "@/components/dash/PassedFilesLookup";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
-    if (params.slug !== "settings" && params.slug !== "problem-visitors" && params.slug !== "fuel-management" && !getTab(params.slug)) throw notFound();
+    if (params.slug !== "admin-users" && params.slug !== "settings" && params.slug !== "problem-visitors" && params.slug !== "fuel-management" && !getTab(params.slug)) throw notFound();
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : params.slug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${params.slug === "admin-users" ? "د کاروونکو مدیریت" : params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : params.slug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
     return {
       meta: [
         { title },
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 
 function TabPage() {
   const { slug } = Route.useParams();
+  if (slug === "admin-users") return <ManagedUsersPage />;
   if (slug === "settings") return <DashboardSettingsPage />;
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;
   if (slug === "fuel-management") return <SimpleDieselReport />;
