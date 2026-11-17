@@ -218,6 +218,7 @@ async function sheetsGet<T>(url:string,headers:Record<string,string>,errorCode:s
 export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StaffCompleteness>=>{
   setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const yesterday=completenessReviewDay();
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"INSIJAM_SHEETS_ERROR");
@@ -234,6 +235,7 @@ export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middlewa
 export const getStateReportForYesterday=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StateReport>=>{
   setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const day=completenessReviewDay();
   const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
@@ -248,6 +250,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<RecentReferrals>=>{
   setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const today=todayJalali();
   const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR");
