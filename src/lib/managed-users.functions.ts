@@ -23,6 +23,11 @@ const updateInput = z.object({
   active: z.boolean(),
   permissions: permissionsSchema,
 });
+function normalizedPermissions(perms:Record<string,string[]>):Record<string,string[]> {
+ return Object.fromEntries(Object.entries(perms).map(([section,actions])=>[
+  section,actions.length && actions.some(action=>action!=='view') ? [...new Set(['view',...actions])] : actions,
+ ]));
+}
 type UserRecord = { user_id:string;email:string;display_name:string;role:string;active:boolean;permissions:Record<string,string[]>; invitationStatus?:'accepted'|'pending'|'existing'|'unknown' };
 function requireOwner(claims:unknown) {
   const email = (claims as {email?:string}|null)?.email;
@@ -97,9 +102,10 @@ export const inviteManagedUser = createServerFn({method:'POST'})
    const {data:current,error:lookupError}=await db.from('dashboard_user_permissions').select('role').eq('user_id',userId).maybeSingle();
    if(lookupError)throw new Error('USER_DIRECTORY_UNAVAILABLE');
    if(current?.role==='super_admin')throw new Error('OWNER_ACCOUNT_PROTECTED');
+   if(current)throw new Error('USER_ALREADY_MANAGED');
    const {error}=await db.from('dashboard_user_permissions').upsert({
      user_id:userId,email:data.email,display_name:data.displayName,
-     role:'manager',active:true,permissions:data.permissions,
+     role:'manager',active:true,permissions:normalizedPermissions(data.permissions),
    },{onConflict:'user_id'});
    // Never delete an Auth user on a permissions write failure: it may be an existing OAuth account.
    if(error)throw new Error('PERMISSIONS_SAVE_FAILED');
@@ -115,7 +121,7 @@ export const updateManagedUser = createServerFn({method:'POST'})
    const {data:target,error:lookupError}=await db.from('dashboard_user_permissions').select('role').eq('user_id',data.userId).single();
    if(lookupError||!target||target.role!=='manager')throw new Error('OWNER_ACCOUNT_PROTECTED');
    const {error}=await db.from('dashboard_user_permissions').update({
-     display_name:data.displayName,active:data.active,permissions:data.permissions,updated_at:new Date().toISOString(),
+     display_name:data.displayName,active:data.active,permissions:normalizedPermissions(data.permissions),updated_at:new Date().toISOString(),
    }).eq('user_id',data.userId);
    if(error)throw new Error('PERMISSIONS_UPDATE_FAILED');
    return {success:true};
