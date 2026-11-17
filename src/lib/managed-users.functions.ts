@@ -61,7 +61,7 @@ export const inviteManagedUser = createServerFn({method:'POST'})
      user_id:invited.user.id,email:data.email,display_name:data.displayName,
      role:'manager',active:true,permissions:data.permissions,
    },{onConflict:'user_id'});
-   if(error)throw new Error('INVITED_BUT_PERMISSIONS_NOT_SAVED');
+   if(error){ await admin.auth.admin.deleteUser(invited.user.id); throw new Error('INVITED_BUT_PERMISSIONS_NOT_SAVED'); }
    return {success:true};
  });
 export const updateManagedUser = createServerFn({method:'POST'})
