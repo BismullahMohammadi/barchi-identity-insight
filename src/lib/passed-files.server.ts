@@ -11,7 +11,7 @@ const SOURCES=[
 const norm=(v:unknown)=>toLatinDigits(String(v??'')).replace(/[يى]/g,'ی').replace(/ك/g,'ک').trim();
 const dateRegex=/(1[34]\d{2})\s*[\/.-]\s*(\d{1,2})\s*[\/.-]\s*(\d{1,2})/;
 function valid(y:number,m:number,d:number){return y>=1300&&y<=1499&&m>=1&&m<=12&&d>=1&&d<=(m<=6?31:m<=11?30:30)}
-function fullDate(value:unknown){const m=norm(value).match(dateRegex);if(!m)return null;const [y,mo,d]=m.slice(1).map(Number);return valid(y,mo,d)?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
+function fullDate(value:unknown){const m=norm(value).match(dateRegex);if(!m)return null;const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);return valid(y,mo,d)?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
 function noteDate(value:unknown,year:number){const s=norm(value);const full=fullDate(s);if(full)return full;const m=s.match(/(?:^|\s)(\d{1,2})\s*[\/.-]\s*(\d{1,2})(?=\s|$)/);if(!m)return null;const mo=Number(m[1]),d=Number(m[2]);return valid(year,mo,d)?`${year}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
 function initialDate(title:string){const matches=[...norm(title).matchAll(/1[34]\d{2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*\d{1,2}/g)].map(m=>fullDate(m[0])).filter((x):x is string=>!!x);return matches[0]??null}
 const delay=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
@@ -88,6 +88,7 @@ export async function readPassedFiles(from:string,to:string,claims:unknown,query
    for(const [tabIndex,tab] of selected.entries()){
     try{
      const range=ranges[tabIndex];
+     if(range===undefined)throw Error('SHEET_RANGE_MISSING');
      const data=batch?.valueRanges?.[tabIndex]??await read<{values?:unknown[][]}>(`${BASE}/spreadsheets/${source.id}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`,headers);
      scanned++;const grid=data.values??[];
      let header=-1;

@@ -15,7 +15,7 @@ export const STAFF = [
 const digits = (s: string) => s.replace(/[۰-۹]/g, x => String(x.charCodeAt(0)-1776)).replace(/[٠-٩]/g, x => String(x.charCodeAt(0)-1632));
 const normalize = (x: unknown) => digits(String(x ?? '')).replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/\s+/g,' ').trim();
 const number = (x: unknown): number | null => { const s=normalize(x).replace(/[,٬]/g,''); return s!=='' && /^\d+$/.test(s) ? Number(s) : null; };
-const monthTitle = (titles: string[], month: number) => titles.filter(t=>normalize(t).includes(MONTH_NAMES[month])).sort((a,b)=>Number(/گزارش|ګزارش/.test(b))-Number(/گزارش|ګزارش/.test(a)))[0] ?? null;
+const monthTitle = (titles: string[], month: number) => { const name=MONTH_NAMES[month]; if(name===undefined)return null; return titles.filter(t=>normalize(t).includes(name)).sort((a,b)=>Number(/گزارش|ګزارش/.test(b))-Number(/گزارش|ګزارش/.test(a)))[0] ?? null; };
 async function read<T>(url:string,headers:Record<string,string>):Promise<T> {
  const r=await fetch(url,{headers,signal:AbortSignal.timeout(20000),cache:'no-store'});
  if(!r.ok)throw new Error('SHEETS_READ_'+r.status);
@@ -60,5 +60,5 @@ export async function readStaffReconciliation(year:number,month:number,claims:un
   const data=await read<{values?:unknown[][]}>(`${BASE}/spreadsheets/${x.id}/values/${encodeURIComponent(x.range)}?valueRenderOption=FORMATTED_VALUE`,headers);
   return data.values??[];
  }));
- return {tab,rows:compareStaff(values[0],values[1],year,month),error:null};
+ return {tab,rows:compareStaff(values[0]??[],values[1]??[],year,month),error:null};
 }
