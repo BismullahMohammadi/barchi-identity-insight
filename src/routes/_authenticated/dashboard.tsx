@@ -211,8 +211,8 @@ function DashboardLayoutContent() {
               <h1 className="mt-4 text-xl font-bold">لاسرسی رد شو</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {access.data?.allowlistConfigured === false
-                  ? "د مالک ایمیل لیست لا نه دی ترتیب شوی، نو ټول لاسرسي بند دي."
-                  : "دا حساب د اجازه لرونکو ایمیلونو په لیست کې نشته."}
+                  ? "د لاسرسي تنظیمات بشپړ نه دي. له عمومي مدیر سره اړیکه ونیسئ."
+                  : "ستاسو حساب ته د راپورونو د لیدلو اجازه نه ده ورکړل شوې. له عمومي مدیر څخه د صلاحیتونو فعالول وغواړئ."}
               </p>
               <Button className="mt-6" onClick={signOut}>د بل حساب سره ننوتل</Button>
             </div>
