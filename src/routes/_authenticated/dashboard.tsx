@@ -136,7 +136,7 @@ function DashboardLayoutContent() {
       <aside id="desktop-dashboard-sidebar" className={"no-print shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground "+(sidebarCollapsed?"hidden":"hidden w-64 lg:block")}>
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
-          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions} /></div>
+          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} /></div>
           <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>
         </div>
       </aside>
