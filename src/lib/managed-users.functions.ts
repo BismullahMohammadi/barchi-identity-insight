@@ -23,7 +23,7 @@ const updateInput = z.object({
   active: z.boolean(),
   permissions: permissionsSchema,
 });
-type UserRecord = { user_id:string;email:string;display_name:string;role:string;active:boolean;permissions:Record<string,string[]> };
+type UserRecord = { user_id:string;email:string;display_name:string;role:string;active:boolean;permissions:Record<string,string[]>; invitationStatus?:'accepted'|'pending'|'existing'|'unknown' };
 function requireOwner(claims:unknown) {
   const email = (claims as {email?:string}|null)?.email;
   if (!isEmailAllowed(email, process.env['OWNER_EMAILS'])) throw new Error('ACCESS_DENIED');
@@ -45,7 +45,23 @@ export const listManagedUsers = createServerFn({method:'GET'})
    setResponseHeader('Cache-Control','private, no-store');
    const {data,error} = await permissionDb(context.supabase).from('dashboard_user_permissions').select('user_id,email,display_name,role,active,permissions').order('email');
    if(error)throw new Error('USER_DIRECTORY_UNAVAILABLE');
-   return (data??[]) as UserRecord[];
+   const records=(data??[]) as UserRecord[];
+   const admin=adminClient();
+   const byId=new Map<string,{last_sign_in_at?:string|null;invited_at?:string|null}>();
+   for(let page=1;page<=100;page++){
+     const {data:users,error:listError}=await admin.auth.admin.listUsers({page,perPage:1000});
+     if(listError)break;
+     for(const user of users.users)byId.set(user.id,user);
+     if(users.users.length<1000)break;
+   }
+   return records.map(record=>{
+     const authUser=byId.get(record.user_id);
+     const invitationStatus:UserRecord['invitationStatus']=!authUser?'unknown'
+       :authUser.last_sign_in_at?'accepted'
+       :authUser.invited_at?'pending'
+       :'existing';
+     return {...record,invitationStatus};
+   });
  });
 export const inviteManagedUser = createServerFn({method:'POST'})
  .middleware([requireSupabaseAuth])
@@ -66,6 +82,7 @@ export const inviteManagedUser = createServerFn({method:'POST'})
      if(users.users.length<1000)break;
    }
    let userId=existingUserId;
+   const invitationStatus:'existing'|'pending' = existingUserId?'existing':'pending';
    if(!userId){
      const {data:invited,error:inviteError}=await admin.auth.admin.inviteUserByEmail(data.email,{data:{display_name:data.displayName}});
      if(inviteError||!invited.user){
@@ -86,7 +103,7 @@ export const inviteManagedUser = createServerFn({method:'POST'})
    },{onConflict:'user_id'});
    // Never delete an Auth user on a permissions write failure: it may be an existing OAuth account.
    if(error)throw new Error('PERMISSIONS_SAVE_FAILED');
-   return {success:true};
+   return {success:true,invitationStatus};
  });
 export const updateManagedUser = createServerFn({method:'POST'})
  .middleware([requireSupabaseAuth])
