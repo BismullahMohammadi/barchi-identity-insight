@@ -55,13 +55,37 @@ export const inviteManagedUser = createServerFn({method:'POST'})
    setResponseHeader('Cache-Control','private, no-store');
    if(isEmailAllowed(data.email,process.env['OWNER_EMAILS']))throw new Error('OWNER_ACCOUNT_PROTECTED');
    const admin=adminClient();
-   const {data:invited,error:inviteError}=await admin.auth.admin.inviteUserByEmail(data.email,{data:{display_name:data.displayName}});
-   if(inviteError||!invited.user)throw new Error('INVITATION_FAILED');
-   const {error}=await permissionDb(context.supabase).from('dashboard_user_permissions').upsert({
-     user_id:invited.user.id,email:data.email,display_name:data.displayName,
+   // Existing Google OAuth accounts must be granted access without re-inviting them.
+   // Only the authenticated owner can call this endpoint.
+   let existingUserId: string | null = null;
+   for (let page = 1; page <= 100; page++) {
+     const {data:users,error:listError}=await admin.auth.admin.listUsers({page,perPage:1000});
+     if(listError)throw new Error('USER_LOOKUP_FAILED');
+     const found=users.users.find(user=>user.email?.trim().toLowerCase()===data.email);
+     if(found){existingUserId=found.id;break;}
+     if(users.users.length<1000)break;
+   }
+   let userId=existingUserId;
+   if(!userId){
+     const {data:invited,error:inviteError}=await admin.auth.admin.inviteUserByEmail(data.email,{data:{display_name:data.displayName}});
+     if(inviteError||!invited.user){
+       const message=(inviteError?.message??'').toLowerCase();
+       if(/rate limit|too many|429/.test(message))throw new Error('INVITATION_RATE_LIMITED');
+       if(/already registered|already exists|already been registered/.test(message))throw new Error('ACCOUNT_ALREADY_EXISTS_RETRY');
+       throw new Error('INVITATION_FAILED');
+     }
+     userId=invited.user.id;
+   }
+   const db=permissionDb(context.supabase);
+   const {data:current,error:lookupError}=await db.from('dashboard_user_permissions').select('role').eq('user_id',userId).maybeSingle();
+   if(lookupError)throw new Error('USER_DIRECTORY_UNAVAILABLE');
+   if(current?.role==='super_admin')throw new Error('OWNER_ACCOUNT_PROTECTED');
+   const {error}=await db.from('dashboard_user_permissions').upsert({
+     user_id:userId,email:data.email,display_name:data.displayName,
      role:'manager',active:true,permissions:data.permissions,
    },{onConflict:'user_id'});
-   if(error){ await admin.auth.admin.deleteUser(invited.user.id); throw new Error('INVITED_BUT_PERMISSIONS_NOT_SAVED'); }
+   // Never delete an Auth user on a permissions write failure: it may be an existing OAuth account.
+   if(error)throw new Error('PERMISSIONS_SAVE_FAILED');
    return {success:true};
  });
 export const updateManagedUser = createServerFn({method:'POST'})
