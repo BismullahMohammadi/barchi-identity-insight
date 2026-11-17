@@ -43,7 +43,7 @@ function TabPage() {
 }
 
 function OwnerOnly({children}:{children:React.ReactNode}) {
-  const access=useQuery(accessQuery());
+  const access=useQuery(accessQuery);
   if(access.isLoading)return <p>د لاسرسي ارزونه روانه ده…</p>;
   if(access.data?.owner!==true)return <p role="alert">دې برخې ته یوازې عمومي مدیر لاسرسی لري.</p>;
   return <>{children}</>;
