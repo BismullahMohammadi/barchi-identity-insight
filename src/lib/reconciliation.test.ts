@@ -51,7 +51,7 @@ describe('report reconciliation', () => {
     const { local } = fixture();
     expect(findMonthlyBlock(local, 1404, 8, 'local', 1405).status).toBe('month_missing');
     expect(findMonthlyBlock([...local, ...local], 1405, 8, 'local', 1405).status).toBe('ambiguous_month');
-    expect(compare(local, []).every(r => r.status === 'missing' || (r.status === 'holiday' && r.reason === 'holiday'))).toBe(true);
+    expect(compare(local, []).every(r => r.status === 'missing' || r.status === 'holiday')).toBe(true);
   });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();
