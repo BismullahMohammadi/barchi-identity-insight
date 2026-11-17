@@ -15,6 +15,7 @@ const empty = ():Perms=>({});
 const viewAll=():Perms=>Object.fromEntries(DASHBOARD_SECTIONS.map(section=>[section,['view']]));
 const countViews=(perms:Perms)=>DASHBOARD_SECTIONS.filter(section=>perms[section]?.includes('view')).length;
 const errors:Record<string,string>={
+ USER_ALREADY_MANAGED:'دا کاروونکی مخکې ثبت شوی دی. د لېست له لارې یې صلاحیتونه اصلاح کړئ.',
  INVITATION_RATE_LIMITED:'د ایمیل بلنې د لېږلو موقتي محدودیت پوره شوی؛ وروسته بیا هڅه وکړئ یا SMTP تنظیمات وګورئ.',
  INVITATION_FAILED:'Supabase بلنه ونه لېږله؛ د Authentication ایمیل تنظیمات او Logs وګورئ.',
  ADMIN_INVITES_NOT_CONFIGURED:'د سرور د بلنو تنظیمات بشپړ نه دي.',
