@@ -1,0 +1,20 @@
+name: Validate manager permissions branch
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'supabase/migrations/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/manager-permissions-ci.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run build

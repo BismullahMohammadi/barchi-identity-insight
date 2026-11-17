@@ -1,6 +1,7 @@
 import {useGlobalDateRange} from "@/lib/global-date-range";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { accessQuery } from "@/lib/queries";
 import { SyncBar } from "@/components/dash/SyncBar";
 import { TabView } from "@/components/dash/TabView";
 import { errorText, sheetQuery } from "@/lib/queries";
@@ -10,15 +11,16 @@ import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
 import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
 import { SimpleDieselReport } from "@/components/dash/SimpleDieselReport";
+import { ManagedUsersPage } from "@/components/dash/ManagedUsersPage";
 import { PassedFilesLookup } from "@/components/dash/PassedFilesLookup";
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
-    if (params.slug !== "settings" && params.slug !== "problem-visitors" && params.slug !== "fuel-management" && !getTab(params.slug)) throw notFound();
+    if (params.slug !== "admin-users" && params.slug !== "settings" && params.slug !== "problem-visitors" && params.slug !== "fuel-management" && !getTab(params.slug)) throw notFound();
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : params.slug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${params.slug === "admin-users" ? "د کاروونکو مدیریت" : params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : params.slug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
     return {
       meta: [
         { title },
@@ -33,12 +35,19 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 
 function TabPage() {
   const { slug } = Route.useParams();
+  if (slug === "admin-users") return <OwnerOnly><ManagedUsersPage /></OwnerOnly>;
   if (slug === "settings") return <DashboardSettingsPage />;
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;
   if (slug === "fuel-management") return <SimpleDieselReport />;
   return <ReportPage slug={slug} />;
 }
 
+function OwnerOnly({children}:{children:React.ReactNode}) {
+  const access=useQuery(accessQuery);
+  if(access.isLoading)return <p>د لاسرسي ارزونه روانه ده…</p>;
+  if(access.data?.owner!==true)return <p role="alert">دې برخې ته یوازې عمومي مدیر لاسرسی لري.</p>;
+  return <>{children}</>;
+}
 function ReportPage({slug}:{slug:string}) {
   const tab = getTab(slug)!;
   const settings = useDashboardSettings();

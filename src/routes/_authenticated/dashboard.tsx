@@ -31,7 +31,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardLayout,
 });
 
-function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?:number }) {
+function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { onNavigate?: () => void; matchCount?:number; owner?:boolean; permissions?:Record<string,string[]> }) {
+  const canView=(section:string)=>owner || permissions[section]?.includes("view")===true;
   const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,"archive-scan":ScanLine,bank:Landmark,annual:CalendarRange};
   const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
@@ -41,18 +42,18 @@ function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?
   ];
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
-      <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
+      {canView("dashboard") && <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
         <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري بهیر
-      </Link>
-      <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
+      </Link>}
+      {canView("problem-visitors") && <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
         <AlertTriangle className="h-4 w-4 shrink-0" /> <span className="min-w-0 flex-1">مشکلاتي مراجعین</span>{matchCount>0&&<span aria-label={`د احتمالي تطابق شمېر ${matchCount}`} className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-extrabold text-amber-950 dark:bg-amber-800 dark:text-white">{matchCount>99?"99+":matchCount}</span>}
-      </Link>
+      </Link>}
       {groups.map((group) => (
         <div key={group.title} className="space-y-1">
           <p className="px-3 pb-1 pt-2 text-xs font-semibold text-sidebar-foreground/60">{group.title}</p>
           {group.slugs.map((slug) => {
             const tab = TABS.find((item) => item.slug === slug);
-            if (!tab) return null;
+            if (!tab || !canView(slug)) return null;
             return (
               <Link key={slug} to="/dashboard/$slug" params={{ slug }}
                 className={cls} activeProps={active} onClick={onNavigate}>
@@ -65,9 +66,10 @@ function Nav({ onNavigate,matchCount=0 }: { onNavigate?: () => void; matchCount?
       ))}
       <div className="space-y-1 border-t border-sidebar-border pt-3">
         <p className="px-3 pb-1 text-xs font-semibold text-sidebar-foreground/60">اداري او مرستندویه برخې</p>
-        <Link to="/dashboard/reconciliation" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د راپورونو مطابقت</Link>
-        <Link to="/dashboard/center-quality" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د مرکزونو د فعالیت پرتله</Link>
-        <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت</Link>
+        {owner && <Link to="/dashboard/$slug" params={{ slug: "admin-users" }} className={cls} activeProps={active} onClick={onNavigate}><ShieldAlert className="h-4 w-4 shrink-0" /> د کاروونکو مدیریت</Link>}
+        {canView("reconciliation") && <Link to="/dashboard/reconciliation" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د راپورونو مطابقت</Link>}
+        {canView("center-quality") && <Link to="/dashboard/center-quality" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د مرکزونو د فعالیت پرتله</Link>}
+        {canView("fuel-management") && <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت</Link>}
       </div>
     </nav>
   );
@@ -88,7 +90,7 @@ function DashboardLayoutContent() {
   // Watch completion while authenticated even if the tools drawer is closed.
   const pathname = useLocation({ select: (location) => location.pathname });
   const currentSlug = pathname.split("/").filter(Boolean).at(-1);
-  const pageTitle = currentSlug === "center-quality" ? "د مرکزونو د فعالیت پرتله" : currentSlug === "reconciliation" ? "د راپورونو مطابقت" : currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
+  const pageTitle = currentSlug === "center-quality" ? "د مرکزونو د فعالیت پرتله" : currentSlug === "reconciliation" ? "د راپورونو مطابقت" : currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "admin-users" ? "د کاروونکو مدیریت" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
   const completion = useStaffCompletionMonitor();
   const [open, setOpen] = useState(false);
   const [today,setToday]=useState<ReturnType<typeof todayJalali>|null>(null);
@@ -134,7 +136,7 @@ function DashboardLayoutContent() {
       <aside id="desktop-dashboard-sidebar" className={"no-print shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground "+(sidebarCollapsed?"hidden":"hidden w-64 lg:block")}>
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
-          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} /></div>
+          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} /></div>
           <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>
         </div>
       </aside>
@@ -143,7 +145,7 @@ function DashboardLayoutContent() {
           <SheetTitle className="sr-only">مینو</SheetTitle>
           <div className="flex max-h-full flex-col">
             {brand}
-            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} onNavigate={() => setOpen(false)} /></div>
+            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} owner={access.data?.allowed===true} onNavigate={() => setOpen(false)} /></div>
             <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>
           </div>
         </SheetContent>

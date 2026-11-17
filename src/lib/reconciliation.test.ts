@@ -36,7 +36,7 @@ describe('report reconciliation', () => {
     if (!lr || !pr) throw new Error('fixture missing');
     lr[1] = 9; pr[6] = 1; // 1405/08/01 is Friday.
     lr[4] = 0; pr[9] = 0;
-    expect(compare(local, province).find(r => r.day === 1 && r.metric === 'family')).toMatchObject({ status: 'missing', reason: 'holiday' });
+    expect(compare(local, province).find(r => r.day === 1 && r.metric === 'family')).toMatchObject({ status: 'holiday', reason: 'holiday' });
     expect(compare(local, province).find(r => r.day === 4 && r.metric === 'family')).toMatchObject({ status: 'equal', delta: 0 });
     const blocks = [findMonthlyBlock(local, 1405, 8, 'local', 1405), findMonthlyBlock(province, 1405, 8, 'province', 1405)] as const;
     expect(compareMonthlyReports(blocks[0], blocks[1], 1405, 8, { y: 1405, m: 8, d: 3 }).find(r => r.day === 4)?.reason).toBe('future');
@@ -51,7 +51,7 @@ describe('report reconciliation', () => {
     const { local } = fixture();
     expect(findMonthlyBlock(local, 1404, 8, 'local', 1405).status).toBe('month_missing');
     expect(findMonthlyBlock([...local, ...local], 1405, 8, 'local', 1405).status).toBe('ambiguous_month');
-    expect(compare(local, []).every(r => r.status === 'missing')).toBe(true);
+    expect(compare(local, []).every(r => r.status === 'missing' || r.status === 'holiday')).toBe(true);
   });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
+import { hasDashboardPermission } from "./dashboard-permissions.server";
 import { SPREADSHEET_ID, TABS } from "./tabs";
 import { todayJalali, yesterdayJalali, formatJ, jKey, parseJalali, type JDate } from "./jalali";
 import { isFridayJalali } from "./holidays";
@@ -33,7 +34,13 @@ export const getAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     setResponseHeader("Cache-Control", "private, no-store");
     const email = emailFromClaims(context.claims);
-    return { email, allowed: ownerAuthorized(context.claims), allowlistConfigured: !!process.env["OWNER_EMAILS"]?.trim() };
+    const owner=ownerAuthorized(context.claims);
+    if(owner)return {email,allowed:true,owner:true,permissions:{} as Record<string,string[]>,allowlistConfigured:true};
+    const {data:profile,error}=await (context.supabase as any).from("dashboard_user_permissions")
+      .select("active,role,permissions").eq("user_id",context.userId).maybeSingle();
+    const perms=(!error && profile?.active===true && profile.role==="manager" && profile.permissions && typeof profile.permissions==="object")
+      ? profile.permissions as Record<string,string[]> : {};
+    return {email,allowed:Object.values(perms).some(actions=>Array.isArray(actions)&&actions.includes("view")),owner:false,permissions:perms,allowlistConfigured:!!process.env["OWNER_EMAILS"]?.trim()};
   });
 export type SheetPayload = { fetchedAt: number; tabs: {slug:string;title:string;grid:string[][]}[] };
 export const getSheetTabs = createServerFn({ method: "POST" })
@@ -44,7 +51,7 @@ export const getSheetTabs = createServerFn({ method: "POST" })
   })
   .handler(async ({data,context}):Promise<SheetPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
-    if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
+    if (!(await Promise.all(data.slugs.map(slug=>hasDashboardPermission(context,slug,"view")))).every(Boolean)) throw new Error("ACCESS_DENIED");
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
@@ -78,7 +85,7 @@ export const getDailyForms = createServerFn({ method: "POST" })
   .inputValidator((data: {cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
   .handler(async ({ context,data }): Promise<DailyFormsPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
-    if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
+    if (!(await hasDashboardPermission(context,"dashboard","view"))) throw new Error("ACCESS_DENIED");
     const lovableKey=process.env["LOVABLE_API_KEY"];
     const sheetsKey=process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
@@ -119,7 +126,7 @@ export const getDailyCoordination = createServerFn({ method: "POST" })
   .inputValidator((data:{cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
   .handler(async ({ context,data }): Promise<DailyCoordinationPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
-    if (!ownerAuthorized(context.claims)) throw new Error("ACCESS_DENIED");
+    if (!(await hasDashboardPermission(context,"dashboard","view"))) throw new Error("ACCESS_DENIED");
     const lovableKey=process.env["LOVABLE_API_KEY"];
     const sheetsKey=process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
@@ -174,7 +181,7 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StaffCompleteness>=>{
   setResponseHeader("Cache-Control","private, no-store");
-  if(!ownerAuthorized(context.claims))throw new Error("ACCESS_DENIED");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const lovableKey=process.env["LOVABLE_API_KEY"];
   const sheetsKey=process.env["GOOGLE_SHEETS_API_KEY"];
   if(!lovableKey||!sheetsKey)throw new Error("SHEETS_NOT_CONNECTED");
@@ -211,6 +218,7 @@ async function sheetsGet<T>(url:string,headers:Record<string,string>,errorCode:s
 export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StaffCompleteness>=>{
   setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const yesterday=completenessReviewDay();
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"INSIJAM_SHEETS_ERROR");
@@ -227,6 +235,7 @@ export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middlewa
 export const getStateReportForYesterday=createServerFn({method:"GET"}).middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<StateReport>=>{
   setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const day=completenessReviewDay();
   const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
@@ -241,6 +250,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<RecentReferrals>=>{
   setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const today=todayJalali();
   const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR");
@@ -375,7 +385,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
  })
  .handler(async({data,context})=>{
   setResponseHeader("Cache-Control","private, no-store");
-  if(!ownerAuthorized(context.claims))throw new Error("ACCESS_DENIED");
+  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
   const headers=authorizedSheetHeaders(context.claims);
   const {from,to}=data;
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
