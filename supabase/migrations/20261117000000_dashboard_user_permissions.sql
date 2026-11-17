@@ -48,7 +48,7 @@ returns trigger language plpgsql security definer set search_path = ''
 as $$
 begin
  insert into public.dashboard_permission_audit(actor_id,target_user_id,action,changes)
- values ((select auth.uid()), new.user_id, tg_op,
+ values (coalesce((select auth.uid()),new.user_id), new.user_id, tg_op,
    jsonb_build_object('email',new.email,'role',new.role,'active',new.active,'permissions',new.permissions));
  return new;
 end $$;
