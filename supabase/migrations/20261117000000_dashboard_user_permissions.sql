@@ -62,3 +62,25 @@ insert into public.dashboard_user_permissions(user_id,email,display_name,role,ac
 select id, lower(email), 'عمومي مدیر', 'super_admin', true from auth.users
 where lower(email) = 'bismullahm@gmail.com'
 on conflict (user_id) do nothing;
+
+-- A manager's identity and role are immutable after creation, including through crafted REST requests.
+create or replace function public.dashboard_prevent_identity_change()
+returns trigger language plpgsql set search_path = ''
+as $$
+begin
+ if new.user_id is distinct from old.user_id
+    or new.email is distinct from old.email
+    or new.role is distinct from old.role then
+   raise exception 'Manager identity and role are immutable';
+ end if;
+ return new;
+end $$;
+drop trigger if exists dashboard_permission_identity_guard on public.dashboard_user_permissions;
+create trigger dashboard_permission_identity_guard before update on public.dashboard_user_permissions
+for each row execute function public.dashboard_prevent_identity_change();
+
+-- Client access requires both Data API grants and row-level security policies.
+grant select, insert, update on public.dashboard_user_permissions to authenticated;
+grant select on public.dashboard_permission_audit to authenticated;
+revoke delete on public.dashboard_user_permissions from authenticated;
+revoke insert, update, delete on public.dashboard_permission_audit from authenticated;
