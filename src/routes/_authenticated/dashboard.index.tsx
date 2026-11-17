@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowUpLeft, ChartNoAxesColumn, RefreshCw, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
+import { accessQuery, errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
 import { holidayOfToday } from "@/lib/holidays";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
@@ -101,12 +101,15 @@ function Overview() {
   
   const yesterday = yesterdayJalali();
   const refreshMs = settingsRefreshMs(settings);
-  const q = useQuery(sheetQuery(OVERVIEW_SLUGS, refreshMs));
-  const daily = useQuery(dailyFormsQuery(refreshMs));
-  const coordination = useQuery(dailyCoordinationQuery(refreshMs));
-  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:settings.showDailyVisitors});
+  const access=useQuery(accessQuery);
+  const canView=(slug:string)=>access.data?.owner===true || access.data?.permissions?.[slug]?.includes("view")===true;
+  const allowedSlugs=OVERVIEW_SLUGS.filter(canView);
+  const q = useQuery({...sheetQuery(allowedSlugs, refreshMs),enabled:access.isSuccess && allowedSlugs.length>0});
+  const daily = useQuery({...dailyFormsQuery(refreshMs),enabled:canView("dashboard")});
+  const coordination = useQuery({...dailyCoordinationQuery(refreshMs),enabled:canView("dashboard")});
+  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:canView("dashboard")&&settings.showDailyVisitors});
   const historicalSupported=!!range&&(range.to.y-range.from.y)*12+range.to.m-range.from.m<=2;
-  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
+  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:canView("dashboard")&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
   const recentData=range?(historicalSupported?historical.data:undefined):recent.data;
   const recentLoading=range?historical.isLoading:recent.isLoading;
   const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
@@ -148,6 +151,7 @@ function Overview() {
     emerald: {root:"dashboard-kpi-emerald",icon:"bg-emerald-700/10 text-emerald-800",number:"text-emerald-900"},
   } as const;
   const renderCard = (item: SummaryMetric) => {
+    if(!canView(item.slug))return null;
     const colors = cardStyle[item.tone];
     return (
       <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
