@@ -1,6 +1,7 @@
 import {useGlobalDateRange} from "@/lib/global-date-range";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { accessQuery } from "@/lib/queries";
 import { SyncBar } from "@/components/dash/SyncBar";
 import { TabView } from "@/components/dash/TabView";
 import { errorText, sheetQuery } from "@/lib/queries";
@@ -34,13 +35,19 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 
 function TabPage() {
   const { slug } = Route.useParams();
-  if (slug === "admin-users") return <ManagedUsersPage />;
+  if (slug === "admin-users") return <OwnerOnly><ManagedUsersPage /></OwnerOnly>;
   if (slug === "settings") return <DashboardSettingsPage />;
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;
   if (slug === "fuel-management") return <SimpleDieselReport />;
   return <ReportPage slug={slug} />;
 }
 
+function OwnerOnly({children}:{children:React.ReactNode}) {
+  const access=useQuery(accessQuery());
+  if(access.isLoading)return <p>د لاسرسي ارزونه روانه ده…</p>;
+  if(access.data?.owner!==true)return <p role="alert">دې برخې ته یوازې عمومي مدیر لاسرسی لري.</p>;
+  return <>{children}</>;
+}
 function ReportPage({slug}:{slug:string}) {
   const tab = getTab(slug)!;
   const settings = useDashboardSettings();
