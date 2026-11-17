@@ -19,7 +19,7 @@ import {findPotentialProblemMatches} from "./problem-visitor-matching";
 import type {ProblemVisitor} from "./problem-visitors.functions";
 import type {SupabaseClient} from "@supabase/supabase-js";
 import {MONTH_NAMES} from "./monthly-staff-completeness";
-import {authorizedSheetHeaders} from "./sheets-access.server";
+import {sheetConnectionHeaders} from "./sheets-access.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
 function emailFromClaims(claims: unknown): string | null {
@@ -219,7 +219,7 @@ export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middlewa
  .handler(async({context}):Promise<StaffCompleteness>=>{
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
-  const headers=authorizedSheetHeaders(context.claims);
+  const headers=sheetConnectionHeaders();
   const yesterday=completenessReviewDay();
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"INSIJAM_SHEETS_ERROR");
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
@@ -236,7 +236,7 @@ export const getStateReportForYesterday=createServerFn({method:"GET"}).middlewar
  .handler(async({context}):Promise<StateReport>=>{
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
-  const headers=authorizedSheetHeaders(context.claims);
+  const headers=sheetConnectionHeaders();
   const day=completenessReviewDay();
   const range=encodeURIComponent("'ریاست ته ګزارش'!A1:AG75");
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"STATE_REPORT_ERROR");
@@ -251,7 +251,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
  .handler(async({context}):Promise<RecentReferrals>=>{
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
-  const headers=authorizedSheetHeaders(context.claims);
+  const headers=sheetConnectionHeaders();
   const today=todayJalali();
   const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR");
   const intakeTitles=(intakeMeta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
@@ -386,7 +386,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
  .handler(async({data,context})=>{
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
-  const headers=authorizedSheetHeaders(context.claims);
+  const headers=sheetConnectionHeaders();
   const {from,to}=data;
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
