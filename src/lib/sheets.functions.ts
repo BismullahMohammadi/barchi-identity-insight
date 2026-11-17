@@ -34,7 +34,13 @@ export const getAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     setResponseHeader("Cache-Control", "private, no-store");
     const email = emailFromClaims(context.claims);
-    return { email, allowed: ownerAuthorized(context.claims), allowlistConfigured: !!process.env["OWNER_EMAILS"]?.trim() };
+    const owner=ownerAuthorized(context.claims);
+    if(owner)return {email,allowed:true,owner:true,permissions:{} as Record<string,string[]>,allowlistConfigured:true};
+    const {data:profile,error}=await (context.supabase as any).from("dashboard_user_permissions")
+      .select("active,role,permissions").eq("user_id",context.userId).maybeSingle();
+    const perms=(!error && profile?.active===true && profile.role==="manager" && profile.permissions && typeof profile.permissions==="object")
+      ? profile.permissions as Record<string,string[]> : {};
+    return {email,allowed:Object.values(perms).some(actions=>Array.isArray(actions)&&actions.includes("view")),owner:false,permissions:perms,allowlistConfigured:!!process.env["OWNER_EMAILS"]?.trim()};
   });
 export type SheetPayload = { fetchedAt: number; tabs: {slug:string;title:string;grid:string[][]}[] };
 export const getSheetTabs = createServerFn({ method: "POST" })
