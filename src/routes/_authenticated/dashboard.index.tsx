@@ -260,11 +260,12 @@ function Overview() {
                   {item.key==="intake"?(()=>{
                     const people=item.group.people;
                     const registered=recentData?.registration.people??[];
-                    const sumMembers=(members:typeof people)=>members.reduce((total,p)=>total+(p.familyMembers??0),0);
+                    // Status counts represent referred files/clients, not their family-member totals.
+                    // One family can have many members but must only count as one referral.
                     const rejected=people.filter(p=>!!p.rejectionReason);
                     const approved=people.filter(p=>!p.rejectionReason&&(p.dailyApproved||p.birthCardConfirmed||matchesRegisteredPerson(p,registered)));
                     const pending=people.filter(p=>!p.rejectionReason&&!p.dailyApproved&&!p.birthCardConfirmed&&!matchesRegisteredPerson(p,registered));
-                    return `رد شوي: ${sumMembers(rejected)} · تایید شوي: ${sumMembers(approved)} · منتظر: ${sumMembers(pending)}`;
+                    return `رد شوي: ${rejected.length} · تایید شوي: ${approved.length} · منتظر: ${pending.length}`;
                   })():(()=>{
                     const people=item.group.people;
                     const sumMembers=(members:typeof people)=>members.reduce((total,p)=>total+(p.familyMembers??0),0);
@@ -272,7 +273,7 @@ function Overview() {
                     const ordinary=people.filter(p=>p.team!=="ثبت تولد");
                     return `ثبت تولد: ${sumMembers(births)} · عادي: ${sumMembers(ordinary)}`;
                   })()}
-                  <span className="ms-1 opacity-70">(د فامیل غړي، په لېست کې)</span>
+                  <span className="ms-1 opacity-70">{item.key==="intake"?"(د معرفي شوو دوسیو شمېر)":"(د فامیل غړي، په لېست کې)"}</span>
                 </p>
               ):null}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
