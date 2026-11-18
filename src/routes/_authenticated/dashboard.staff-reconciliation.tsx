@@ -17,7 +17,7 @@ function StaffReconciliationPage(){
  const report=useQuery({queryKey:['staff-reconciliation',year,month],queryFn:()=>getStaffReconciliation({data:{year,month}}),staleTime:120000,retry:false});
  const rows=(report.data?.rows??[]).filter(r=>(day===null||r.day===day)&&(!onlyDifferences||r.status==='mismatch'));
  const count=(status:string)=>rows.filter(r=>r.status===status).length;
- return <main dir="rtl" className="space-y-4 pb-8">
+ return <main data-print-target dir="rtl" className="space-y-4 pb-8">
   <header className="flex flex-wrap items-center justify-between gap-3">
    <div><h1 className="text-xl font-bold">د کارمندانو او تخنیکي راپورونو مطابقت</h1><p className="text-sm text-muted-foreground">تصدیق انفرادي (۴ کارمندان) او ثبت تولد (بهزاد)</p></div>
    <div className="flex flex-wrap gap-2 print:hidden">

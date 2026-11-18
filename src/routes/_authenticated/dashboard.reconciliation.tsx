@@ -194,7 +194,7 @@ function ReconciliationPage() {
       </div>
       <p className="text-xs text-muted-foreground">پر هره خانه کلیک وکړئ چې د مرکز او ریاست شمېرې وګورئ. په کوچنیو سکرینونو کې جدول د لمس یا ټچ‌پډ له لارې خوځولای شئ؛ جدول یوازې د لوستلو لپاره دی.</p>
     </section>}
-    <section id="reconciliation-print-report" className="reconciliation-print-report" dir="rtl" aria-label="د چاپ لپاره رسمي راپور">
+    <section id="reconciliation-print-report" data-print-target={view==="differences" ? "" : undefined} className="reconciliation-print-report" dir="rtl" aria-label="د چاپ لپاره رسمي راپور">
       <header className="report-print-heading">
         <h1>د دشت برچي د الکترونیکي تذکرو مرکز</h1>
         <h2>د راپورونو د میاشتنیو مجموعو مطابقت</h2>

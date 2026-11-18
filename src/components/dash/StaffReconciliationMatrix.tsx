@@ -16,7 +16,8 @@ export function StaffReconciliationMatrix({year,month}:{year:number;month:number
  const days=onlyDifferences?allDays.filter(d=>rows.some(r=>r.day===d&&r.status==='mismatch')):allDays;
  const lookup=new Map(rows.map(r=>[`${r.name}:${r.day}`,r]));
  const detail=selected?lookup.get(`${selected.name}:${selected.day}`):null;
- return <section className="space-y-3" aria-label="د کارمندانو او تخنیکي راپورونو مطابقت">
+ return <section data-print-target className="space-y-3" aria-label="د کارمندانو او تخنیکي راپورونو مطابقت">
+  <h2 className="hidden print:block">د کارمندانو او تخنیکي راپورونو مطابقت · {JALALI_MONTHS[month-1]} {fmt(year)}</h2>
   <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3 print:hidden">
    <div><h2 className="text-sm font-semibold">د کارمندانو او تخنیکي راپورونو د توپیرونو جدول</h2><p className="text-xs text-muted-foreground">{JALALI_MONTHS[month-1]} {fmt(year)} · {report.data?.tab??'د میاشتې راپور'}</p></div>
    <div className="flex items-center gap-3"><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={onlyDifferences} onChange={e=>setOnlyDifferences(e.target.checked)}/>یوازې توپیر لرونکې ورځې</label><Button variant="outline" size="icon" aria-label="تازه کول" disabled={report.isFetching} onClick={()=>void report.refetch()}><RefreshCw className={`h-4 w-4 ${report.isFetching?'animate-spin':''}`}/></Button></div>

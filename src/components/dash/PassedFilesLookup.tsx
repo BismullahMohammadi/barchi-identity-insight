@@ -1,3 +1,4 @@
+import { printSection } from "@/lib/print-section";
 import { useState } from 'react';
 import { CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 const STAFF=['ټول کارمندان','عزیزالله الطاف','فاطمه علي رضایي','نېک ولي خان ایمان','محمد نبي بهزاد','محمد نسیم هاشمي'];
 export function PassedFilesLookup(){
  const [from,setFrom]=useState(todayValue);
- const [to,setTo]=useState('1405-08-24');
+ const [to,setTo]=useState(todayValue);
  const [firstPick,setFirstPick]=useState<string|null>(null);
  const [calendarOpen,setCalendarOpen]=useState(false);
  const [view,setView]=useState(()=>{const d=todayJalali();return {year:d.y,month:d.m};});
@@ -31,15 +32,14 @@ export function PassedFilesLookup(){
  const days=view.month<=6?31:view.month<=11?30:30;
  const sum=(key:'familyForms'|'individualForms')=>rows.reduce((n,r)=>n+(r[key]??0),0);
  return <section dir="rtl" className="space-y-4" aria-label="د پاس شوو دوسیو لټون">
-  <style>{`@media print { @page { size:A4 landscape; margin:10mm; } body * { visibility:hidden!important; } #passed-print,#passed-print * {visibility:visible!important;} #passed-print {position:absolute!important;inset:0!important;width:100%!important;background:white!important;color:black!important;} #passed-print .no-print,#passed-print .print-hide {display:none!important;} #passed-print table {width:100%!important;border-collapse:collapse!important;font-size:10px!important;} #passed-print th,#passed-print td {border:1px solid #777!important;padding:5px!important;color:black!important;} #passed-print thead {display:table-header-group!important;} #passed-print tr {break-inside:avoid!important;} #passed-print .overflow-x-auto {overflow:visible!important;} }`}</style>
-  <div id="passed-print" className="space-y-4 rounded-xl bg-background p-2 print:p-0">
+  <div id="passed-print" data-print-section className="space-y-4 rounded-xl bg-background p-2 print:p-0">
    <header className="hidden text-center print:block"><p className="text-xs font-medium">د افغانستان اسلامي امارت ـ د احصایې او معلوماتو ملي اداره</p><h2 className="text-lg font-bold">د دشت برچي د الکترونیکي تذکرو مرکز</h2><p className="font-semibold">د کنټرول برخې د پاس شوو دوسیو راپور</p><p className="text-sm">نېټه: {submitted.from.replace(/-/g,'/')} — {submitted.to.replace(/-/g,'/')} · کارمند: {employee}</p></header>
    <div className="no-print flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
     <div className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><Popover open={calendarOpen} onOpenChange={setCalendarOpen}><PopoverTrigger asChild><Button variant="outline" className="h-10 gap-2"><CalendarRange className="h-4 w-4"/>{from.replace(/-/g,'/')} — {to.replace(/-/g,'/')}</Button></PopoverTrigger><PopoverContent align="start" dir="rtl" className="w-[min(94vw,340px)] p-3"><div className="mb-3 flex items-center justify-between"><Button size="icon" variant="ghost" aria-label="مخکینۍ میاشت" onClick={()=>moveMonth(-1)}><ChevronRight className="h-4 w-4"/></Button><strong>{JALALI_MONTHS[view.month-1]} {view.year}</strong><Button size="icon" variant="ghost" aria-label="راتلونکې میاشت" onClick={()=>moveMonth(1)}><ChevronLeft className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1">{Array.from({length:days},(_,i)=><button type="button" key={i} onClick={()=>chooseDay(i+1)} className={`h-9 rounded-md text-sm hover:bg-muted ${`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`>=from&&`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`<=to?'bg-primary text-primary-foreground':''}`}>{i+1}</button>)}</div><div className="mt-3 flex justify-end"><Button type="button" size="sm" variant="outline" onClick={goToday}>نن</Button></div><p className="mt-2 text-xs text-muted-foreground">{firstPick?'اوس د پای نېټه وټاکئ':'د پیل او پای نېټې د ټاکلو لپاره دوه ورځې وټاکئ'}</p></PopoverContent></Popover></div>
     <label className="space-y-1 text-sm"><span className="block">کارمند</span><select className="h-10 max-w-full rounded-md border bg-background px-3" value={employee} onChange={e=>setEmployee(e.target.value)}>{STAFF.map(n=><option key={n}>{n}</option>)}</select></label>
     <label className="space-y-1 text-sm"><span className="block">د مراجع نوم یا فامیلي کوډ</span><input className="h-10 rounded-md border bg-background px-3" value={search} onChange={e=>setSearch(e.target.value)} placeholder="نوم یا کوډ ولیکئ"/></label>
     <Button disabled={report.isFetching} onClick={()=>{setHasSearched(true);setSubmitted({from,to,query:search.trim()});if(hasSearched&&submitted.from===from&&submitted.to===to&&submitted.query===search.trim())void report.refetch()}}>{report.isFetching?"لټون...":"لټون"}</Button>
-    <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={()=>window.print()}><Printer className="h-4 w-4"/> چاپ</Button>
+    <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={e=>printSection(e.currentTarget)}><Printer className="h-4 w-4"/> چاپ</Button>
    </div>
    {!hasSearched&&<p className="no-print text-sm text-muted-foreground">د ټاکلې مودې د دوسیو د کتلو لپاره «لټون» ووهئ.</p>}
    {report.isLoading&&<p role="status">د شیټونو معلومات لوستل کېږي…</p>}

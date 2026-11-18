@@ -2,7 +2,9 @@ import {useDashboardSettings} from "@/lib/dashboard-settings";
 import {Link} from "@tanstack/react-router";
 import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
 import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
-import { useMemo, useState } from "react";
+import { printSection } from "@/lib/print-section";
+import { flushSync } from "react-dom";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Download, Printer, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +36,18 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const [shown, setShown] = useState(20);
   const [expanded, setExpanded] = useState(false);
 
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    const prepare = () => flushSync(() => setPrinting(true));
+    const restore = () => setPrinting(false);
+    window.addEventListener("beforeprint", prepare);
+    window.addEventListener("afterprint", restore);
+    return () => {
+      window.removeEventListener("beforeprint", prepare);
+      window.removeEventListener("afterprint", restore);
+    };
+  }, []);
+
   const range = useMemo(() => dateRange ?? (month === "all"
     ? { from: null, to: null }
     : { from: { y: 1405, m: Number(month), d: 1 }, to: { y: 1405, m: Number(month), d: 31 } }),
@@ -49,7 +63,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
   const validRows = rows.filter(row => !isTotalRow(row));
   const mainTotal = canSum && validRows.length > 0 ? sumColumn(validRows, primary) : null;
   const primaryLabel = canSum ? table.headers[primary] : null;
-  const shownRows = filteredRows.slice(0, Math.max(shown,settings.tablePageSize));
+  const shownRows = printing ? filteredRows : filteredRows.slice(0, Math.max(shown,settings.tablePageSize));
   const subtotalRows=shownRows.filter(r=>!isTotalRow(r));
   const distributionTotals = title === "توزیع" && validRows.length ? {regular:sumColumn(validRows,1),services:sumColumn(validRows,2)} : null;
 
@@ -100,14 +114,15 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
         <div className="dashboard-panel p-4 sm:p-5"><p className="text-xs font-semibold text-muted-foreground">د خدماتو توزیع</p><p className="mt-2 text-2xl font-extrabold tabular-nums"><AnimatedNumber value={distributionTotals.services} maximumFractionDigits={2}/></p><p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې تذکرې</p></div>
       </section>}
 
-      <section className="dashboard-panel overflow-hidden">
+      <section data-print-section className="dashboard-panel overflow-hidden">
+        <h2 className="hidden print:block">{title}</h2>
         <button type="button" aria-expanded={expanded}
-          className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          className="no-print flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           onClick={() => setExpanded(v => !v)}>
           <span>تفصیلي معلومات {expanded ? "" : "(د اړتیا پر مهال)"}</span>
           <ChevronDown aria-hidden className={expanded ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
         </button>
-        {expanded && (
+        {(expanded || printing) && (
           <div className="space-y-3 border-t p-3">
             <div className="no-print flex flex-wrap items-center gap-2">
               <div className="relative min-w-40 flex-1 sm:max-w-xs">
@@ -118,7 +133,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
               <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filteredRows.length}>
                 <Download className="h-4 w-4" /> CSV
               </Button>
-              <Button size="sm" variant="outline" onClick={() => window.print()} disabled={!filteredRows.length}>
+              <Button size="sm" variant="outline" onClick={e => printSection(e.currentTarget)} disabled={!filteredRows.length}>
                 <Printer className="h-4 w-4" /> چاپ
               </Button>
             </div>
@@ -142,7 +157,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
               </Table>
               {!shownRows.length && <p className="p-4 text-center text-sm text-muted-foreground">د دې انتخاب لپاره معلومات نشته.</p>}
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <div className="no-print flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>{fmt(shownRows.length)} له {fmt(filteredRows.length)} قطارونو</span>
               {shownRows.length < filteredRows.length && (
                 <Button size="sm" variant="ghost" onClick={() => setShown(n => n + settings.tablePageSize)}>نور ښکاره کړئ</Button>
