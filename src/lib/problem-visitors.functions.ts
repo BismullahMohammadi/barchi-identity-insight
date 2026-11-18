@@ -18,7 +18,7 @@ export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requi
  return data as ProblemVisitor[];
 });
 export const changeProblemVisitor=createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
- .inputValidator((data:Command)=>{
+ .validator((data:Command)=>{
   if(!data || !["add","status","delete"].includes(data.action))throw new Error("INVALID_REQUEST");
   if(data.action==="add" && (![data.full_name,data.father_name,data.issue].every(v=>typeof v==="string") || data.full_name.trim().length<2 || data.full_name.length>180 || data.father_name.trim().length<2 || data.father_name.length>180 || data.issue.trim().length<3 || data.issue.length>2000))throw new Error("INVALID_REQUEST");
   if(data.action!=="add"&&!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(data.id))throw new Error("INVALID_REQUEST");

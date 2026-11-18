@@ -9,11 +9,11 @@ const SOURCES=[
  {name:'محمد نسیم هاشمي',id:'1TKHUyfnkr6uQaePIISt2fBJ7AB2YpMujM5OHqtoNBJQ'}
 ];
 const norm=(v:unknown)=>toLatinDigits(String(v??'')).replace(/[يى]/g,'ی').replace(/ك/g,'ک').trim();
-const dateRegex=/(1[34]\d{2})\s*[\/.-]\s*(\d{1,2})\s*[\/.-]\s*(\d{1,2})/;
+const dateRegex=/(1[34]\d{2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{1,2})/;
 function valid(y:number,m:number,d:number){return y>=1300&&y<=1499&&m>=1&&m<=12&&d>=1&&d<=(m<=6?31:m<=11?30:30)}
 function fullDate(value:unknown){const m=norm(value).match(dateRegex);if(!m)return null;const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);return valid(y,mo,d)?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
-function noteDate(value:unknown,year:number){const s=norm(value);const full=fullDate(s);if(full)return full;const m=s.match(/(?:^|\s)(\d{1,2})\s*[\/.-]\s*(\d{1,2})(?=\s|$)/);if(!m)return null;const mo=Number(m[1]),d=Number(m[2]);return valid(year,mo,d)?`${year}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
-function initialDate(title:string){const matches=[...norm(title).matchAll(/1[34]\d{2}\s*[\/.-]\s*\d{1,2}\s*[\/.-]\s*\d{1,2}/g)].map(m=>fullDate(m[0])).filter((x):x is string=>!!x);return matches[0]??null}
+function noteDate(value:unknown,year:number){const s=norm(value);const full=fullDate(s);if(full)return full;const m=s.match(/(?:^|\s)(\d{1,2})\s*[/.-]\s*(\d{1,2})(?=\s|$)/);if(!m)return null;const mo=Number(m[1]),d=Number(m[2]);return valid(year,mo,d)?`${year}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null}
+function initialDate(title:string){const matches=[...norm(title).matchAll(/1[34]\d{2}\s*[/.-]\s*\d{1,2}\s*[/.-]\s*\d{1,2}/g)].map(m=>fullDate(m[0])).filter((x):x is string=>!!x);return matches[0]??null}
 const delay=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
 const cache=new Map<string,{expires:number;value:unknown}>();
 const pending=new Map<string,Promise<unknown>>();

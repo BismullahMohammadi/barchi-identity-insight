@@ -1,7 +1,7 @@
 import {toLatinDigits} from "./jalali";
 
 export function normalizeFileCode(value:unknown):string {
- return toLatinDigits(String(value??"")).normalize("NFKC").replace(/[\u200b-\u200f\u064b-\u065f\s\-_/.,،]/g,"").toUpperCase();
+ return toLatinDigits(String(value??"")).normalize("NFKC").replace(/[\u064b-\u065f\u200b-\u200f\s\-_/.,،]/g,"").toUpperCase();
 }
 function header(value:unknown):string {
  return String(value??"").replace(/\s+/g,"").replace(/[يى]/g,"ی").replace(/ك/g,"ک");

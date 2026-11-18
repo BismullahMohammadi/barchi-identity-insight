@@ -1,5 +1,5 @@
 import {createSign} from "node:crypto";
-import {yesterdayJalali,formatJ} from "../src/lib/jalali";
+import {yesterdayJalali,formatJ,type JDate} from "../src/lib/jalali";
 import {findReportMonth,inspectStaffDay,type StaffCompleteness} from "../src/lib/monthly-staff-completeness";
 import {findInsijamMonth,inspectInsijamDay} from "../src/lib/insijam-completeness";
 
@@ -35,12 +35,11 @@ async function getJSON<T>(url:string,token:string):Promise<T>{
  if(!response.ok)throw new Error("Google spreadsheet read failed: "+response.status);
  return response.json() as Promise<T>;
 }
-async function monthlyReport(id:string,month:number,token:string,kind:"registration"|"insijam"):Promise<StaffCompleteness>{
+async function monthlyReport(id:string,day:JDate,token:string,kind:"registration"|"insijam"):Promise<StaffCompleteness>{
  const meta=await getJSON<{sheets?:{properties?:{title?:string}}[]}>(
   `https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets(properties(title))`,token);
  const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((v):v is string=>!!v);
- const title=kind==="registration"?findReportMonth(titles,month):findInsijamMonth(titles,month);
- const day=yesterdayJalali();
+ const title=kind==="registration"?findReportMonth(titles,day.m):findInsijamMonth(titles,day.m,day.y);
  if(!title)return kind==="registration"?inspectStaffDay([],day,""):inspectInsijamDay([],day,"");
  const range=encodeURIComponent(`'${title.replace(/'/g,"''")}'!A1:${kind==="registration"?"AL100":"AM90"}`);
  const result=await getJSON<{values?:unknown[][]}>(
@@ -63,8 +62,9 @@ async function persist(row:Record<string,unknown>){
 }
 async function main(){
  for(const name of REQUIRED)required(name);
- const day=yesterdayJalali(),date=formatJ(day);
- const friday=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Kabul",weekday:"short"}).format(new Date(Date.now()-86400000))==="Fri";
+ const now=Date.now();
+ const day=yesterdayJalali(now),date=formatJ(day);
+ const friday=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Kabul",weekday:"short"}).format(new Date(now-86400000))==="Fri";
  if(friday){
   await persist({report_date:date,status:"nonwork",missing_count:0,registration:null,insijam:null,error_text:null,checked_at:new Date().toISOString()});
   console.log("Scheduled check: Friday, no reminder.");return;
@@ -72,8 +72,8 @@ async function main(){
  try{
   const token=await googleToken();
   const [registration,insijam]=await Promise.all([
-   monthlyReport(REGISTRATION,day.m,token,"registration"),
-   monthlyReport(INSIJAM,day.m,token,"insijam"),
+   monthlyReport(REGISTRATION,day,token,"registration"),
+   monthlyReport(INSIJAM,day,token,"insijam"),
   ]);
   const valid=["complete","incomplete"].includes(registration.status)&&["complete","incomplete"].includes(insijam.status)&&registration.totalCount>0&&insijam.totalCount>0;
   const missing=valid?registration.missing.length+insijam.missing.length:0;
@@ -81,11 +81,11 @@ async function main(){
    registration:valid?sanitize(registration):null,insijam:valid?sanitize(insijam):null,
    missing_count:missing,error_text:valid?null:"One or more report layouts unavailable",checked_at:new Date().toISOString()});
   console.log("Scheduled check complete; status "+(!valid?"unavailable":missing?"incomplete":"complete")+".");
- }catch(error){
+ }catch{
   // Do not mark staff missing if either Google Sheets source failed.
   await persist({report_date:date,status:"unavailable",missing_count:0,registration:null,insijam:null,
-   error_text:error instanceof Error?error.message.slice(0,160):"Unknown error",checked_at:new Date().toISOString()});
-  throw error;
+   error_text:"Scheduled report check failed",checked_at:new Date().toISOString()});
+  throw new Error("Scheduled report check failed");
  }
 }
 await main();

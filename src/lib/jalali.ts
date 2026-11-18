@@ -7,7 +7,16 @@ export function parseJalali(raw: string): JDate | null {
   const match = toLatinDigits(String(raw ?? "")).trim().match(/^(1[34]\d\d)[/\-.](\d{1,2})[/\-.](\d{1,2})$/);
   if (!match) return null;
   const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
-  if (m < 1 || m > 12 || d < 1 || d > (m <= 6 ? 31 : m <= 11 ? 30 : 30)) return null;
+  if (m < 1 || m > 12 || d < 1 || d > (m <= 6 ? 31 : 30)) return null;
+  // Verify leap day against the same Persian calendar used for display.
+  if (m === 12 && d === 30) {
+    const march = Date.UTC(y + 622, 2, 19, 12);
+    const exists = [0, 1, 2].some(offset => {
+      const date = localJalali(new Date(march + offset * 86400000));
+      return date.y === y && date.m === m && date.d === d;
+    });
+    if (!exists) return null;
+  }
   return { y, m, d };
 }
 export function jKey(j: JDate): number { return j.y * 10000 + j.m * 100 + j.d; }
@@ -18,7 +27,7 @@ function localJalali(date: Date): JDate {
   return {y:get("year"),m:get("month"),d:get("day")};
 }
 export function todayJalali(): JDate { return localJalali(new Date()); }
-export function yesterdayJalali(): JDate { return localJalali(new Date(Date.now() - 86400000)); }
+export function yesterdayJalali(now = Date.now()): JDate { return localJalali(new Date(now - 86400000)); }
 export function nowJalaliTime(ts: number): string {
   const date = new Date(ts);
   const time = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kabul",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(date);

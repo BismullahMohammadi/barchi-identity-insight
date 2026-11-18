@@ -17,7 +17,8 @@ const grid:unknown[][]=[
 ];
 describe("insijam monthly staff completeness",()=>{
  it("finds proper month by exact year and name",()=>{
-  expect(findInsijamMonth(["میزان 1405","عقرب 1405","عقرب 1404"],8)).toBe("عقرب 1405");
+  expect(findInsijamMonth(["عقرب ۱۴۰۵","عقرب ۱۴۰۶"],8,1406)).toBe("عقرب ۱۴۰۶");
+  expect(findInsijamMonth(["میزان 1405","عقرب 1405","عقرب 1404"],8,1405)).toBe("عقرب 1405");
  });
  it("ignores physical sheet rows seven/eight and Javed Malekzada",()=>{
   const result=inspectInsijamDay(grid,{y:1405,m:8,d:5},"عقرب 1405");

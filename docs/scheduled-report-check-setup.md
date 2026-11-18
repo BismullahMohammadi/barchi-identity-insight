@@ -23,7 +23,7 @@ The source code and private Supabase table are prepared. **The schedule is not o
    - `SCHEDULE_SUPABASE_URL`: the existing Barchi Lovable/Supabase project's HTTPS API URL
    - `SCHEDULE_SUPABASE_SERVICE_ROLE_KEY`: **service_role secret** for that same project (server-side only)
 4. In the deployed Lovable environment, add `SCHEDULE_SUPABASE_SERVICE_ROLE_KEY` to **server-side secrets** to let the authenticated dashboard read the private status. Do **not** use a VITE_ prefix or expose it in frontend code. The existing server-side `SUPABASE_URL` and `OWNER_EMAILS` must remain configured.
-5. Ensure the database has `public.daily_report_checks`, RLS enabled, and no grants to `anon` or `authenticated`. The table was provisioned during this implementation. Only service role can write/read, and the authenticated server endpoint verifies `OWNER_EMAILS` before returning data.
+5. Ensure the database has `public.daily_report_checks`, RLS enabled, and no grants to `anon` or `authenticated`. For a fresh database, apply the repository migration `20261118000000_daily_report_checks.sql`. Only service role can write/read, and the authenticated server endpoint verifies `OWNER_EMAILS` before returning data.
 6. GitHub → Actions → **Check previous-day staff reports at 10 AM Kabul** → **Run workflow**. Verify the run succeeds, then log into the dashboard and check the new banner and WhatsApp button. If a Google Sheets read returns 403, share the sheet with the service account.
 7. Check for one of the statuses `incomplete`, `complete`, `nonwork` or `unavailable`. Do not interpret `unavailable` as the staff failing to submit a report.
 

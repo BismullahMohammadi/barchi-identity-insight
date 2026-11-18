@@ -36,7 +36,7 @@ export function FuelManagementPage(){
  const carriedLiters=deliveries.filter(d=>d.isCarryover).reduce((sum,d)=>sum+d.liters,0);
  const dieselTotal=dieselRecords.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
  const dieselHours=dieselRecords.reduce((sum,r)=>sum+(r.hours??0),0);
- const rows=q.data??[];
+ const rows=useMemo(()=>q.data??[],[q.data]);
  const balance=rows.reduce((sum,x)=>sum+(x.kind==="used"?-x.liters:x.liters),0);
  const received=rows.filter(x=>x.kind!=="used").reduce((sum,x)=>sum+x.liters,0);
  const used=rows.filter(x=>x.kind==="used").reduce((sum,x)=>sum+x.liters,0);

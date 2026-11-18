@@ -14,7 +14,7 @@ export const getFuelEntries=createServerFn({method:"GET"}).middleware([requireSu
  return (data??[]).map(x=>({...x,liters:Number(x.liters),generator_hours:x.generator_hours===null?null:Number(x.generator_hours)})) as FuelEntry[];
 });
 export const addFuelEntry=createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
-.inputValidator((x:FuelInput)=>{
+.validator((x:FuelInput)=>{
  if(!x||!["opening","received","used"].includes(x.kind)||typeof x.liters!=="number"||!Number.isFinite(x.liters)||x.liters<=0||x.liters>100000||!/^\d{4}-\d{2}-\d{2}$/.test(x.entry_date)||String(x.reference_no??"").length>120||String(x.supplier??"").length>180||String(x.note??"").length>2000||x.generator_hours!=null&&(!Number.isFinite(x.generator_hours)||x.generator_hours<0||x.generator_hours>100000))throw new Error("INVALID_FUEL_ENTRY");
  return x;
 }).handler(async({context,data})=>{

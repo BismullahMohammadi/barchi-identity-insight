@@ -137,7 +137,7 @@ function DashboardLayoutContent() {
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
           <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} /></div>
-          {(access.data?.owner===true || access.data?.permissions?.settings?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>}
+          {(access.data?.owner===true || access.data?.permissions?.["settings"]?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>}
         </div>
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -146,7 +146,7 @@ function DashboardLayoutContent() {
           <div className="flex max-h-full flex-col">
             {brand}
             <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} onNavigate={() => setOpen(false)} /></div>
-            {(access.data?.owner===true || access.data?.permissions?.settings?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>}
+            {(access.data?.owner===true || access.data?.permissions?.["settings"]?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>}
           </div>
         </SheetContent>
       </Sheet>

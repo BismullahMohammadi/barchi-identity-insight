@@ -1,12 +1,12 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { hasDashboardPermission } from './dashboard-permissions.server';
+import { hasDashboardPermission, type DashboardContext } from './dashboard-permissions.server';
 
 afterEach(()=>vi.unstubAllEnvs());
 const context=(row:unknown,error:unknown=null,email='manager@example.org')=>({
   claims:{email},
   userId:'12345678-1234-4234-8234-123456789abc',
   supabase:{from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:row,error})})})})},
-} as any);
+} as unknown as DashboardContext);
 describe('server-side manager permission checks',()=>{
  it('denies missing or disabled profiles',async()=>{
    vi.stubEnv('OWNER_EMAILS','owner@example.org');

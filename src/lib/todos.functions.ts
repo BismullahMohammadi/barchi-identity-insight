@@ -29,7 +29,7 @@ export const getTodos=createServerFn({method:"GET"}).middleware([requireSupabase
  return (data as DbTodo[]).map(mapTodo);
 });
 export const changeTodo=createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
- .inputValidator((input:TodoCommand)=>{
+ .validator((input:TodoCommand)=>{
   if(!input || !["add","toggle","delete","import"].includes(input.action))throw new Error("INVALID_TODO");
   if(input.action==="add" && (!input.title?.trim() || input.title.trim().length>180))throw new Error("INVALID_TODO");
   if((input.action==="toggle"||input.action==="delete") && !/^[0-9a-f-]{36}$/i.test(input.id))throw new Error("INVALID_TODO");

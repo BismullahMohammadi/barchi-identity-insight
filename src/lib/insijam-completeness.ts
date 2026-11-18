@@ -13,11 +13,11 @@ export function hasSubmittedInsijamValue(value:unknown):boolean {
  return /^[+-]?\d+(?:\.\d+)?$/.test(s) && Number.isFinite(Number(s));
 }
 const excluded=(name:string)=>/جاوید\s*ملک\s*زاد/i.test(name.replace(/ي/g,"ی").replace(/ك/g,"ک"));
-export function findInsijamMonth(titles:string[],month:number):string|null {
+export function findInsijamMonth(titles:string[],month:number,year:number):string|null {
  const word=MONTH_NAMES[month];
  if(!word)return null;
  const compact=(v:string)=>v.replace(/\s+/g,"").replace(/[يى]/g,"ی").replace(/ك/g,"ک");
- return titles.find(t=>compact(t).includes(compact(word))&&/1405|۱۴۰۵/.test(toLatinDigits(t)))??null;
+ return titles.find(t=>compact(t).includes(compact(word))&&toLatinDigits(t).match(/\b\d{4}\b/g)?.includes(String(year)))??null;
 }
 /** Insijam workbook: A=row number, B=staff, D=department, E=activity, F:AJ=day 1..31.
  * Excel rows 7 and 8 are placeholders; Javed Malekzada is explicitly excluded.

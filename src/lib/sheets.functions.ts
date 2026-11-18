@@ -36,7 +36,7 @@ export const getAccess = createServerFn({ method: "GET" })
     const email = emailFromClaims(context.claims);
     const owner=ownerAuthorized(context.claims);
     if(owner)return {email,allowed:true,owner:true,permissions:{} as Record<string,string[]>,allowlistConfigured:true};
-    const {data:profile,error}=await (context.supabase as any).from("dashboard_user_permissions")
+    const {data:profile,error}=await (context.supabase as unknown as SupabaseClient).from("dashboard_user_permissions")
       .select("active,role,permissions").eq("user_id",context.userId).maybeSingle();
     const perms=(!error && profile?.active===true && profile.role==="manager" && profile.permissions && typeof profile.permissions==="object")
       ? profile.permissions as Record<string,string[]> : {};
@@ -45,7 +45,7 @@ export const getAccess = createServerFn({ method: "GET" })
 export type SheetPayload = { fetchedAt: number; tabs: {slug:string;title:string;grid:string[][]}[] };
 export const getSheetTabs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: {slugs: string[]}) => {
+  .validator((input: {slugs: string[]}) => {
     if (!input || !Array.isArray(input.slugs) || !input.slugs.length || input.slugs.length > 12 || new Set(input.slugs).size !== input.slugs.length || input.slugs.some(s=>!TABS.some(t=>t.slug===s))) throw new Error("Invalid tabs");
     return {slugs:input.slugs};
   })
@@ -82,7 +82,7 @@ export type DailyFormsPayload = {
 };
 export const getDailyForms = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: {cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
+  .validator((data: {cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
   .handler(async ({ context,data }): Promise<DailyFormsPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
     if (!(await hasDashboardPermission(context,"dashboard","view"))) throw new Error("ACCESS_DENIED");
@@ -100,7 +100,7 @@ export const getDailyForms = createServerFn({ method: "POST" })
     const escaped=match.name.replace(/'/g,"''");
     // Daily template changes merged cells and columns: detect the aggregate by its label.
     // Manual owner override is a validated A1 cell (A1:AZ20) in this same authorized tab.
-    const range=encodeURIComponent(`\'${escaped}\'!A1:AZ20`);
+    const range=encodeURIComponent(`'${escaped}'!A1:AZ20`);
     const response=await fetch(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE`,{method:"GET",headers,cache:"no-store"});
     if(!response.ok)throw new Error(`FORMS_SHEETS_ERROR_${response.status}`);
     const body=await response.json() as {values?:unknown[][]};
@@ -123,7 +123,7 @@ export type DailyCoordinationPayload = {
 };
 export const getDailyCoordination = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data:{cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
+  .validator((data:{cell?:string;nonce?:number})=>({cell:normalizeReferralCell(data?.cell??""),nonce:Number(data?.nonce)||0}))
   .handler(async ({ context,data }): Promise<DailyCoordinationPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
     if (!(await hasDashboardPermission(context,"dashboard","view"))) throw new Error("ACCESS_DENIED");
@@ -223,7 +223,7 @@ export const getInsijamDailyCompleteness=createServerFn({method:"GET"}).middlewa
   const yesterday=completenessReviewDay();
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"INSIJAM_SHEETS_ERROR");
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
-  const month=findInsijamMonth(titles,yesterday.m);
+  const month=findInsijamMonth(titles,yesterday.m,yesterday.y);
   if(!month)return inspectInsijamDay([],yesterday,"");
   const range=encodeURIComponent(`'${month.replace(/'/g,"''")}'!A1:AM90`);
   const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${INSIJAM_SPREADSHEET_ID}/values/${range}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"INSIJAM_SHEETS_ERROR");
@@ -378,7 +378,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
 
 export const getHistoricalReferrals=createServerFn({method:"POST"})
  .middleware([requireSupabaseAuth])
- .inputValidator((input:{from:string;to:string})=>{
+ .validator((input:{from:string;to:string})=>{
   const from=parseJalali(input?.from??""),to=parseJalali(input?.to??"");
   if(!from||!to||jKey(from)>jKey(to)||(to.y-from.y)*12+to.m-from.m>2)throw new Error("HISTORICAL_RANGE_MAX_THREE_MONTHS");
   return {from,to};

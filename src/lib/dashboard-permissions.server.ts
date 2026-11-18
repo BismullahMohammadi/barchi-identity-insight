@@ -5,7 +5,7 @@ export type DashboardAction = 'view'|'create'|'edit'|'delete'|'print'|'export';
 export type DashboardContext = {
   claims: unknown;
   userId: string;
-  supabase: SupabaseClient<any>;
+  supabase: SupabaseClient;
 };
 export function isOwner(claims:unknown):boolean {
   const email=(claims as {email?:unknown}|null)?.email;

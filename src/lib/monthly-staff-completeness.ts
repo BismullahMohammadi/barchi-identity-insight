@@ -1,4 +1,4 @@
-import type { JDate } from "./jalali";
+import { toLatinDigits, type JDate } from "./jalali";
 export type StaffStatus={name:string;role:string;activities:string[];submitted:boolean};
 export type CompletenessStatus="complete"|"incomplete"|"unavailable"|"nonwork";
 export type StaffCompleteness={date:string;sheet:string;status:CompletenessStatus;staff:StaffStatus[];missing:StaffStatus[];submittedCount:number;totalCount:number;message:string};
@@ -27,7 +27,7 @@ export function inspectStaffDay(grid:unknown[][],date:JDate,sheet:string):StaffC
  const headerIndex=grid.slice(0,8).findIndex(row=>stringOf(row[3]).includes("اسم") && stringOf(row[6]).includes("فعالیت") && numeric(row[7]));
  if(headerIndex<0)return unknown("د راپور د کارمندانو او ورځو کالمونه ونه پېژندل شول.");
  const header=grid[headerIndex]??[];
- const dayCol=header.findIndex((cell,i)=>i>=7 && numeric(cell)&&Number(stringOf(cell))===date.d);
+ const dayCol=header.findIndex((cell,i)=>i>=7 && numeric(cell)&&Number(toLatinDigits(stringOf(cell)))===date.d);
  if(dayCol<0)return unknown("د تېرې ورځې کالم په راپور کې نشته.");
  const people:StaffStatus[]=[];
  let current:StaffStatus|null=null;

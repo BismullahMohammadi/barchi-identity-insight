@@ -29,6 +29,10 @@ describe("per-employee previous-day report monitoring",()=>{
   expect(x.status).toBe("complete");
   expect(x.missing).toHaveLength(0);
  });
+ it("reads a day heading written with local digits",()=>{
+  const localized=headers[0]!.map(cell=>cell===5?"۵":cell);
+  expect(inspectStaffDay([localized,...rows],{y:1405,m:8,d:5},"عقرب").submittedCount).toBe(2);
+ });
  it("reads the alternative row-four monthly header layout",()=>{
   const x=inspectStaffDay([["اداره"],["metadata"],["metadata"],...headers,...rows],{y:1405,m:8,d:5},"ګزارش ماه عقرب");
   expect(x.status).toBe("incomplete");

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, LineChart, Lock } from "lucide-react";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
@@ -30,7 +31,7 @@ function Landing() {
     let mounted = true;
     supabase.auth.getUser().then(({data,error}) => {
       if (!mounted) return;
-      if (error) setLoginError("د حساب د تایید خدمت ته اړیکه ونه شوه. د انټرنټ یا Supabase اتصال وګورئ.");
+      if (error && !isAuthSessionMissingError(error)) setLoginError("د حساب د تایید خدمت ته اړیکه ونه شوه. د انټرنټ یا Supabase اتصال وګورئ.");
       else setSignedIn(!!data.user);
     }).catch(() => { if (mounted) setLoginError("د حساب د تایید اتصال ناکام شو. بیا هڅه وکړئ."); });
     const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{

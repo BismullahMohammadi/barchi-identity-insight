@@ -35,7 +35,7 @@ function requireOwner(claims:unknown) {
 }
 function permissionDb(client:unknown) {
   // Tables are introduced by a SQL migration; generated Supabase types will be refreshed separately.
-  return client as SupabaseClient<any>;
+  return client as SupabaseClient;
 }
 function adminClient() {
   const url = process.env['SUPABASE_URL'];
@@ -70,7 +70,7 @@ export const listManagedUsers = createServerFn({method:'GET'})
  });
 export const inviteManagedUser = createServerFn({method:'POST'})
  .middleware([requireSupabaseAuth])
- .inputValidator((value:unknown)=>userInput.parse(value))
+ .validator((value:unknown)=>userInput.parse(value))
  .handler(async({context,data})=>{
    requireOwner(context.claims);
    setResponseHeader('Cache-Control','private, no-store');
@@ -113,7 +113,7 @@ export const inviteManagedUser = createServerFn({method:'POST'})
  });
 export const updateManagedUser = createServerFn({method:'POST'})
  .middleware([requireSupabaseAuth])
- .inputValidator((value:unknown)=>updateInput.parse(value))
+ .validator((value:unknown)=>updateInput.parse(value))
  .handler(async({context,data})=>{
    requireOwner(context.claims);
    setResponseHeader('Cache-Control','private, no-store');

@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -8,6 +9,7 @@ export const Route = createFileRoute("/_authenticated")({
     // Keep the existing session on screen; server functions still verify JWTs.
     const { data, error } = await supabase.auth.getUser();
     if (data.user) return;
+    if (isAuthSessionMissingError(error)) throw redirect({ to: "/" });
     if (error) {
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) return;

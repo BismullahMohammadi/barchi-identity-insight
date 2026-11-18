@@ -28,8 +28,8 @@ const msg = (e: unknown) => { const s = String(e instanceof Error ? e.message : 
 export function GeneratorModelPanel({ sheetDeliveries }: { sheetDeliveries: DieselDelivery[] }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["generator-model"], queryFn: () => getGeneratorData(), refetchInterval: 60000 });
-  const readings = q.data?.readings ?? [];
-  const deliveries = q.data?.deliveries ?? [];
+  const readings = useMemo(() => q.data?.readings ?? [], [q.data?.readings]);
+  const deliveries = useMemo(() => q.data?.deliveries ?? [], [q.data?.deliveries]);
   const model = useMemo(() => computeModel(readings, deliveries), [readings, deliveries]);
   const lastRate = readings.at(-1)?.rate_lph ?? GENERATOR_BASELINE.rateLph;
   const lastHours = readings.at(-1)?.meter_hours ?? GENERATOR_BASELINE.meterHours;

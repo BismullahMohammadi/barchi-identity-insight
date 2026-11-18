@@ -32,7 +32,7 @@ export const getGeneratorData = createServerFn({ method: "GET" }).middleware([re
 
 type ReadingInput = { reading_at: string; meter_hours: number; rate_lph: number; measured_liters: number | null; note?: string };
 export const addMeterReading = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((x: ReadingInput) => {
+  .validator((x: ReadingInput) => {
     if (!x || !isIso(x.reading_at) || typeof x.meter_hours !== "number" || !Number.isFinite(x.meter_hours) || x.meter_hours < 5113 || x.meter_hours > 1000000
       || typeof x.rate_lph !== "number" || !Number.isFinite(x.rate_lph) || x.rate_lph <= 0 || x.rate_lph > 100
       || (x.measured_liters !== null && (typeof x.measured_liters !== "number" || !Number.isFinite(x.measured_liters) || x.measured_liters < 0 || x.measured_liters > 100000))
@@ -49,7 +49,7 @@ export const addMeterReading = createServerFn({ method: "POST" }).middleware([re
 
 type DeliveryInput = { delivered_at: string; liters: number; reference_no: string; supplier?: string; note?: string };
 export const addVerifiedDelivery = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((x: DeliveryInput) => {
+  .validator((x: DeliveryInput) => {
     if (!x || !isIso(x.delivered_at) || typeof x.liters !== "number" || !Number.isFinite(x.liters) || x.liters <= 0 || x.liters > 100000
       || typeof x.reference_no !== "string" || !x.reference_no.trim() || x.reference_no.length > 120
       || String(x.supplier ?? "").length > 180 || String(x.note ?? "").length > 2000) throw new Error("INVALID_DELIVERY");

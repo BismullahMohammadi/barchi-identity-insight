@@ -102,7 +102,7 @@ export function newestRegisteredPeople(titles:string[],load:{date:JDate;grid:unk
  if(!chosen||!load||jKey(load.date)!==jKey(chosen.date))
   return {date:null,people:[],source:null,diagnostic:base};
  const {records,layout}=readRegistrationRows(load.grid);
- const dateCell=load.grid.slice(0,4).flat().map(clean).find(v=>/14\d\d[\/\-.]\d{1,2}[\/\-.]\d{1,2}/.test(toLatinDigits(v)))??null;
+ const dateCell=load.grid.slice(0,4).flat().map(clean).find(v=>/14\d\d[/\-.]\d{1,2}[/\-.]\d{1,2}/.test(toLatinDigits(v)))??null;
  const diagnostic:RegistrationDiagnostic={...base,status:!layout?"no_header":records.length?"ok":"empty_today",
   headerRow:layout?layout.headerIndex+1:null,groups:layout?.offsets.length??0,
   rowsScanned:layout?Math.max(0,load.grid.length-layout.headerIndex-1):0,sheetDateCell:dateCell?toLatinDigits(dateCell):null};

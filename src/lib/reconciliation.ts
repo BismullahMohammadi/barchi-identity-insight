@@ -25,7 +25,7 @@ export const metricDefinitions = [
 export type ReconciliationStatus = 'mismatch' | 'equal' | 'missing' | 'holiday';
 export type CellValue = { value: number | null; reason: 'blank' | 'holiday' | 'invalid' | null };
 export function reportText(value: unknown): string {
-  return toLatinDigits(String(value ?? '')).normalize('NFKC').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/[ـ\u200c\u200d\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
+  return toLatinDigits(String(value ?? '')).normalize('NFKC').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/[ـ\u200c-\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
 }
 export function reportNumber(raw: unknown): CellValue {
   const text = reportText(raw);

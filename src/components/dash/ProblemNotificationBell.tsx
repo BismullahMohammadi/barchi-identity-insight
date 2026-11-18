@@ -13,19 +13,19 @@ export function ProblemNotificationBell({matches}:{matches:Match[]}){
  useEffect(()=>{
   if(known.current===null){
    let previous:string[]|null=null;
-   try{const raw=window.localStorage.getItem(KEY);if(raw){const x:unknown=JSON.parse(raw);if(Array.isArray(x))previous=x.filter((v):v is string=>typeof v==="string");}}catch{}
+   try{const raw=window.localStorage.getItem(KEY);if(raw){const x:unknown=JSON.parse(raw);if(Array.isArray(x))previous=x.filter((v):v is string=>typeof v==="string");}}catch{/* Browser storage may be unavailable. */}
    known.current=new Set(previous??matches.map(m=>m.key));
-   if(previous===null){try{window.localStorage.setItem(KEY,JSON.stringify([...known.current]));}catch{}return;}
+   if(previous===null){try{window.localStorage.setItem(KEY,JSON.stringify([...known.current]));}catch{/* Browser storage may be unavailable. */}return;}
   }
   const fresh=matches.filter(m=>!known.current!.has(m.key));
   if(!fresh.length)return;
   fresh.forEach(m=>known.current!.add(m.key));
-  try{window.localStorage.setItem(KEY,JSON.stringify([...known.current].slice(-1000)));}catch{}
+  try{window.localStorage.setItem(KEY,JSON.stringify([...known.current].slice(-1000)));}catch{/* Browser storage may be unavailable. */}
   if("Notification" in window&&Notification.permission==="granted"){
-   try{const n=new Notification("نوی احتمالي مشکلاتي مراجع",{body:String(fresh.length)+" نوی احتمالي تطابق؛ په سیستم کې یې وګورئ.",tag:"barchi-problem-match"});n.onclick=()=>{window.focus();window.location.assign("/dashboard/problem-visitors");n.close();};}catch{}
+   try{const n=new Notification("نوی احتمالي مشکلاتي مراجع",{body:String(fresh.length)+" نوی احتمالي تطابق؛ په سیستم کې یې وګورئ.",tag:"barchi-problem-match"});n.onclick=()=>{window.focus();window.location.assign("/dashboard/problem-visitors");n.close();};}catch{/* Browser notifications may be disabled. */}
   }
  },[matches]);
- async function request(){if(!("Notification" in window))return;try{setPermission(await Notification.requestPermission());}catch{}}
+ async function request(){if(!("Notification" in window))return;try{setPermission(await Notification.requestPermission());}catch{/* Browser notifications may be disabled. */}}
  const count=matches.length;
  return <div className="relative">
   <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl" aria-label={"خبرتیاوې: "+count} aria-expanded={open} onClick={()=>setOpen(v=>!v)}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -end-1 -top-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{count>99?"99+":count}</span>}</Button>
