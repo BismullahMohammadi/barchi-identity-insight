@@ -259,6 +259,7 @@ function Overview() {
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.key==="intake"?(()=>{
                     const people=item.group.people;
+                    if(item.group.requestedDate && item.group.date!==item.group.requestedDate) return `د نن ورځې (${item.group.requestedDate}) د جمع‌آورۍ معلومات نشته؛ د ${item.group.date??"نامعلومې ورځې"} شمېرې د نن ورځې په توګه نه حسابېږي.`;
                     const registered=recentData?.registration.people??[];
                     // Status counts represent referred files/clients, not their family-member totals.
                     // One family can have many members but must only count as one referral.
@@ -273,7 +274,7 @@ function Overview() {
                     const ordinary=people.filter(p=>p.team!=="ثبت تولد");
                     return `ثبت تولد: ${sumMembers(births)} · عادي: ${sumMembers(ordinary)}`;
                   })()}
-                  <span className="ms-1 opacity-70">{item.key==="intake"?"(د معرفي شوو دوسیو شمېر)":"(د فامیل غړي، په لېست کې)"}</span>
+                  <span className="ms-1 opacity-70">{item.key==="intake"?"(د معرفي شوو انفرادي ثبتونو شمېر)":"(د فامیل غړي، په لېست کې)"}</span>
                 </p>
               ):null}
               {expandedVisitors[item.key]&&<div id={`daily-visitor-details-${item.key}`}>
