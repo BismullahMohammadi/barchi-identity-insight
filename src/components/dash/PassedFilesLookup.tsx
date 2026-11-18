@@ -1,29 +1,31 @@
 import { useState } from 'react';
 import { CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { JALALI_MONTHS } from '@/lib/jalali';
+import { JALALI_MONTHS, todayJalali } from '@/lib/jalali';
+const todayValue=()=>{const d=todayJalali();return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;};
 import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
 import { getPassedFiles } from '@/lib/passed-files.functions';
 import { Button } from '@/components/ui/button';
 const STAFF=['ټول کارمندان','عزیزالله الطاف','فاطمه علي رضایي','نېک ولي خان ایمان','محمد نبي بهزاد','محمد نسیم هاشمي'];
 export function PassedFilesLookup(){
- const [from,setFrom]=useState('1405-08-24');
+ const [from,setFrom]=useState(todayValue);
  const [to,setTo]=useState('1405-08-24');
  const [firstPick,setFirstPick]=useState<string|null>(null);
  const [calendarOpen,setCalendarOpen]=useState(false);
- const [view,setView]=useState({year:1405,month:8});
+ const [view,setView]=useState(()=>{const d=todayJalali();return {year:d.y,month:d.m};});
  const [showDetails,setShowDetails]=useState(false);
  const [search,setSearch]=useState('');
  const [hasSearched,setHasSearched]=useState(false);
  const [employee,setEmployee]=useState('ټول کارمندان');
- const [submitted,setSubmitted]=useState({from:'1405-08-24',to:'1405-08-24',query:''});
+ const [submitted,setSubmitted]=useState(()=>({from:todayValue(),to:todayValue(),query:''}));
  const report=useQuery({queryKey:['passed-files',submitted.from,submitted.to,submitted.query],queryFn:()=>getPassedFiles({data:submitted}),enabled:hasSearched&&submitted.from<=submitted.to,retry:false,staleTime:120000});
  const normalizedSearch=search.trim().toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/\s+/g,'');
  const rows=(report.data?.rows??[]).filter(r=>(Boolean(submitted.query)||employee==='ټول کارمندان'||r.employee===employee));
  const showWorkType=employee==='محمد نبي بهزاد'||(employee==='ټول کارمندان'&&rows.some(r=>r.employee==='محمد نبي بهزاد'));
  const incomplete=!!report.data?.warnings.length;
  const warningCount=report.data?.warnings.length??0;
+ function goToday(){const d=todayJalali();const date=todayValue();setFrom(date);setTo(date);setFirstPick(null);setView({year:d.y,month:d.m});setCalendarOpen(false);setHasSearched(true);setSubmitted({from:date,to:date,query:search.trim()});}
  function moveMonth(delta:number){setView(v=>{const n=v.year*12+v.month-1+delta;return {year:Math.floor(n/12),month:((n%12)+12)%12+1};});}
  function chooseDay(day:number){const chosen=`${view.year}-${String(view.month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;if(!firstPick){setFirstPick(chosen);setFrom(chosen);setTo(chosen);}else{setFrom(chosen<firstPick?chosen:firstPick);setTo(chosen<firstPick?firstPick:chosen);setFirstPick(null);setCalendarOpen(false);}}
  const days=view.month<=6?31:view.month<=11?30:30;
@@ -33,7 +35,7 @@ export function PassedFilesLookup(){
   <div id="passed-print" className="space-y-4 rounded-xl bg-background p-2 print:p-0">
    <header className="hidden text-center print:block"><p className="text-xs font-medium">د افغانستان اسلامي امارت ـ د احصایې او معلوماتو ملي اداره</p><h2 className="text-lg font-bold">د دشت برچي د الکترونیکي تذکرو مرکز</h2><p className="font-semibold">د کنټرول برخې د پاس شوو دوسیو راپور</p><p className="text-sm">نېټه: {submitted.from.replace(/-/g,'/')} — {submitted.to.replace(/-/g,'/')} · کارمند: {employee}</p></header>
    <div className="no-print flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
-    <div className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><Popover open={calendarOpen} onOpenChange={setCalendarOpen}><PopoverTrigger asChild><Button variant="outline" className="h-10 gap-2"><CalendarRange className="h-4 w-4"/>{from.replace(/-/g,'/')} — {to.replace(/-/g,'/')}</Button></PopoverTrigger><PopoverContent align="start" dir="rtl" className="w-[min(94vw,340px)] p-3"><div className="mb-3 flex items-center justify-between"><Button size="icon" variant="ghost" aria-label="مخکینۍ میاشت" onClick={()=>moveMonth(-1)}><ChevronRight className="h-4 w-4"/></Button><strong>{JALALI_MONTHS[view.month-1]} {view.year}</strong><Button size="icon" variant="ghost" aria-label="راتلونکې میاشت" onClick={()=>moveMonth(1)}><ChevronLeft className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1">{Array.from({length:days},(_,i)=><button type="button" key={i} onClick={()=>chooseDay(i+1)} className={`h-9 rounded-md text-sm hover:bg-muted ${`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`>=from&&`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`<=to?'bg-primary text-primary-foreground':''}`}>{i+1}</button>)}</div><p className="mt-2 text-xs text-muted-foreground">{firstPick?'اوس د پای نېټه وټاکئ':'د پیل او پای نېټې د ټاکلو لپاره دوه ورځې وټاکئ'}</p></PopoverContent></Popover></div>
+    <div className="space-y-1 text-sm"><span className="block">هجري شمسي نېټه</span><Popover open={calendarOpen} onOpenChange={setCalendarOpen}><PopoverTrigger asChild><Button variant="outline" className="h-10 gap-2"><CalendarRange className="h-4 w-4"/>{from.replace(/-/g,'/')} — {to.replace(/-/g,'/')}</Button></PopoverTrigger><PopoverContent align="start" dir="rtl" className="w-[min(94vw,340px)] p-3"><div className="mb-3 flex items-center justify-between"><Button size="icon" variant="ghost" aria-label="مخکینۍ میاشت" onClick={()=>moveMonth(-1)}><ChevronRight className="h-4 w-4"/></Button><strong>{JALALI_MONTHS[view.month-1]} {view.year}</strong><Button size="icon" variant="ghost" aria-label="راتلونکې میاشت" onClick={()=>moveMonth(1)}><ChevronLeft className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1">{Array.from({length:days},(_,i)=><button type="button" key={i} onClick={()=>chooseDay(i+1)} className={`h-9 rounded-md text-sm hover:bg-muted ${`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`>=from&&`${view.year}-${String(view.month).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`<=to?'bg-primary text-primary-foreground':''}`}>{i+1}</button>)}</div><div className="mt-3 flex justify-end"><Button type="button" size="sm" variant="outline" onClick={goToday}>نن</Button></div><p className="mt-2 text-xs text-muted-foreground">{firstPick?'اوس د پای نېټه وټاکئ':'د پیل او پای نېټې د ټاکلو لپاره دوه ورځې وټاکئ'}</p></PopoverContent></Popover></div>
     <label className="space-y-1 text-sm"><span className="block">کارمند</span><select className="h-10 max-w-full rounded-md border bg-background px-3" value={employee} onChange={e=>setEmployee(e.target.value)}>{STAFF.map(n=><option key={n}>{n}</option>)}</select></label>
     <label className="space-y-1 text-sm"><span className="block">د مراجع نوم یا فامیلي کوډ</span><input className="h-10 rounded-md border bg-background px-3" value={search} onChange={e=>setSearch(e.target.value)} placeholder="نوم یا کوډ ولیکئ"/></label>
     <Button disabled={report.isFetching} onClick={()=>{setHasSearched(true);setSubmitted({from,to,query:search.trim()});if(hasSearched&&submitted.from===from&&submitted.to===to&&submitted.query===search.trim())void report.refetch()}}>{report.isFetching?"لټون...":"لټون"}</Button>
