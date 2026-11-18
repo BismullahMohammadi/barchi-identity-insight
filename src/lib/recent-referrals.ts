@@ -1,7 +1,7 @@
 import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
 import {selectTodayCoordinationTab} from "./daily-forms";
 export type RecentReferral={name:string;father:string;familyMembers:number|null;fileCode?:string|undefined;rejectionReason?:string|undefined;birthCardConfirmed?:boolean|undefined;dailyApproved?:boolean|undefined;team?:string|undefined;recordKey?:string|undefined};
-export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null;diagnostic?:RegistrationDiagnostic|undefined};
+export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null;diagnostic?:RegistrationDiagnostic|undefined;requestedDate?:string|undefined};
 export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;teamCounts?:[number,number,number,number];fetchedAt:number;birthCardAddedCount?:number;potentialMatches?:{key:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
 
 function clean(x:unknown):string{return String(x??"").replace(/\s+/g," ").trim();}
@@ -42,7 +42,7 @@ export function newestCollectedPeople(grid:unknown[][],today:JDate,limit=5):Refe
  if(current)groups.push(current);
  const latest=groups.filter(g=>jKey(g.date)<=jKey(today)&&g.people.length)
    .sort((a,b)=>jKey(b.date)-jKey(a.date))[0];
- return {date:latest?formatJ(latest.date):null,people:latest?latest.people.slice(-limit).reverse():[],source:null};
+ return {date:latest?formatJ(latest.date):null,people:latest?latest.people.slice(-limit).reverse():[],source:null,requestedDate:formatJ(today)};
 }
 /** Scan every dated section of the monthly intake tab. Birth-card approvals may
  * arrive on a later day than the original intake, so latest-day-only is insufficient. */
