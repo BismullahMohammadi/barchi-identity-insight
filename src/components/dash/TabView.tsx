@@ -90,7 +90,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
 
   return (
     <div className="space-y-4">
-      {hasUndatedRange&&<p role="status" className="rounded-lg border p-3 text-sm text-muted-foreground">په دې راپور کې د ورځې نېټه نشته؛ د ټاکلې مودې دقیقې شمېرې نه شي محاسبه کېدای. د ناسمو مجموعو د مخنیوي لپاره معلومات نه ښودل کېږي.</p>}
+      {hasUndatedRange&&<p role="status" className="rounded-lg border p-3 text-sm text-muted-foreground">راپور ورځنۍ نېټې نه لري، نو د ټاکلې مودې شمېرې نه شي محاسبه کېدای.</p>}
       {!detailsOnly && <section className="dashboard-panel flex flex-wrap items-end justify-between gap-4 p-4 sm:p-5">
         <div>
           <p className="text-sm text-muted-foreground">{primaryLabel ?? "د راپور قطارونه"}</p>
@@ -118,7 +118,7 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
       </section>}
 
       <section data-print-section className="dashboard-panel overflow-hidden">
-        <h2 className="hidden print:block">{title}</h2>
+        <h2 className="hidden print:block">{TABS.find(tab=>tab.title===title)?.label ?? title}</h2>
         <button type="button" aria-expanded={expanded}
           className="no-print flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           onClick={() => setExpanded(v => !v)}>

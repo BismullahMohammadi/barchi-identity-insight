@@ -225,7 +225,7 @@ function Overview() {
         {mainCards.map(renderCard)}
       </div>
 
-      {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو تاریخي تفصیلي لېست تر درېیو میاشتو پورې ترلاسه کېږي. د اوږدې مودې لپاره درې میاشتې یا کمه موده وټاکئ.</p>}
+      {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو د تفصیلي لېست لپاره درې میاشتې یا تر دې کمه موده وټاکئ.</p>}
       {range&&historicalSupported&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې د مراجعینو شمېرې د ثبت او جمع‌آورۍ له شیټونو څخه دي؛ د تایید او رد تاریخي حالتونه لا په دې مودې کې نه دي محاسبه شوي.</p>}
       {settings.showDailyVisitors && (!range||historicalSupported) && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">

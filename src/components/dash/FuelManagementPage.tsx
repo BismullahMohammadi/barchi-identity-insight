@@ -54,7 +54,7 @@ export function FuelManagementPage(){
  }
  return <div className="mx-auto max-w-6xl space-y-5 pb-8">
   <header className="rounded-2xl border bg-card p-5 shadow-sm sm:p-6">
-   <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-primary">ساده او منظم حساب</p>
+   <div className="flex flex-wrap items-center justify-between gap-3"><div>
     <h1 className="mt-1 flex items-center gap-2 text-2xl font-extrabold"><Fuel className="h-7 w-7 text-primary"/>د تېلو او ډیزلو مدیریت</h1>
     <p className="mt-2 text-sm leading-6 text-muted-foreground">د جنراتور ساعتونه او نوي ډیزل ثبت کړئ؛ پاتې موجودي او راپورونه په آسانۍ وګورئ.</p></div>
     <Button variant="outline" size="sm" onClick={()=>{void q.refetch();void diesel.refetch();}} disabled={q.isFetching||diesel.isFetching}><RefreshCw className={"h-4 w-4 "+(q.isFetching||diesel.isFetching?"animate-spin":"")}/>ټول تازه کړئ</Button></div>

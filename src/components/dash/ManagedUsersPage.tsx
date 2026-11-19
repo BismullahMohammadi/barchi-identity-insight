@@ -4,12 +4,7 @@ import { Button } from '@/components/ui/button';
 import { availableActions, DASHBOARD_SECTIONS, DASHBOARD_ACTIONS } from "@/lib/dashboard-access";
 import { inviteManagedUser, listManagedUsers, updateManagedUser } from '@/lib/managed-users.functions';
 
-const names:Record<string,string> = {
- dashboard:'د مرکز کاري بهیر',total:'مجموعي راپور',identity:'تثبیت هویت',control:'کنټرول کیفیت',
- services:'خدمات',distribution:'توزیع',bank:'عواید',arrivals:'معرفي شوي', 'archive-scan':'آرشیف سکن',
- annual:'کلنی راپور','problem-visitors':'مشکلاتي مراجعین','fuel-management':'د تېلو مدیریت',
- reconciliation:'د راپورونو مطابقت','center-quality':'د مرکزونو پرتله',settings:'تنظیمات'
-};
+import { sectionLabels as names } from "@/lib/tabs";
 const actions:Record<string,string> = {view:'لیدل',create:'اضافه کول',edit:'اصلاح',delete:'حذف',print:'چاپ',export:'صادرول'};
 type Perms = Record<string,string[]>;
 const empty = ():Perms=>({});
@@ -28,7 +23,7 @@ const errors:Record<string,string>={
 const friendlyError=(e:unknown)=>{const message=String((e as Error)?.message??e);return Object.entries(errors).find(([code])=>message.includes(code))?.[1]??'عملیات ناکام شول. د سرور اتصال او تنظیمات وګورئ.';};
 function PermissionEditor({value,onChange}:{value:Perms;onChange:(next:Perms)=>void}) {
  return <div className="space-y-2">
-  <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold">د هرې برخې صلاحیتونه — د لیدلو اجازه: {countViews(value)} / {DASHBOARD_SECTIONS.length}</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" size="sm" onClick={()=>onChange(viewAll())}>ټولو برخو ته یوازې لیدل</Button><Button type="button" variant="outline" size="sm" onClick={()=>onChange(empty())}>ټول صلاحیتونه پاک کړئ</Button></div></div>
+  <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold">د هرې برخې صلاحیتونه — د لیدلو اجازه: {countViews(value)} / {DASHBOARD_SECTIONS.length}</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" size="sm" onClick={()=>onChange(viewAll())}>د ټولو برخو د لیدلو اجازه</Button><Button type="button" variant="outline" size="sm" onClick={()=>onChange(empty())}>ټول صلاحیتونه پاک کړئ</Button></div></div>
   <div className="overflow-x-auto rounded-xl border">
    <table className="w-full min-w-[680px] text-sm">
     <thead><tr><th className="p-3 text-right">برخه</th>{DASHBOARD_ACTIONS.map(a=><th key={a} className="p-2">{actions[a]}</th>)}</tr></thead>
@@ -61,13 +56,13 @@ export function ManagedUsersPage() {
  const filteredUsers=users.data?.filter(u=>[u.email,u.display_name].some(v=>v.toLowerCase().includes(filter.trim().toLowerCase())));
  const activeManagers=users.data?.filter(u=>u.role==='manager'&&u.active).length??0;
  return <section dir="rtl" className="space-y-6">
-  <div><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1><p className="text-sm text-muted-foreground">یوازې عمومي مدیر کولای شي د نورو مدیرانو حسابونه او صلاحیتونه تنظیم کړي.</p></div>
-  {users.error && <p role="alert" className="rounded-lg border p-3 text-destructive">د کاروونکو لېست ترلاسه نه شو. لومړی د Supabase امنیتي Migration او د مدیر حساب تنظیم کړئ.</p>}
+  <div><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1></div>
+  {users.error && <p role="alert" className="rounded-lg border p-3 text-destructive">د کاروونکو لېست ونه لوستل شو. د مدیر حساب او د ډیټابېس د لاسرسي تنظیمات وګورئ.</p>}
   <div className="rounded-xl border bg-card p-4 space-y-3">
    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-bold">ثبت شوي مدیران ({users.data?.length??0}) — فعال: {activeManagers}</h2><Button type="button" variant="outline" size="sm" onClick={()=>void users.refetch()} disabled={users.isFetching}>لېست تازه کړئ</Button></div>
    <input aria-label="د کاروونکو لټون" className="w-full rounded-lg border bg-background p-2 text-sm" placeholder="په نوم یا ایمیل لټون…" value={filter} onChange={e=>setFilter(e.target.value)}/>
    {users.isLoading && <p>معلومات لوستل کېږي…</p>}
-   {filteredUsers?.length===0&&<p className="text-sm text-muted-foreground">د لټون مطابق کاروونکی ونه موندل شو.</p>}
+   {filteredUsers?.length===0&&<p className="text-sm text-muted-foreground">په دې نوم یا برېښنالیک کاروونکی ونه موندل شو.</p>}
    {filteredUsers?.map(u=><div key={u.user_id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2">
     <div><p className="font-semibold">{u.display_name||u.email}</p><p className="text-xs text-muted-foreground" dir="ltr">{u.email}</p><p className="text-xs">{u.role==='super_admin'?'عمومي مدیر':u.active?'فعال مدیر':'غیرفعال مدیر'}</p>{u.role==='manager'&&<p className="text-xs text-muted-foreground">{u.invitationStatus==='accepted'?'حساب ته ننوتلی — تایید شوی':u.invitationStatus==='pending'?'بلنه لا نه ده منل شوې':u.invitationStatus==='existing'?'مخکې ثبت شوی حساب': 'د بلنې حالت نامعلوم دی'}</p>}</div>
     {u.role==='manager' && u.active && <p className="text-xs text-muted-foreground">د لیدلو برخې: {DASHBOARD_SECTIONS.filter(key=>u.permissions?.[key]?.includes('view')).map(key=>names[key]).join('، ') || 'هېڅ'}</p>}
@@ -75,7 +70,7 @@ export function ManagedUsersPage() {
    </div>)}
   </div>
   <form className="space-y-4 rounded-xl border bg-card p-4" onSubmit={e=>{e.preventDefault();setError('');setNotice('');if(countViews(permissions)===0&&!window.confirm('دې حساب ته د لیدلو هېڅ اجازه نه ده ټاکل شوې. ایا غواړئ همداسې ثبت شي؟'))return;if(editing)update.mutate();else invite.mutate();}}>
-   <h2 className="font-bold">{editing?'د مدیر صلاحیتونه اصلاح کړئ':'نوی مدیر دعوت کړئ'}</h2>
+   <h2 className="font-bold">{editing?'د مدیر صلاحیتونه اصلاح کړئ':'نوي مدیر ته بلنه ورکړئ'}</h2>
    <label className="block text-sm">نوم<input className="mt-1 w-full rounded-lg border bg-background p-2" required maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label>
    <label className="block text-sm">ایمیل<input className="mt-1 w-full rounded-lg border bg-background p-2" dir="ltr" type="email" required disabled={!!editing} value={email} onChange={e=>setEmail(e.target.value)}/></label>
    {editing&&<label className="flex items-center gap-2"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/> حساب فعال دی</label>}
@@ -83,7 +78,7 @@ export function ManagedUsersPage() {
    <p className="text-xs text-muted-foreground">د اضافه کولو، اصلاح، حذف، چاپ او صادرولو اجازه د لیدلو اجازه هم فعالوي. د لیدلو په لرې کولو سره د هماغې برخې نور صلاحیتونه هم لرې کېږي.</p>
    {notice&&<p role="status" className="rounded-lg border p-3 text-sm">{notice}</p>}
    {error&&<p role="alert" className="text-destructive">{error}</p>}
-   <div className="flex gap-2"><Button type="submit" disabled={invite.isPending||update.isPending}>{editing?'بدلونونه ثبت کړئ':'بلنه ثبت کړئ'}</Button>
+   <div className="flex gap-2"><Button type="submit" disabled={invite.isPending||update.isPending}>{editing?'بدلونونه ثبت کړئ':'بلنه ولېږئ'}</Button>
    {editing&&<Button type="button" variant="outline" onClick={()=>{setEditing(null);setEmail('');setName('');setPermissions(empty());}}>لغوه کول</Button>}</div>
   </form>
  </section>;

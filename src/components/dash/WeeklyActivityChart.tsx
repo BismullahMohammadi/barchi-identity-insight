@@ -34,7 +34,7 @@ export function WeeklyActivityChart(){
     </div>
     <div>
      <h2 id="weekly-activity-title" className="text-lg font-extrabold">د کار عمومي وضعیت</h2>
-     <p className="mt-0.5 text-xs leading-6 text-muted-foreground">هفته وار فعالیت · پاس شوي + مثنی + تجدید · د روانې اونۍ څخه مخکې بشپړې اونۍ</p>
+     <p className="mt-0.5 text-xs leading-6 text-muted-foreground">په تېرو بشپړو اونیو کې پاس شوې، مثنی او تجدید شوې دوسیې</p>
     </div>
    </div>
    <div role="group" aria-label="د ګراف د اونیو شمېر" className="flex flex-wrap gap-1 rounded-xl bg-muted/55 p-1">
@@ -45,8 +45,8 @@ export function WeeklyActivityChart(){
    </div>
   </div>
   {q.error&&<p role="alert" className="m-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{errorText(q.error)}</p>}
-  {q.isLoading&&<p className="px-5 py-12 text-center text-muted-foreground" role="status">د هفته وار راپور ارقام اخیستل کېږي…</p>}
-  {!q.isLoading&&!q.error&&points.length===0&&<p className="px-5 py-12 text-center text-sm text-muted-foreground">د هفته وار راپور د تایید وړ شمېرې ونه موندل شوې. د شیټ د کالمونو او معلوماتو حالت وګورئ.</p>}
+  {q.isLoading&&<p className="px-5 py-12 text-center text-muted-foreground" role="status">د اونیز راپور ارقام اخیستل کېږي…</p>}
+  {!q.isLoading&&!q.error&&points.length===0&&<p className="px-5 py-12 text-center text-sm text-muted-foreground">د اونیز راپور د تایید وړ شمېرې ونه موندل شوې. د شیټ د کالمونو او معلوماتو حالت وګورئ.</p>}
   {!q.isLoading&&!q.error&&points.length>0&&<>
    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-4 sm:px-5">
     <div><p className="text-xs text-muted-foreground">د وروستۍ ثبت شوې اونۍ فعالیت</p><p className="mt-0.5 text-2xl font-extrabold tabular-nums text-primary">{fmt(latest!.total)}</p></div>
@@ -67,7 +67,7 @@ export function WeeklyActivityChart(){
      </AreaChart>
     </ResponsiveContainer>
    </div>
-   <p className="px-4 pb-4 text-xs leading-6 text-muted-foreground sm:px-5">د ۴، ۸ او ۱۲ اونیو فلټرونه د نن ورځې څخه مخکې بشپړې شوې اونۍ ښيي؛ «ټول کال» ټول ثبت شوي ارقام ښيي. د اصلي هفته وار Google Sheet ثبت شوې اونۍ ښودل کېږي؛ د رخصتیو یا نامکملو اونیو شمېرې نه اټکل کېږي. ګراف د ثبت شويو دوسیو د شمېر وضعیت ښيي، نه د کارمندانو د کیفیت درجه.</p>
+   <p className="px-4 pb-4 text-xs leading-6 text-muted-foreground sm:px-5">«ټول کال» ټولې ثبت شوې اونۍ ښيي. د رخصتیو او نیمګړو اونیو شمېرې نه اټکل کېږي.</p>
   </>}
  </section>;
 }

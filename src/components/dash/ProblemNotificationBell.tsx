@@ -22,7 +22,7 @@ export function ProblemNotificationBell({matches}:{matches:Match[]}){
   fresh.forEach(m=>known.current!.add(m.key));
   try{window.localStorage.setItem(KEY,JSON.stringify([...known.current].slice(-1000)));}catch{/* Browser storage may be unavailable. */}
   if("Notification" in window&&Notification.permission==="granted"){
-   try{const n=new Notification("نوی احتمالي مشکلاتي مراجع",{body:String(fresh.length)+" نوی احتمالي تطابق؛ په سیستم کې یې وګورئ.",tag:"barchi-problem-match"});n.onclick=()=>{window.focus();window.location.assign("/dashboard/problem-visitors");n.close();};}catch{/* Browser notifications may be disabled. */}
+   try{const n=new Notification("له ثبت شوي مراجع سره احتمالي سمون",{body:String(fresh.length)+" نوی احتمالي تطابق؛ په سیستم کې یې وګورئ.",tag:"barchi-problem-match"});n.onclick=()=>{window.focus();window.location.assign("/dashboard/problem-visitors");n.close();};}catch{/* Browser notifications may be disabled. */}
   }
  },[matches]);
  async function request(){if(!("Notification" in window))return;try{setPermission(await Notification.requestPermission());}catch{/* Browser notifications may be disabled. */}}

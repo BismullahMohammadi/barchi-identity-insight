@@ -64,8 +64,8 @@ export const stateReportQuery=(refreshMs=REFRESH_MS)=>queryOptions({
 });
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
-  if (m.includes("ACCESS_DENIED")) return "لاسرسی رد شو: دې برخې ته د لیدلو اجازه نه لرئ. له عمومي مدیر څخه صلاحیت وغواړئ.";
-  if (m.includes("INSIJAM_SHEETS_ERROR_403") || m.includes("INSIJAM_SHEETS_ERROR_404")) return "د انسجام نوي Google Sheet ته د لوستلو اجازه نه ده ورکړل شوې.";
+  if (m.includes("ACCESS_DENIED")) return "د دې برخې د لیدلو لپاره له عمومي مدیر څخه اجازه وغواړئ.";
+  if (m.includes("INSIJAM_SHEETS_ERROR_403") || m.includes("INSIJAM_SHEETS_ERROR_404")) return "د انسجام شیټ ونه موندل شو یا د لوستلو اجازه نشته.";
   if (m.includes("INSIJAM_SHEETS_ERROR")) return "د انسجام میاشتنی راپور ونه لوستل شو.";
   if (m.includes("STATE_REPORT_ERROR")) return "د «ریاست ته ګزارش» اصلي ټاب ونه لوستل شو.";
   if (m.includes("STAFF_SHEETS_ERROR_403") || m.includes("STAFF_SHEETS_ERROR_404")) return "د کارمندانو نوي Google Sheet ته د لوستلو اجازه نشته. د Lovable Google اتصال کې ورته لاسرسی ورکړئ.";
@@ -74,12 +74,12 @@ export function errorText(err: unknown): string {
   if (m.includes("REFERRAL_CELL_NOT_FOUND")) return "د نویو معرفي شویو مراجعینو سیل ونه موندل شو. تنظیمات ← Google Sheets کې یې وازمویئ.";
   if (m.includes("INVALID_REFERRAL_CELL")) return "د سیل پته ناسمه ده. بېلګه: AM2 یا G3.";
   if (m.includes("COORDINATION_CELL_NOT_NUMERIC")) return "د ثبت‌نام همغږۍ د شمېر سیل عدد نه لري. تنظیمات ← Google Sheets کې یې وازمویئ.";
-  if (m.includes("COORDINATION_SHEETS_ERROR_403") || m.includes("COORDINATION_SHEETS_ERROR_404")) return "د هماهنګۍ Google Sheet ته د لوستلو اجازه نشته.";
+  if (m.includes("COORDINATION_SHEETS_ERROR_403") || m.includes("COORDINATION_SHEETS_ERROR_404")) return "د همغږۍ شیټ ونه موندل شو یا د لوستلو اجازه نشته.";
   if (m.includes("COORDINATION_SHEETS_ERROR")) return "د ثبت‌نام د همغږۍ ورځنی راپور ونه لوستل شو.";
-  if (m.includes("FORMS_SHEETS_ERROR_403") || m.includes("FORMS_SHEETS_ERROR_404")) return "دویم Google Sheet ته د لوستلو اجازه نشته.";
+  if (m.includes("FORMS_SHEETS_ERROR_403") || m.includes("FORMS_SHEETS_ERROR_404")) return "د ورځنیو فورمو شیټ ونه موندل شو یا د لوستلو اجازه نشته.";
   if (m.includes("FORMS_SHEETS_ERROR")) return "د ورځنیو فورمونو شیټ لوستل ناکام شول.";
-  if (m.includes("SHEETS_ERROR_429")) return "د ګوګل محدودیت؛ لږ وروسته به بیا هڅه وشي.";
+  if (m.includes("SHEETS_ERROR_429")) return "ګوګل د غوښتنو شمېر محدود کړی. لږ وروسته بیا هڅه وکړئ.";
   if (m.includes("SHEETS_ERROR_403") || m.includes("SHEETS_ERROR_404")) return "شیټ ته لاسرسی نشته — د شیټ اجازه وګورئ.";
   if (m.includes("SHEETS_ERROR")) return "د شیټ لوستل ناکام شول.";
-  return "د سرور سره اړیکه ناکامه شوه.";
+  return "له سرور سره اړیکه ټینګه نه شوه.";
 }

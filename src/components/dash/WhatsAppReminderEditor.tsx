@@ -33,8 +33,8 @@ export function WhatsAppReminderEditor({registration,insijam}:Props){
    setSavedTemplate(templateDraft);
    setTemplateError("");
    setEditingTemplate(false);
-   toast.success("ټیمپلیټ خوندي شو.");
-  }catch{setTemplateError("ټیمپلیټ ونه ساتل شو.");}
+   toast.success("قالب خوندي شو.");
+  }catch{setTemplateError("قالب ونه ساتل شو.");}
  };
  const share=()=>{
   if(!generated||!messageDraft.trim())return;
@@ -59,11 +59,11 @@ export function WhatsAppReminderEditor({registration,insijam}:Props){
    <Button type="button" variant="ghost" size="sm" aria-expanded={editingTemplate} onClick={()=>{
     if(!editingTemplate){setTemplateDraft(savedTemplate);setTemplateError("");setEditingMessage(false);}
     setEditingTemplate(v=>!v);
-   }}><Pencil aria-hidden="true" className="me-1 h-4 w-4"/>{editingTemplate?"بند کړئ":"ټیمپلیټ"}</Button>
+   }}><Pencil aria-hidden="true" className="me-1 h-4 w-4"/>{editingTemplate?"بند کړئ":"قالب"}</Button>
   </div>
 
   {editingTemplate&&<div className="space-y-2 rounded-xl border bg-muted/30 p-3">
-   <label htmlFor="whatsapp-template" className="text-sm font-bold">ټیمپلیټ سمول</label>
+   <label htmlFor="whatsapp-template" className="text-sm font-bold">قالب سمول</label>
    <textarea id="whatsapp-template" dir="rtl" rows={8} maxLength={3000} value={templateDraft}
     onChange={e=>{setTemplateDraft(e.target.value);setTemplateError("");}}
     className="w-full resize-y rounded-lg border bg-background p-3 text-sm leading-7 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"/>

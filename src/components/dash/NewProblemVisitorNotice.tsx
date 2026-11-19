@@ -87,8 +87,8 @@ export function NewProblemVisitorNotice() {
     <div className="flex items-start gap-2">
       <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true"/>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold">د مشکلاتي مراجع احتمالي نوی تطابق ({visible.length})</p>
-        <p className="mt-1 text-xs text-muted-foreground">جزئیات د مشکلاتي مراجعینو په مینو کې وګورئ. هویت باید تایید شي.</p>
+        <p className="text-sm font-bold">له ثبت شوو مراجعینو سره احتمالي سمون ({visible.length})</p>
+        <p className="mt-1 text-xs text-muted-foreground">د مراجع هویت له اصلي اسنادو سره تایید کړئ.</p>
         <Link to="/dashboard/$slug" params={{slug:"problem-visitors"}} onClick={()=>setVisible([])}
          className="mt-2 inline-block text-xs font-bold text-primary underline">لېست وګورئ</Link>
       </div>
@@ -97,7 +97,7 @@ export function NewProblemVisitorNotice() {
     </div>
   </aside>}
   <button type="button" onClick={toggleSound} title={soundEnabled?"د خبرتیا غږ بند کړئ":"د خبرتیا غږ فعال کړئ"}
-    aria-label={soundEnabled?"د مشکلاتي مراجعینو غږ بند کړئ":"د مشکلاتي مراجعینو غږ فعال کړئ"}
+    aria-label={soundEnabled?"د مراجعینو د خبرتیاوو غږ بند کړئ":"د مراجعینو د خبرتیاوو غږ فعال کړئ"}
     aria-pressed={soundEnabled}
     className="fixed bottom-4 left-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border bg-card text-foreground shadow-md hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary">
    {soundEnabled?<Bell className="h-4 w-4"/>:<BellOff className="h-4 w-4"/>}

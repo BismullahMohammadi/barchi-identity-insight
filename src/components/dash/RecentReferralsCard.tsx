@@ -161,7 +161,6 @@ export function RecentReferralsCard() {
           error={q.error}
         />
       </div>
-      <p className="text-xs text-muted-foreground">په پیل کې ۵ وروستي ثبتونه؛ نور د اړتیا پر مهال · یوازې د مدیر لپاره</p>
     </section>
   );
 }

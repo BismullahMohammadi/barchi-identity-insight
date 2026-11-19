@@ -114,7 +114,7 @@ function ReconciliationPage() {
     </div>
     <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-2" role="tablist" aria-label="د مطابقت ډول">
       {([['differences','د مرکز او ریاست راپورونو مطابقت']] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={view===key} onClick={()=>{setView(key);setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view===key?'bg-background shadow-sm':''}`}>{label}</button>)}
-      <button type="button" role="tab" aria-selected={view==='staff'} onClick={()=>{setView('staff');setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view==='staff'?'bg-background shadow-sm':''}`}>د کارمندانو او تخنیکي راپورونو مطابقت</button>
+      <button type="button" role="tab" aria-selected={view==='staff'} onClick={()=>{setView('staff');setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view==='staff'?'bg-background shadow-sm':''}`}>د کارکوونکو او تخنیکي راپورونو مطابقت</button>
     </div>
     {view==='staff' ? <StaffReconciliationMatrix year={year} month={month}/> : <section className="space-y-3" aria-label="د مرکز او ریاست راپورونو مطابقت">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-3 py-3">

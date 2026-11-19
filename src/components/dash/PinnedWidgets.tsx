@@ -88,7 +88,7 @@ function StateReportCopy({report}:{report:StateReport}){
    // Avoid HTML tables because some spreadsheets would also paste headers/labels.
    await navigator.clipboard.writeText(values);
    setCopied(true);
-   toast.success("یوازې ارقام کاپي شول.");
+   toast.success("د راپور شمېرې کاپي شوې.");
   }catch{
    toast.error("کاپي ونه شوه؛ د Clipboard اجازه ورکړئ.");
   }
@@ -97,9 +97,9 @@ function StateReportCopy({report}:{report:StateReport}){
   <h3 className="font-bold">ریاست ته ګزارش</h3>
   {report.status!=="available" ? <p className="text-sm text-amber-700">{report.message}</p> :
    copied ? <div role="status" className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-800">
-     <Check aria-hidden="true" className="h-4 w-4"/> ارقام کاپي شول، اوس یې په شیټ کې پیسټ کړئ.
+     <Check aria-hidden="true" className="h-4 w-4"/> شمېرې کاپي شوې. اوس یې په شیټ کې ولګوئ.
     </div> :
-    <Button type="button" onClick={copy} className="w-full">د ریاست د ګزارش ارقام کاپي کړئ</Button>}
+    <Button type="button" onClick={copy} className="w-full">د ریاست د راپور شمېرې کاپي کړئ</Button>}
  </section>;
 }
 function ReportHealthContent(){

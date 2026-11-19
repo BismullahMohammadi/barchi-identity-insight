@@ -21,7 +21,7 @@ function StaffReconciliationPage(){
  const count=(status:string)=>rows.filter(r=>r.status===status).length;
  return <main data-print-target dir="rtl" className="space-y-4 pb-8">
   <header className="flex flex-wrap items-center justify-between gap-3">
-   <div><h1 className="text-xl font-bold">د کارمندانو او تخنیکي راپورونو مطابقت</h1><p className="text-sm text-muted-foreground">تصدیق انفرادي (۴ کارمندان) او ثبت تولد (بهزاد)</p></div>
+   <div><h1 className="text-xl font-bold">د کارکوونکو او تخنیکي راپورونو مطابقت</h1><p className="text-sm text-muted-foreground">تصدیق انفرادي (۴ کارمندان) او ثبت تولد (بهزاد)</p></div>
    <div className="flex flex-wrap gap-2 print:hidden">
     <Link to="/dashboard/reconciliation" className="rounded-lg border px-3 py-2 text-sm">عمومي مطابقت</Link>
     {can("print") && <Button variant="outline" size="sm" onClick={()=>window.print()}><Printer className="h-4 w-4"/>چاپ</Button>}
@@ -41,7 +41,7 @@ function StaffReconciliationPage(){
   <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3 print:hidden" role="tablist" aria-label="د مطابقت ډول">
    <Link to="/dashboard/reconciliation" search={{}} role="tab" aria-selected={false} className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm">د ورځو مطابقت</Link>
    <Link to="/dashboard/reconciliation" search={{}} role="tab" aria-selected={false} className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm">د توپیرونو مطابقت</Link>
-   <span role="tab" aria-selected={true} className="flex min-h-10 items-center justify-center rounded-md bg-background px-2 text-center text-sm font-medium shadow-sm">د کارمندانو او تخنیکي راپورونو مطابقت</span>
+   <span role="tab" aria-selected={true} className="flex min-h-10 items-center justify-center rounded-md bg-background px-2 text-center text-sm font-medium shadow-sm">د کارکوونکو او تخنیکي راپورونو مطابقت</span>
   </div>
   <div className="overflow-x-auto rounded-xl border bg-card" role="region" tabIndex={0} aria-label="د کارمندانو د ورځنیو توپیرونو جدول">
    <table className="w-full min-w-[850px] table-fixed border-collapse text-center text-[10px]">

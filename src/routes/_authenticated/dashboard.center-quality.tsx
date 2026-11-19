@@ -43,7 +43,7 @@ function Page(){
  async function refresh(){setBusy(true);setError(false);try{const result=await fetcher({data:{year,month,refresh:true}});client.setQueryData(query(year,month).queryKey,result);}catch{setError(true);}finally{setBusy(false);}}
  return <div dir="rtl" className="space-y-5 pb-8">
   <header className="flex flex-wrap items-start justify-between gap-3">
-   <div><h1 className="text-xl font-extrabold sm:text-2xl">د مرکزونو د فعالیت پرتله</h1><p className="mt-1 text-xs text-muted-foreground">کنترل کیفیت — تصدیق معلومات و ارسال به چاپ، روند عادی</p></div>
+   <div><h1 className="text-xl font-extrabold sm:text-2xl">د مرکزونو د فعالیت پرتله</h1><p className="mt-1 text-xs text-muted-foreground">د کیفیت کنټرول: په عادي بهیر کې د معلوماتو تایید او چاپ ته لېږل</p></div>
    <div className="flex items-center gap-2">
     <select aria-label="میاشت یا مکمل کال" className="min-h-10 rounded-xl border bg-card px-3 text-sm" value={month} onChange={e=>{setDay(0);void navigate({search:{year,month:Number(e.target.value)}});}}><option value={0}>مکمل کال {year}</option>{JALALI_MONTHS.map((name,i)=><option key={i} value={i+1}>{name} {year}</option>)}</select>
     <select aria-label="کال" className="min-h-10 rounded-xl border bg-card px-2 text-sm" value={year} onChange={e=>{setDay(0);void navigate({search:{year:Number(e.target.value),month}});}}>{Array.from(new Set([today.y-2,today.y-1,today.y,year])).sort((a,b)=>b-a).map(y=><option key={y} value={y}>{fmt(y)}</option>)}</select>

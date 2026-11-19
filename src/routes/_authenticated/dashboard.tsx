@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { canAccess, DASHBOARD_SECTIONS, sectionForPage } from "@/lib/dashboard-access";
 import { accessQuery, recentReferralsQuery } from "@/lib/queries";
-import { TABS } from "@/lib/tabs";
+import { TABS, sectionLabels } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
 import { ScheduledReportNotice } from "@/components/dash/ScheduledReportNotice";
 import { NewProblemVisitorNotice } from "@/components/dash/NewProblemVisitorNotice";
@@ -45,10 +45,10 @@ export function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { on
   return (
     <nav aria-label="د ډشبورډ مینو" className="flex min-h-0 flex-col gap-4">
       {canView("dashboard") && <Link to="/dashboard" activeOptions={{ exact: true }} className={cls} activeProps={active} onClick={onNavigate}>
-        <LayoutDashboard className="h-4 w-4 shrink-0" /> د مرکز کاري بهیر
+        <LayoutDashboard className="h-4 w-4 shrink-0" /> {sectionLabels["dashboard"]}
       </Link>}
       {canView("problem-visitors") && <Link to="/dashboard/$slug" params={{ slug: "problem-visitors" }} className={cls} activeProps={active} onClick={onNavigate}>
-        <AlertTriangle className="h-4 w-4 shrink-0" /> <span className="min-w-0 flex-1">مشکلاتي مراجعین</span>{matchCount>0&&<span aria-label={`د احتمالي تطابق شمېر ${matchCount}`} className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-extrabold text-amber-950 dark:bg-amber-800 dark:text-white">{matchCount>99?"99+":matchCount}</span>}
+        <AlertTriangle className="h-4 w-4 shrink-0" /> <span className="min-w-0 flex-1">{sectionLabels["problem-visitors"]}</span>{matchCount>0&&<span aria-label={`د احتمالي تطابق شمېر ${matchCount}`} className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-extrabold text-amber-950 dark:bg-amber-800 dark:text-white">{matchCount>99?"99+":matchCount}</span>}
       </Link>}
       {groups.filter(group => group.slugs.some(canView)).map((group) => (
         <div key={group.title} className="space-y-1">
@@ -68,10 +68,10 @@ export function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { on
       ))}
       {(owner || ["reconciliation","center-quality","fuel-management"].some(canView)) && <div className="space-y-1 border-t border-sidebar-border pt-3">
         <p className="px-3 pb-1 text-xs font-semibold text-sidebar-foreground/60">اداري او مرستندویه برخې</p>
-        {owner && <Link to="/dashboard/$slug" params={{ slug: "admin-users" }} className={cls} activeProps={active} onClick={onNavigate}><ShieldAlert className="h-4 w-4 shrink-0" /> د کاروونکو مدیریت</Link>}
-        {canView("reconciliation") && <Link to="/dashboard/reconciliation" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د راپورونو مطابقت</Link>}
-        {canView("center-quality") && <Link to="/dashboard/center-quality" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> د مرکزونو د فعالیت پرتله</Link>}
-        {canView("fuel-management") && <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> د تېلو او ډیزلو مدیریت</Link>}
+        {owner && <Link to="/dashboard/$slug" params={{ slug: "admin-users" }} className={cls} activeProps={active} onClick={onNavigate}><ShieldAlert className="h-4 w-4 shrink-0" /> {sectionLabels["admin-users"]}</Link>}
+        {canView("reconciliation") && <Link to="/dashboard/reconciliation" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> {sectionLabels["reconciliation"]}</Link>}
+        {canView("center-quality") && <Link to="/dashboard/center-quality" className={cls} activeProps={active} onClick={onNavigate}><ClipboardCheck className="h-4 w-4 shrink-0" /> {sectionLabels["center-quality"]}</Link>}
+        {canView("fuel-management") && <Link to="/dashboard/$slug" params={{ slug: "fuel-management" }} className={cls} activeProps={active} onClick={onNavigate}><Fuel className="h-4 w-4 shrink-0" /> {sectionLabels["fuel-management"]}</Link>}
       </div>}
     </nav>
   );
@@ -82,7 +82,7 @@ function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
     <Link to="/dashboard/$slug" params={{ slug: "settings" }} className={cls}
       activeProps={{ className: `${cls} bg-sidebar-accent text-sidebar-primary font-bold` }}
       onClick={onNavigate}>
-      <Settings className="h-4 w-4 shrink-0" /> تنظیمات
+      <Settings className="h-4 w-4 shrink-0" /> {sectionLabels["settings"]}
     </Link>
   );
 }
@@ -92,7 +92,7 @@ function DashboardLayoutContent() {
   // Watch completion while authenticated even if the tools drawer is closed.
   const pathname = useLocation({ select: (location) => location.pathname });
   const currentSlug = pathname.split("/").filter(Boolean).at(-1);
-  const pageTitle = currentSlug === "center-quality" ? "د مرکزونو د فعالیت پرتله" : currentSlug === "reconciliation" ? "د راپورونو مطابقت" : currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "admin-users" ? "د کاروونکو مدیریت" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
+  const pageTitle = sectionLabels[currentSlug ?? "dashboard"] ?? "د مرکز راپورونه";
   const access = useQuery(accessQuery);
   const profile = access.isError ? undefined : access.data;
   const canDashboard = canAccess(profile, "dashboard");
@@ -132,8 +132,7 @@ function DashboardLayoutContent() {
   const brand = (
     <div className="mb-5 rounded-2xl border border-sidebar-border bg-sidebar-accent/35 px-4 py-5">
       <p className="text-xs font-semibold tracking-wide text-sidebar-primary">eNID · ۱۴۰۵</p>
-      <h2 className="mt-1 font-display text-lg font-extrabold">دشت برچي مرکز</h2>
-      <p className="mt-1 text-xs text-sidebar-foreground/65">د مدیریتي راپورونو سیستم</p>
+      <h2 className="mt-1 font-display text-lg font-extrabold">د دشت برچي مرکز</h2>
     </div>
   );
 
@@ -180,7 +179,6 @@ function DashboardLayoutContent() {
             </Button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-extrabold leading-6 text-foreground sm:text-base">{pageTitle}</p>
-              <p className="hidden truncate text-xs text-muted-foreground md:block">د دشت برچي د الکترونیکي تذکرو مرکز</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <GlobalJalaliPicker />

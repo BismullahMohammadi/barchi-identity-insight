@@ -43,7 +43,7 @@ export function PassedFilesLookup(){
     <Button disabled={report.isFetching} onClick={()=>{setHasSearched(true);setSubmitted({from,to,query:search.trim()});if(hasSearched&&submitted.from===from&&submitted.to===to&&submitted.query===search.trim())void report.refetch()}}>{report.isFetching?"لټون...":"لټون"}</Button>
     {can("print") && <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={e=>printSection(e.currentTarget)}><Printer className="h-4 w-4"/> چاپ</Button>}
    </div>
-   {!hasSearched&&<p className="no-print text-sm text-muted-foreground">د ټاکلې مودې د دوسیو د کتلو لپاره «لټون» ووهئ.</p>}
+   {!hasSearched&&<p className="no-print text-sm text-muted-foreground">موده وټاکئ او دوسیې ولټوئ.</p>}
    {report.isLoading&&<p role="status">د شیټونو معلومات لوستل کېږي…</p>}
    {report.isError&&<p role="alert" className="text-destructive">د دوسیو لټون ناکام شو؛ اتصال او نېټه وګورئ.</p>}
    {report.data&&<>

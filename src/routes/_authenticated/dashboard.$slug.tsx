@@ -5,7 +5,7 @@ import { accessQuery } from "@/lib/queries";
 import { SyncBar } from "@/components/dash/SyncBar";
 import { TabView } from "@/components/dash/TabView";
 import { errorText, sheetQuery } from "@/lib/queries";
-import { getTab } from "@/lib/tabs";
+import { getTab, sectionLabels } from "@/lib/tabs";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
 import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   },
   head: ({ params }) => {
     const t = getTab(params.slug);
-    const title = `${params.slug === "admin-users" ? "د کاروونکو مدیریت" : params.slug === "settings" ? "تنظیمات" : params.slug === "problem-visitors" ? "مشکلاتي مراجعین" : params.slug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : (t?.label ?? "پاڼه")} — دشت برچي eNID ۱۴۰۵`;
+    const title = `${sectionLabels[params.slug] ?? "راپور"} — د دشت برچي مرکز`;
     return {
       meta: [
         { title },

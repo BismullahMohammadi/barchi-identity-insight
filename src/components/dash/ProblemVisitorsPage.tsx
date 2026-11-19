@@ -19,9 +19,9 @@ export function ProblemVisitorsPage() {
  const mutation=useMutation({mutationFn:changeProblemVisitor,onSuccess:async()=>{await qc.invalidateQueries({queryKey:["problem-visitors"]});}});
  async function add(e:React.FormEvent){e.preventDefault();await mutation.mutateAsync({data:{action:"add",full_name:name,father_name:father,issue}});setName("");setFather("");setIssue("");}
  return <div className="space-y-5">
-  <div><h1 className="text-2xl font-extrabold">مشکلاتي مراجعین</h1><p className="mt-1 text-sm text-muted-foreground">یوازې د مدیر لپاره خصوصي لېست؛ ثبتونه د احتمالي تطابق لپاره کارېږي.</p></div>
+  <div><h1 className="text-2xl font-extrabold">د مراجعینو ثبت شوې ستونزې</h1><p className="mt-1 text-sm text-muted-foreground">ثبتونه د مراجع د نوم او د پلار د نوم د پرتله کولو لپاره کارېږي.</p></div>
   {dashboard("view") && <ProblemVisitorAlerts />}
-  {can("create") && <form onSubmit={add} className="dashboard-panel grid gap-3 p-4 sm:p-5" aria-label="د مشکلاتي مراجع ثبت">
+  {can("create") && <form onSubmit={add} className="dashboard-panel grid gap-3 p-4 sm:p-5" aria-label="د مراجع د ستونزې ثبت">
    <h2 className="font-bold">نوی مراجع ثبت کړئ</h2>
    <label className="grid gap-1 text-sm">نوم او تخلص<Input required maxLength={180} value={name} onChange={e=>setName(e.target.value)} /></label>
    <label className="grid gap-1 text-sm">د پلار نوم<Input required maxLength={180} value={father} onChange={e=>setFather(e.target.value)}/></label>
@@ -30,7 +30,7 @@ export function ProblemVisitorsPage() {
    {mutation.isError&&<p role="alert" className="text-sm text-destructive">د ثبت یا بدلون غوښتنه ناکامه شوه. د ډیټابېس تنظیمات او اجازه وګورئ.</p>}
   </form>}
   <section className="dashboard-panel p-4 sm:p-5"><h2 className="mb-3 font-bold">ثبت شوي مراجعین ({q.data?.length??0})</h2>
-   {q.isLoading?<p>معلومات رااخیستل کېږي…</p>:q.error?<p role="alert" className="text-destructive">د لېست په ترلاسه کولو کې ستونزه ده. د ډیټابېس Migration وګورئ.</p>:q.data?.length===0?<p className="text-muted-foreground">تر اوسه مراجع نه دی ثبت شوی.</p>:
+   {q.isLoading?<p>معلومات رااخیستل کېږي…</p>:q.error?<p role="alert" className="text-destructive">لېست ونه لوستل شو. بیا هڅه وکړئ؛ که ستونزه پاتې وي، له عمومي مدیر سره اړیکه ونیسئ.</p>:q.data?.length===0?<p className="text-muted-foreground">تر اوسه مراجع نه دی ثبت شوی.</p>:
     <div className="space-y-3">{q.data?.map(v=><article key={v.id} className="rounded-xl border p-3">
      <div className="flex items-start justify-between gap-2"><div><p className="font-bold">{v.full_name}</p><p className="text-sm text-muted-foreground">د پلار نوم: {v.father_name}</p></div><span className="text-xs">{v.status==="active"?"فعال":"حل شوی"}</span></div>
      <p className="mt-2 whitespace-pre-wrap text-sm">{v.issue}</p>
