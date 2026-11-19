@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isEmailAllowed } from "./access";
+import { requireDashboardPermission } from "./dashboard-permissions.server";
 import { SPREADSHEET_ID } from "./tabs";
 
 export type MonthlyDieselRecord={
@@ -53,8 +53,7 @@ export function parseDieselReconciliation(rows:unknown[][]):DieselReconciliation
 }
 export const getDieselSheetReport=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).validator((x:{nonce:number})=>{if(!Number.isFinite(x?.nonce))throw new Error("INVALID_REFRESH");return x;}).handler(async({context}):Promise<MonthlyDieselReport>=>{
  setResponseHeader("Cache-Control","private, no-store");
- const claims=context.claims as {email?:string}|null;
- if(!isEmailAllowed(claims?.email??null,process.env["OWNER_EMAILS"]))throw new Error("ACCESS_DENIED");
+ await requireDashboardPermission(context,"fuel-management");
  const lovable=process.env["LOVABLE_API_KEY"],key=process.env["GOOGLE_SHEETS_API_KEY"];
  if(!lovable||!key)throw new Error("SHEETS_NOT_CONNECTED");
  const params=new URLSearchParams();

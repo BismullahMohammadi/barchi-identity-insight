@@ -1,6 +1,7 @@
+import { DashboardAccessContext } from "@/lib/dashboard-access-context";
 import {GlobalDateProvider} from "@/lib/global-date-range";
 import {GlobalJalaliPicker} from "@/components/dash/GlobalJalaliPicker";
-import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { todayJalali, JALALI_MONTHS } from "@/lib/jalali";
@@ -8,6 +9,7 @@ import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settin
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { canAccess, DASHBOARD_SECTIONS, sectionForPage } from "@/lib/dashboard-access";
 import { accessQuery, recentReferralsQuery } from "@/lib/queries";
 import { TABS } from "@/lib/tabs";
 import { PinnedWidgets } from "@/components/dash/PinnedWidgets";
@@ -31,8 +33,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardLayout,
 });
 
-function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { onNavigate?: () => void; matchCount?:number; owner?:boolean; permissions?:Record<string,string[]> }) {
-  const canView=(section:string)=>owner || permissions[section]?.includes("view")===true;
+export function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { onNavigate?: () => void; matchCount?:number; owner?:boolean; permissions?:Record<string,string[]> }) {
+  const canView=(section:string)=>canAccess({owner,permissions},section);
   const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,"archive-scan":ScanLine,bank:Landmark,annual:CalendarRange};
   const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
   const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
@@ -91,7 +93,13 @@ function DashboardLayoutContent() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const currentSlug = pathname.split("/").filter(Boolean).at(-1);
   const pageTitle = currentSlug === "center-quality" ? "د مرکزونو د فعالیت پرتله" : currentSlug === "reconciliation" ? "د راپورونو مطابقت" : currentSlug === "dashboard" ? "د مرکز کاري بهیر" : currentSlug === "admin-users" ? "د کاروونکو مدیریت" : currentSlug === "settings" ? "تنظیمات" : currentSlug === "fuel-management" ? "د تېلو او ډیزلو مدیریت" : currentSlug === "problem-visitors" ? "مشکلاتي مراجعین" : TABS.find((tab) => tab.slug === currentSlug)?.label ?? "د مرکز مدیریتي سیسټم";
-  const completion = useStaffCompletionMonitor();
+  const access = useQuery(accessQuery);
+  const profile = access.isError ? undefined : access.data;
+  const canDashboard = canAccess(profile, "dashboard");
+  const canMatch = canDashboard && canAccess(profile, "problem-visitors");
+  const section = sectionForPage(currentSlug);
+  const firstSection = DASHBOARD_SECTIONS.find(key => canAccess(profile,key));
+  const completion = useStaffCompletionMonitor(canDashboard);
   const [open, setOpen] = useState(false);
   const [today,setToday]=useState<ReturnType<typeof todayJalali>|null>(null);
   useEffect(()=>{const update=()=>setToday(todayJalali());update();const timer=window.setInterval(update,60_000);return ()=>window.clearInterval(timer);},[]);
@@ -111,8 +119,7 @@ function DashboardLayoutContent() {
   const reportsComplete = reportsReady && completion.data?.complete === true;
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const access = useQuery(accessQuery);
-  const matchesQuery=useQuery({...recentReferralsQuery(60_000),enabled:access.data?.allowed===true});
+  const matchesQuery=useQuery({...recentReferralsQuery(60_000),enabled:canMatch});
   const matchCount=matchesQuery.data?.potentialMatches?.length??0;
 
   async function signOut() {
@@ -131,13 +138,13 @@ function DashboardLayoutContent() {
   );
 
   return (
-    <div dir="rtl" lang="ps" className="min-h-screen md:flex">
+    <DashboardAccessContext.Provider value={profile}><div dir="rtl" lang="ps" className="min-h-screen md:flex">
       <a href="#main-dashboard-content" className="sr-only fixed start-4 top-2 z-50 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only">اصلي منځپانګې ته لاړ شئ</a>
       <aside id="desktop-dashboard-sidebar" className={"no-print shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground "+(sidebarCollapsed?"hidden":"hidden w-64 lg:block")}>
         <div className="sticky top-0 flex h-screen flex-col py-3">
           {brand}
-          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} /></div>
-          {(access.data?.owner===true || access.data?.permissions?.["settings"]?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>}
+          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={profile?.owner===true} permissions={profile?.permissions ?? {}} /></div>
+          {canAccess(profile, "settings") && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>}
         </div>
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -145,12 +152,12 @@ function DashboardLayoutContent() {
           <SheetTitle className="sr-only">مینو</SheetTitle>
           <div className="flex max-h-full flex-col">
             {brand}
-            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} owner={access.data?.owner===true} permissions={access.data?.permissions ?? {}} onNavigate={() => setOpen(false)} /></div>
-            {(access.data?.owner===true || access.data?.permissions?.["settings"]?.includes("view")) && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>}
+            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><Nav matchCount={matchCount} owner={profile?.owner===true} permissions={profile?.permissions ?? {}} onNavigate={() => setOpen(false)} /></div>
+            {canAccess(profile, "settings") && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink onNavigate={() => setOpen(false)} /></div>}
           </div>
         </SheetContent>
       </Sheet>
-      {access.data?.allowed && showTools && (
+      {canDashboard && showTools && (
         <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
           <SheetContent side="left" className="no-print flex h-full w-full max-w-md flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-[480px]">
             <div className="shrink-0 border-b px-5 pb-4 pt-6">
@@ -177,8 +184,8 @@ function DashboardLayoutContent() {
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <GlobalJalaliPicker />
-              {access.data?.allowed && <ProblemNotificationBell matches={matchesQuery.data?.potentialMatches??[]}/>}
-              {access.data?.allowed && showTools && (
+              {canMatch && <ProblemNotificationBell matches={matchesQuery.data?.potentialMatches??[]}/>}
+              {canDashboard && showTools && (
                 <Button variant="outline" size="icon" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه" aria-haspopup="dialog" aria-expanded={toolsOpen}
                   title={reportsReady?(reportsComplete?"د راپورونو بشپړتیا تایید شوې":"د راپورونو بشپړتیا نیمګړې ده"):"دندې او راپورونه"}
                   className="h-9 w-9 shrink-0 rounded-xl sm:h-10 sm:w-auto sm:gap-2 sm:px-3">
@@ -193,8 +200,8 @@ function DashboardLayoutContent() {
             </div>
           </div>
         </header>
-        {access.data?.allowed && <ScheduledReportNotice />}
-        {access.data?.allowed && <NewProblemVisitorNotice />}
+        {profile?.owner && <ScheduledReportNotice />}
+        {canMatch && <NewProblemVisitorNotice />}
         <main id="main-dashboard-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:px-8 md:py-7">
           {access.isLoading ? (
             <p role="status" className="rounded-xl border bg-card p-5 text-muted-foreground">لاسرسی کتل کېږي…</p>
@@ -217,11 +224,16 @@ function DashboardLayoutContent() {
               <Button className="mt-6" onClick={signOut}>د بل حساب سره ننوتل</Button>
             </div>
           ) : (
-            <Outlet />
+            canAccess(profile, section) ? <Outlet /> :
+            section==="dashboard" && firstSection ? (
+              firstSection==="reconciliation" ? <Navigate to="/dashboard/reconciliation" replace /> :
+              firstSection==="center-quality" ? <Navigate to="/dashboard/center-quality" replace /> :
+              <Navigate to="/dashboard/$slug" params={{slug:firstSection}} replace />
+            ) : <p role="alert">دې برخې ته د لاسرسي اجازه نه لرئ.</p>
           )}
         </main>
       </div>
-    </div>
+    </div></DashboardAccessContext.Provider>
   );
 }
 

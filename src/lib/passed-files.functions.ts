@@ -8,4 +8,4 @@ export const getPassedFiles=createServerFn({method:'POST'})
   if(!/^1[34]\d{2}-\d{2}-\d{2}$/.test(input?.from??'')||!/^1[34]\d{2}-\d{2}-\d{2}$/.test(input?.to??'')||input.from>input.to)throw Error('INVALID_DATE_RANGE');
   return {from:input.from,to:input.to,query:String(input.query??'').trim().slice(0,120)};
  })
- .handler(async({data,context})=>{setResponseHeader('Cache-Control','private, no-store');return readPassedFiles(data.from,data.to,context.claims,data.query)});
+ .handler(async({data,context})=>{setResponseHeader('Cache-Control','private, no-store');return readPassedFiles(data.from,data.to,context,data.query)});

@@ -10,5 +10,5 @@ export const getCenterQuality = createServerFn({method:'POST'})
  })
  .handler(async({data,context})=>{
   setResponseHeader('Cache-Control','private, no-store');
-  return readCenterQuality(data.year,data.month,context.claims,context.userId,data.refresh);
+  return readCenterQuality(data.year,data.month,context,data.refresh);
  });

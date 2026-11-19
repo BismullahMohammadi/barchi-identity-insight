@@ -1,3 +1,4 @@
+import { useSectionActions } from "@/lib/dashboard-access-context";
 import { createFileRoute } from '@tanstack/react-router';
 import { queryOptions, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
@@ -40,6 +41,7 @@ export const Route = createFileRoute('/_authenticated/dashboard/reconciliation')
 });
 const number = (value: number | null) => value === null ? '—' : value.toLocaleString('fa-AF');
 function ReconciliationPage() {
+  const can = useSectionActions("reconciliation");
   const search = Route.useSearch(), navigate = Route.useNavigate(), today = todayJalali();
   const year = search.year ?? today.y, month = search.month ?? today.m;
   const { data } = useSuspenseQuery(reportQuery(year, month));
@@ -101,8 +103,8 @@ function ReconciliationPage() {
         <select aria-label="میاشت" className="min-h-10 rounded-lg border bg-card px-3" value={`${year}-${month}`} onChange={e=>changeMonth(e.target.value)}>
           {months.map(m=><option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>{JALALI_MONTHS[m.month-1]} {m.year}</option>)}
         </select>
-        <Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}><Printer className="h-4 w-4" /> چاپ</Button>
-        <Button variant="outline" size="sm" className="print:hidden" onClick={exportSvg}><FileImage className="h-4 w-4" /> SVG</Button>
+        {can("print") && <Button variant="outline" size="sm" className="print:hidden" onClick={() => window.print()}><Printer className="h-4 w-4" /> چاپ</Button>}
+        {can("export") && <Button variant="outline" size="sm" className="print:hidden" onClick={exportSvg}><FileImage className="h-4 w-4" /> SVG</Button>}
         <Button variant="outline" size="icon" aria-label="تازه کول" title="تازه کول" disabled={refreshing} onClick={refresh}><RefreshCw className={`h-4 w-4 ${refreshing?'animate-spin':''}`}/></Button>
       </div>
     </header>

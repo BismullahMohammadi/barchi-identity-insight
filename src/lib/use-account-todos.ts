@@ -1,3 +1,5 @@
+import { useContext } from 'react';
+import { DashboardAccessContext } from './dashboard-access-context';
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { changeTodo, getTodos } from "./todos.functions";
@@ -18,13 +20,14 @@ function getLegacyItems():{legacyKey:string;title:string;done:boolean;createdAt:
  }catch{return [];}
 }
 export function useAccountTodos(){
+ const owner=useContext(DashboardAccessContext)?.owner===true;
  const client=useQueryClient();
  const todos=useQuery({queryKey:["owner-todos"],queryFn:()=>getTodos(),staleTime:5000,retry:1});
  const change=useMutation({mutationFn:changeTodo,onSuccess:()=>client.invalidateQueries({queryKey:["owner-todos"]})});
  const [migrationError,setMigrationError]=useState(false);
  const underway=useRef(false);
  useEffect(()=>{
-  if(!todos.isSuccess||underway.current||typeof window==="undefined")return;
+  if(!owner||!todos.isSuccess||underway.current||typeof window==="undefined")return;
   const items=getLegacyItems();
   if(!items.length||window.localStorage.getItem(migratedFor)==="complete")return;
   underway.current=true;
@@ -33,7 +36,7 @@ export function useAccountTodos(){
    // Keep the old browser data as a recovery backup; never delete it on migration.
    client.invalidateQueries({queryKey:["owner-todos"]});
   }).catch(()=>setMigrationError(true)).finally(()=>{underway.current=false;});
- },[todos.isSuccess,client]);
+ },[owner,todos.isSuccess,client]);
  return {
   todos:(todos.data??[]) as StoredTodo[],
   loading:todos.isLoading,loadError:todos.error,writeError:change.error,migrationError,

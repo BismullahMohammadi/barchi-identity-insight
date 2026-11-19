@@ -11,5 +11,5 @@ export const getReconciliation = createServerFn({ method: 'POST' })
   })
   .handler(async ({ data, context }) => {
     setResponseHeader('Cache-Control', 'private, no-store');
-    return readReconciliation(data, context.claims, context.userId);
+    return readReconciliation(data, context);
   });

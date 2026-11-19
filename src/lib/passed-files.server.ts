@@ -1,3 +1,4 @@
+import type { DashboardContext } from './dashboard-permissions.server';
 import { authorizedSheetHeaders } from './sheets-access.server';
 import { toLatinDigits } from './jalali';
 const BASE='https://connector-gateway.lovable.dev/google_sheets/v4';
@@ -62,10 +63,10 @@ async function read<T>(url:string,headers:Record<string,string>):Promise<T>{
  try{return await task as T}finally{pending.delete(url)}
 }
 
-export async function readPassedFiles(from:string,to:string,claims:unknown,query=''){
+export async function readPassedFiles(from:string,to:string,context: DashboardContext,query=''){
  const search=norm(query).toLowerCase().replace(/\s+/g,'');
  const target=fullDate(to);const startDate=fullDate(from);if(!target||target!==to||!startDate||startDate!==from||startDate>target)throw Error('INVALID_DATE');
- const headers=authorizedSheetHeaders(claims);const [year,month]=target.split('-').map(Number);
+ const headers=await authorizedSheetHeaders(context, "control");const [year,month]=target.split('-').map(Number);
  const records:{employee:string;name:string;father:string;familyCode:string;province:string;familyForms:number|null;individualForms:number|null;workType:string;date:string;sourceUrl:string;tab:string;row:number;confidence:string}[]=[];
  const warnings:string[]=[];let scanned=0;
  for(const source of SOURCES){

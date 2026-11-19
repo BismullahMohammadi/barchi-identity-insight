@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { DASHBOARD_SECTIONS, DASHBOARD_ACTIONS, inviteManagedUser, listManagedUsers, updateManagedUser } from '@/lib/managed-users.functions';
+import { availableActions, DASHBOARD_SECTIONS, DASHBOARD_ACTIONS } from "@/lib/dashboard-access";
+import { inviteManagedUser, listManagedUsers, updateManagedUser } from '@/lib/managed-users.functions';
 
 const names:Record<string,string> = {
  dashboard:'د مرکز کاري بهیر',total:'مجموعي راپور',identity:'تثبیت هویت',control:'کنټرول کیفیت',
@@ -35,7 +36,8 @@ function PermissionEditor({value,onChange}:{value:Perms;onChange:(next:Perms)=>v
       <th scope="row" className="p-3 text-right">{names[section]}</th>
       {DASHBOARD_ACTIONS.map(action=><td key={action} className="p-2 text-center"><input type="checkbox"
        aria-label={`${names[section]} — ${actions[action]}`}
-       checked={value[section]?.includes(action)??false}
+       disabled={!availableActions(section).includes(action)}
+       checked={availableActions(section).includes(action) && (value[section]?.includes(action)??false)}
        onChange={e=>{const current=value[section]??[];const next=e.target.checked?[...new Set([...current,action,...(action==='view'?[]:['view'])])]:action==='view'?[]:current.filter(a=>a!==action);onChange({...value,[section]:next});}}
       /></td>)}
     </tr>)}</tbody>
@@ -55,7 +57,7 @@ export function ManagedUsersPage() {
  const [notice,setNotice]=useState('');
  const [filter,setFilter]=useState('');
  const invite=useMutation({mutationFn:()=>inviteManagedUser({data:{email,displayName:name,permissions}}),onSuccess:async(result)=>{setNotice(result.invitationStatus==='existing'?'دا ایمیل مخکې ثبت شوی و؛ صلاحیتونه یې فعال شول. نوی ایمیل نه دی لېږل شوی.':'د بلنې غوښتنه Supabase ومنله؛ د ایمیل رسېدل او د کاروونکي منل لا نه دي تایید شوي.');await qc.invalidateQueries({queryKey:['managed-users']});setEmail('');setName('');setPermissions(empty());setError('');},onError:e=>setError(friendlyError(e))});
- const update=useMutation({mutationFn:()=>updateManagedUser({data:{userId:editing!,displayName:name,active,permissions}}),onSuccess:async()=>{await qc.invalidateQueries({queryKey:['managed-users']});setEditing(null);setName('');setEmail('');setPermissions(empty());setError('');setNotice('صلاحیتونه په بریالیتوب ثبت شول.');},onError:e=>setError(String(e.message))});
+ const update=useMutation({mutationFn:()=>updateManagedUser({data:{userId:editing!,displayName:name,active,permissions}}),onSuccess:async()=>{await qc.invalidateQueries({queryKey:['managed-users']});setEditing(null);setName('');setEmail('');setPermissions(empty());setError('');setNotice('صلاحیتونه په بریالیتوب ثبت شول.');},onError:e=>setError(friendlyError(e))});
  const filteredUsers=users.data?.filter(u=>[u.email,u.display_name].some(v=>v.toLowerCase().includes(filter.trim().toLowerCase())));
  const activeManagers=users.data?.filter(u=>u.role==='manager'&&u.active).length??0;
  return <section dir="rtl" className="space-y-6">
@@ -68,6 +70,7 @@ export function ManagedUsersPage() {
    {filteredUsers?.length===0&&<p className="text-sm text-muted-foreground">د لټون مطابق کاروونکی ونه موندل شو.</p>}
    {filteredUsers?.map(u=><div key={u.user_id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2">
     <div><p className="font-semibold">{u.display_name||u.email}</p><p className="text-xs text-muted-foreground" dir="ltr">{u.email}</p><p className="text-xs">{u.role==='super_admin'?'عمومي مدیر':u.active?'فعال مدیر':'غیرفعال مدیر'}</p>{u.role==='manager'&&<p className="text-xs text-muted-foreground">{u.invitationStatus==='accepted'?'حساب ته ننوتلی — تایید شوی':u.invitationStatus==='pending'?'بلنه لا نه ده منل شوې':u.invitationStatus==='existing'?'مخکې ثبت شوی حساب': 'د بلنې حالت نامعلوم دی'}</p>}</div>
+    {u.role==='manager' && u.active && <p className="text-xs text-muted-foreground">د لیدلو برخې: {DASHBOARD_SECTIONS.filter(key=>u.permissions?.[key]?.includes('view')).map(key=>names[key]).join('، ') || 'هېڅ'}</p>}
     {u.role==='manager'&&<Button variant="outline" onClick={()=>{setEditing(u.user_id);setEmail(u.email);setName(u.display_name);setActive(u.active);setPermissions(u.permissions??{});setError('');setNotice('');}}>صلاحیتونه بدل کړئ</Button>}
    </div>)}
   </div>
@@ -83,6 +86,5 @@ export function ManagedUsersPage() {
    <div className="flex gap-2"><Button type="submit" disabled={invite.isPending||update.isPending}>{editing?'بدلونونه ثبت کړئ':'بلنه ثبت کړئ'}</Button>
    {editing&&<Button type="button" variant="outline" onClick={()=>{setEditing(null);setEmail('');setName('');setPermissions(empty());}}>لغوه کول</Button>}</div>
   </form>
-  <p className="text-xs text-muted-foreground">امنیتي یادونه: د برخو د صلاحیتونو بشپړ پلي کېدل د ټولو سروري راپورونو له جلا امنیتي ارزونې وروسته فعالېږي.</p>
  </section>;
 }

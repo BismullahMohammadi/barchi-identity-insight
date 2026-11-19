@@ -38,7 +38,8 @@ export const getAccess = createServerFn({ method: "GET" })
     if(owner)return {email,allowed:true,owner:true,permissions:{} as Record<string,string[]>,allowlistConfigured:true};
     const {data:profile,error}=await (context.supabase as unknown as SupabaseClient).from("dashboard_user_permissions")
       .select("active,role,permissions").eq("user_id",context.userId).maybeSingle();
-    const perms=(!error && profile?.active===true && profile.role==="manager" && profile.permissions && typeof profile.permissions==="object")
+    if (error) throw new Error("PERMISSIONS_READ_FAILED");
+    const perms=( profile?.active===true && profile.role==="manager" && profile.permissions && typeof profile.permissions==="object")
       ? profile.permissions as Record<string,string[]> : {};
     return {email,allowed:Object.values(perms).some(actions=>Array.isArray(actions)&&actions.includes("view")),owner:false,permissions:perms,allowlistConfigured:!!process.env["OWNER_EMAILS"]?.trim()};
   });
@@ -366,8 +367,8 @@ export const getRecentReferrals=createServerFn({method:"GET"})
     fetchedAt:Date.now()
   };
   const db=context.supabase as unknown as SupabaseClient;
-  const {data:watchList,error:watchError}=await db.from("problem_visitors")
-    .select("id,full_name,father_name,issue,status,created_at").eq("user_id",context.userId).eq("status","active").limit(500);
+  const {data:watchList,error:watchError}=await hasDashboardPermission(context,"problem-visitors") ? await db.from("problem_visitors")
+    .select("id,full_name,father_name,issue,status,created_at").eq("user_id",context.userId).eq("status","active").limit(500) : {data:[],error:null};
   if(watchError) throw new Error("PROBLEM_VISITORS_READ_FAILED");
   const matches=findPotentialProblemMatches(watchList as ProblemVisitor[],fullGroups);
   return {

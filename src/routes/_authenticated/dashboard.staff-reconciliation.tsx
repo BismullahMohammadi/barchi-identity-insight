@@ -1,3 +1,4 @@
+import { useSectionActions } from "@/lib/dashboard-access-context";
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { RefreshCw, Printer } from 'lucide-react';
 export const Route=createFileRoute('/_authenticated/dashboard/staff-reconciliation')({component:StaffReconciliationPage});
 const display=(x:number|null)=>x===null?'—':x.toLocaleString('fa-AF');
 function StaffReconciliationPage(){
+  const can = useSectionActions("reconciliation");
  const today=todayJalali();
  const [year,setYear]=useState(today.y);
  const [month,setMonth]=useState(today.m);
@@ -22,7 +24,7 @@ function StaffReconciliationPage(){
    <div><h1 className="text-xl font-bold">د کارمندانو او تخنیکي راپورونو مطابقت</h1><p className="text-sm text-muted-foreground">تصدیق انفرادي (۴ کارمندان) او ثبت تولد (بهزاد)</p></div>
    <div className="flex flex-wrap gap-2 print:hidden">
     <Link to="/dashboard/reconciliation" className="rounded-lg border px-3 py-2 text-sm">عمومي مطابقت</Link>
-    <Button variant="outline" size="sm" onClick={()=>window.print()}><Printer className="h-4 w-4"/>چاپ</Button>
+    {can("print") && <Button variant="outline" size="sm" onClick={()=>window.print()}><Printer className="h-4 w-4"/>چاپ</Button>}
     <Button variant="outline" size="icon" aria-label="تازه کول" onClick={()=>report.refetch()} disabled={report.isFetching}><RefreshCw className="h-4 w-4"/></Button>
    </div>
   </header>

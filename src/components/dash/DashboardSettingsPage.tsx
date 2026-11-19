@@ -1,3 +1,4 @@
+import { useSectionActions } from "@/lib/dashboard-access-context";
 import {useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {Settings2,RefreshCw,RotateCcw,LayoutDashboard,Table2,FileSpreadsheet,ShieldCheck,Check,Activity,Users,BarChart3,PanelsTopLeft,ListTodo} from "lucide-react";
@@ -16,6 +17,7 @@ import {REFERRAL_CELL_KEY,REGISTRATION_CELL_KEY,normalizeReferralCell,readReferr
 type Section="general"|"reports"|"sheets"|"account";
 const sections=[{id:"general",label:"عمومي",Icon:Settings2},{id:"reports",label:"راپورونه او جدولونه",Icon:Table2},{id:"sheets",label:"Google Sheets",Icon:FileSpreadsheet},{id:"account",label:"حساب او ساتنه",Icon:ShieldCheck}] as const;
 export function DashboardSettingsPage(){
+ const can=useSectionActions("settings");
  const settings=useDashboardSettings();
  const access=useQuery(accessQuery);
  const qc=useQueryClient();
@@ -100,6 +102,7 @@ export function DashboardSettingsPage(){
     className={"flex min-h-12 items-center justify-center gap-2 rounded-xl px-2 text-xs font-bold transition-colors sm:text-sm "+(tab===id?"bg-primary text-primary-foreground":"hover:bg-muted text-foreground")}>
     <Icon className="h-4 w-4"/>{label}</button>)}
   </nav>
+  <fieldset disabled={!can("edit")} className="min-w-0">
   {tab==="general"&&<section className="dashboard-panel space-y-5 p-4 sm:p-6">
    <h2 className="font-extrabold">عمومي تنظیمات</h2>
    <label className="grid max-w-sm gap-2 text-sm font-semibold">اتومات تازه کول
@@ -173,5 +176,6 @@ export function DashboardSettingsPage(){
      <Button variant="outline" onClick={()=>setResetConfirm(false)}>لغوه</Button>
     </div>}</div>
   </section>}
+  </fieldset>
  </div>;
 }

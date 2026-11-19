@@ -1,3 +1,4 @@
+import type { DashboardContext } from './dashboard-permissions.server';
 import { authorizedSheetHeaders } from './sheets-access.server';
 import { findMonthlyBlock, reportNumber } from './reconciliation';
 import { todayJalali } from './jalali';
@@ -19,9 +20,9 @@ type CenterQualityReport = {
  checkedAt: number;
 };
 const cache = new Map<string,{time:number;data:CenterQualityReport}>();
-export async function readCenterQuality(year:number,month:number,claims:unknown,userId:string,refresh:boolean) {
- const headers = authorizedSheetHeaders(claims);
- const key = userId+':'+year+':'+month;
+export async function readCenterQuality(year:number,month:number,context: DashboardContext,refresh:boolean) {
+ const headers = await authorizedSheetHeaders(context, "center-quality");
+ const key = context.userId+':'+year+':'+month;
  const old = cache.get(key);
  if(old && Date.now()-old.time < (refresh?30000:120000)) return old.data;
  const params = new URLSearchParams({valueRenderOption:'FORMATTED_VALUE'});

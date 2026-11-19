@@ -2,16 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isEmailAllowed } from "./access";
+import { requireDashboardPermission } from "./dashboard-permissions.server";
 
 export type ProblemVisitor = { id:string; full_name:string; father_name:string; issue:string; status:"active"|"resolved"; created_at:string };
 type Command = {action:"add";full_name:string;father_name:string;issue:string} | {action:"status";id:string;status:"active"|"resolved"} | {action:"delete";id:string};
-function verify(context:{claims:unknown}) {
- const claims=context.claims as {email?:string}|null;
- if(!isEmailAllowed(claims?.email??null,process.env["OWNER_EMAILS"])) throw new Error("ACCESS_DENIED");
-}
 export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context}):Promise<ProblemVisitor[]>=>{
- setResponseHeader("Cache-Control","private, no-store");verify(context);
+ setResponseHeader("Cache-Control","private, no-store");await requireDashboardPermission(context,"problem-visitors");
  const db=context.supabase as unknown as SupabaseClient;
  const {data,error}=await db.from("problem_visitors").select("id,full_name,father_name,issue,status,created_at").eq("user_id",context.userId).order("created_at",{ascending:false}).limit(500);
  if(error)throw new Error("PROBLEM_VISITORS_READ_FAILED");
@@ -25,7 +21,7 @@ export const changeProblemVisitor=createServerFn({method:"POST"}).middleware([re
   if(data.action==="status"&&!["active","resolved"].includes(data.status))throw new Error("INVALID_REQUEST");
   return data;
  }).handler(async({data,context})=>{
-  setResponseHeader("Cache-Control","private, no-store");verify(context);
+  setResponseHeader("Cache-Control","private, no-store");await requireDashboardPermission(context,"problem-visitors",data.action==="add"?"create":data.action==="status"?"edit":"delete");
   const db=context.supabase as unknown as SupabaseClient;
   if(data.action==="add"){
    const {error}=await db.from("problem_visitors").insert({user_id:context.userId,full_name:data.full_name.trim(),father_name:data.father_name.trim(),issue:data.issue.trim()});

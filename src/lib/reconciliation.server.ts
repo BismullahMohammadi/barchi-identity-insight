@@ -1,3 +1,4 @@
+import type { DashboardContext } from './dashboard-permissions.server';
 import { authorizedSheetHeaders } from './sheets-access.server';
 import { compareMonthlyReports, compareSourceMonthlyTotals, findMonthlyBlock } from './reconciliation';
 import { todayJalali } from './jalali';
@@ -63,10 +64,10 @@ async function sourceSnapshot(source: keyof typeof SOURCES, userId: string, head
     return result;
   } finally { pending.delete(key); }
 }
-export async function readReconciliation(input: { year: number; month: number; refresh: boolean }, claims: unknown, userId: string) {
-  const headers = authorizedSheetHeaders(claims); // Always authorize before cache access.
+export async function readReconciliation(input: { year: number; month: number; refresh: boolean }, context: DashboardContext) {
+  const headers = await authorizedSheetHeaders(context, "reconciliation"); // Always authorize before cache access.
   const today = todayJalali();
-  const [local, province] = await Promise.all([sourceSnapshot('local', userId, headers, input.refresh), sourceSnapshot('province', userId, headers, input.refresh)]);
+  const [local, province] = await Promise.all([sourceSnapshot('local', context.userId, headers, input.refresh), sourceSnapshot('province', context.userId, headers, input.refresh)]);
   const lb = findMonthlyBlock(local.snapshot?.grid ?? [], input.year, input.month, 'local', today.y);
   const pb = findMonthlyBlock(province.snapshot?.grid ?? [], input.year, input.month, 'province', today.y);
   const link = (source: keyof typeof SOURCES, snapshot: Snapshot | undefined, cell: string | null) => snapshot && cell ? `https://docs.google.com/spreadsheets/d/${SOURCES[source].id}/edit#gid=${snapshot.gid}&range=${cell}` : null;

@@ -2,14 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isEmailAllowed } from "./access";
+import { requireDashboardPermission } from "./dashboard-permissions.server";
 import type { MeterReading, VerifiedDelivery } from "./generator-model";
 
 const KNOWN = ["READING_BEFORE_BASELINE", "READING_IN_FUTURE", "METER_BELOW_BASELINE", "READING_NOT_CHRONOLOGICAL", "METER_NOT_MONOTONIC", "DELIVERY_BEFORE_BASELINE", "DELIVERY_IN_FUTURE", "APPEND_ONLY"];
-function authorize(context: { claims: unknown }) {
-  const claims = context.claims as { email?: string } | null;
-  if (!isEmailAllowed(claims?.email ?? null, process.env["OWNER_EMAILS"])) throw new Error("ACCESS_DENIED");
-}
 function dbError(message: string, fallback: string): never {
   throw new Error(KNOWN.find(k => message.includes(k)) ?? fallback);
 }
@@ -17,7 +13,7 @@ const isIso = (s: unknown) => typeof s === "string" && s.length <= 40 && Number.
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export const getGeneratorData = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }): Promise<{ readings: MeterReading[]; deliveries: VerifiedDelivery[] }> => {
-  setResponseHeader("Cache-Control", "private, no-store"); authorize(context);
+  setResponseHeader("Cache-Control", "private, no-store"); await requireDashboardPermission(context,"fuel-management");
   const db = context.supabase as unknown as SupabaseClient;
   const [r, d] = await Promise.all([
     db.from("generator_meter_readings").select("id,reading_at,meter_hours,rate_lph,measured_liters,note,created_at").eq("user_id", context.userId).order("reading_at", { ascending: true }).limit(5000),
@@ -40,7 +36,7 @@ export const addMeterReading = createServerFn({ method: "POST" }).middleware([re
     return x;
   })
   .handler(async ({ context, data }) => {
-    setResponseHeader("Cache-Control", "private, no-store"); authorize(context);
+    setResponseHeader("Cache-Control", "private, no-store"); await requireDashboardPermission(context,"fuel-management","create");
     const db = context.supabase as unknown as SupabaseClient;
     const { error } = await db.from("generator_meter_readings").insert({ user_id: context.userId, reading_at: data.reading_at, meter_hours: data.meter_hours, rate_lph: data.rate_lph, measured_liters: data.measured_liters, note: data.note || null });
     if (error) dbError(error.message, "READING_WRITE_FAILED");
@@ -56,7 +52,7 @@ export const addVerifiedDelivery = createServerFn({ method: "POST" }).middleware
     return x;
   })
   .handler(async ({ context, data }) => {
-    setResponseHeader("Cache-Control", "private, no-store"); authorize(context);
+    setResponseHeader("Cache-Control", "private, no-store"); await requireDashboardPermission(context,"fuel-management","create");
     const db = context.supabase as unknown as SupabaseClient;
     const { error } = await db.from("generator_diesel_deliveries").insert({ user_id: context.userId, delivered_at: data.delivered_at, liters: data.liters, reference_no: data.reference_no, supplier: data.supplier || null, note: data.note || null });
     if (error) dbError(error.message, "DELIVERY_WRITE_FAILED");

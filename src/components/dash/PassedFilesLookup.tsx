@@ -1,3 +1,4 @@
+import { useSectionActions } from "@/lib/dashboard-access-context";
 import { printSection } from "@/lib/print-section";
 import { useState } from 'react';
 import { CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,6 +11,7 @@ import { getPassedFiles } from '@/lib/passed-files.functions';
 import { Button } from '@/components/ui/button';
 const STAFF=['ټول کارمندان','عزیزالله الطاف','فاطمه علي رضایي','نېک ولي خان ایمان','محمد نبي بهزاد','محمد نسیم هاشمي'];
 export function PassedFilesLookup(){
+  const can = useSectionActions("control");
  const [from,setFrom]=useState(todayValue);
  const [to,setTo]=useState(todayValue);
  const [firstPick,setFirstPick]=useState<string|null>(null);
@@ -39,7 +41,7 @@ export function PassedFilesLookup(){
     <label className="space-y-1 text-sm"><span className="block">کارمند</span><select className="h-10 max-w-full rounded-md border bg-background px-3" value={employee} onChange={e=>setEmployee(e.target.value)}>{STAFF.map(n=><option key={n}>{n}</option>)}</select></label>
     <label className="space-y-1 text-sm"><span className="block">د مراجع نوم یا فامیلي کوډ</span><input className="h-10 rounded-md border bg-background px-3" value={search} onChange={e=>setSearch(e.target.value)} placeholder="نوم یا کوډ ولیکئ"/></label>
     <Button disabled={report.isFetching} onClick={()=>{setHasSearched(true);setSubmitted({from,to,query:search.trim()});if(hasSearched&&submitted.from===from&&submitted.to===to&&submitted.query===search.trim())void report.refetch()}}>{report.isFetching?"لټون...":"لټون"}</Button>
-    <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={e=>printSection(e.currentTarget)}><Printer className="h-4 w-4"/> چاپ</Button>
+    {can("print") && <Button variant="outline" disabled={!report.data||incomplete||report.isFetching} onClick={e=>printSection(e.currentTarget)}><Printer className="h-4 w-4"/> چاپ</Button>}
    </div>
    {!hasSearched&&<p className="no-print text-sm text-muted-foreground">د ټاکلې مودې د دوسیو د کتلو لپاره «لټون» ووهئ.</p>}
    {report.isLoading&&<p role="status">د شیټونو معلومات لوستل کېږي…</p>}

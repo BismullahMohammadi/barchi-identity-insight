@@ -5,12 +5,7 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { isEmailAllowed } from './access';
 
-export const DASHBOARD_SECTIONS = [
-  'dashboard','total','identity','control','services','distribution','bank',
-  'arrivals','archive-scan','annual','problem-visitors','fuel-management',
-  'reconciliation','center-quality','settings',
-] as const;
-export const DASHBOARD_ACTIONS = ['view','create','edit','delete','print','export'] as const;
+import { availableActions, DASHBOARD_SECTIONS, DASHBOARD_ACTIONS } from './dashboard-access';
 const permissionsSchema = z.record(z.enum(DASHBOARD_SECTIONS), z.array(z.enum(DASHBOARD_ACTIONS))).default({});
 const userInput = z.object({
   email: z.string().trim().email().max(254).transform(v=>v.toLowerCase()),
@@ -24,9 +19,11 @@ const updateInput = z.object({
   permissions: permissionsSchema,
 });
 function normalizedPermissions(perms:Record<string,string[]>):Record<string,string[]> {
- return Object.fromEntries(Object.entries(perms).map(([section,actions])=>[
+ return Object.fromEntries(Object.entries(perms).map(([section,stored])=>{
+ const actions=stored.filter(action=>availableActions(section).includes(action));
+ return [
   section,actions.length && actions.some(action=>action!=='view') ? [...new Set(['view',...actions])] : actions,
- ]));
+ ];}));
 }
 type UserRecord = { user_id:string;email:string;display_name:string;role:string;active:boolean;permissions:Record<string,string[]>; invitationStatus?:'accepted'|'pending'|'existing'|'unknown' };
 function requireOwner(claims:unknown) {
@@ -103,10 +100,10 @@ export const inviteManagedUser = createServerFn({method:'POST'})
    if(lookupError)throw new Error('USER_DIRECTORY_UNAVAILABLE');
    if(current?.role==='super_admin')throw new Error('OWNER_ACCOUNT_PROTECTED');
    if(current)throw new Error('USER_ALREADY_MANAGED');
-   const {error}=await db.from('dashboard_user_permissions').upsert({
+   const {error}=await db.from('dashboard_user_permissions').insert({
      user_id:userId,email:data.email,display_name:data.displayName,
      role:'manager',active:true,permissions:normalizedPermissions(data.permissions),
-   },{onConflict:'user_id'});
+   });
    // Never delete an Auth user on a permissions write failure: it may be an existing OAuth account.
    if(error)throw new Error('PERMISSIONS_SAVE_FAILED');
    return {success:true,invitationStatus};
@@ -122,7 +119,7 @@ export const updateManagedUser = createServerFn({method:'POST'})
    if(lookupError||!target||target.role!=='manager')throw new Error('OWNER_ACCOUNT_PROTECTED');
    const {error}=await db.from('dashboard_user_permissions').update({
      display_name:data.displayName,active:data.active,permissions:normalizedPermissions(data.permissions),updated_at:new Date().toISOString(),
-   }).eq('user_id',data.userId);
+   }).eq('user_id',data.userId).eq('role','manager').select('user_id').single();
    if(error)throw new Error('PERMISSIONS_UPDATE_FAILED');
    return {success:true};
  });

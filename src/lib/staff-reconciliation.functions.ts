@@ -10,5 +10,5 @@ export const getStaffReconciliation=createServerFn({method:'POST'})
  })
  .handler(async({data,context})=>{
   setResponseHeader('Cache-Control','private, no-store');
-  return readStaffReconciliation(data.year,data.month,context.claims);
+  return readStaffReconciliation(data.year,data.month,context);
  });

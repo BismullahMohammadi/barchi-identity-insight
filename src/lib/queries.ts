@@ -7,7 +7,9 @@ export const REFRESH_MS = 60_000;
 export const accessQuery = queryOptions({
   queryKey: ["access"],
   queryFn: () => getAccess(),
-  staleTime: 5 * 60_000,
+  staleTime: 0,
+  refetchInterval: 15_000,
+  refetchOnWindowFocus: true,
   retry: false,
 });
 

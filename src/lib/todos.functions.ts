@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isEmailAllowed } from "./access";
+import { requireDashboardPermission } from "./dashboard-permissions.server";
 
 export type StoredTodo={id:string;title:string;done:boolean;createdAt:number};
 type DbTodo={id:string;title:string;completed:boolean;created_at:string};
@@ -12,16 +12,12 @@ type TodoCommand =
  | {action:"delete";id:string}
  | {action:"import";items:{legacyKey:string;title:string;done:boolean;createdAt:number}[]};
 
-function authorized(context:{claims:unknown}) {
- const claims=context.claims as {email?:string}|null;
- if(!isEmailAllowed(claims?.email??null,process.env["OWNER_EMAILS"]))throw new Error("ACCESS_DENIED");
-}
 function mapTodo(t:DbTodo):StoredTodo {
  return {id:t.id,title:t.title,done:t.completed,createdAt:Date.parse(t.created_at)};
 }
 export const getTodos=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
  setResponseHeader("Cache-Control","private, no-store");
- authorized(context);
+ await requireDashboardPermission(context,"dashboard");
  const db=context.supabase as unknown as SupabaseClient;
  const {data,error}=await db.from("dashboard_todos").select("id,title,completed,created_at")
   .eq("user_id",context.userId).order("created_at",{ascending:false}).limit(200);
@@ -37,7 +33,7 @@ export const changeTodo=createServerFn({method:"POST"}).middleware([requireSupab
   return input;
  }).handler(async({context,data})=>{
   setResponseHeader("Cache-Control","private, no-store");
-  authorized(context);
+  await requireDashboardPermission(context,"dashboard",data.action==="toggle"?"edit":data.action==="delete"?"delete":"create");
   const db=context.supabase as unknown as SupabaseClient;
   const owner=context.userId;
   if(data.action==="add"){

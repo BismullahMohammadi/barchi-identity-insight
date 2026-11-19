@@ -1,3 +1,4 @@
+import type { DashboardContext } from './dashboard-permissions.server';
 import { authorizedSheetHeaders } from './sheets-access.server';
 import { MONTH_NAMES } from './monthly-staff-completeness';
 import { isFridayJalali } from './holidays';
@@ -49,8 +50,8 @@ export function compareStaff(control:unknown[][], staff:unknown[][], year:number
     staffCell:rowIndex>0&&col!==undefined?`${col<26?String.fromCharCode(65+col):'A'+String.fromCharCode(65+col-26)}${rowIndex}`:null};
  }));
 }
-export async function readStaffReconciliation(year:number,month:number,claims:unknown){
- const headers=authorizedSheetHeaders(claims);
+export async function readStaffReconciliation(year:number,month:number,context: DashboardContext){
+ const headers=await authorizedSheetHeaders(context, "reconciliation");
  const meta=await read<{sheets?:{properties?:{title?:string}}[]}>(`${BASE}/spreadsheets/${STAFF_ID}?fields=sheets(properties(title))`,headers);
  const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
  const tab=monthTitle(titles,month);

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { canAccess } from './dashboard-access';
 import { isEmailAllowed } from './access';
 
 export type DashboardAction = 'view'|'create'|'edit'|'delete'|'print'|'export';
@@ -19,8 +20,7 @@ export async function hasDashboardPermission(context:DashboardContext,section:st
   if(error || !data || data.active!==true || data.role!=='manager')return false;
   const perms=data.permissions;
   if(!perms || typeof perms!=='object' || Array.isArray(perms))return false;
-  const allowed=(perms as Record<string,unknown>)[section];
-  return Array.isArray(allowed) && allowed.includes(action);
+  return canAccess({owner:false, permissions:perms as Record<string,string[]>}, section, action);
 }
 export async function requireDashboardPermission(context:DashboardContext,section:string,action:DashboardAction='view'):Promise<void> {
   if(!(await hasDashboardPermission(context,section,action)))throw new Error('ACCESS_DENIED');

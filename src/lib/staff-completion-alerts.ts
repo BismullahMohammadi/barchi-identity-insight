@@ -37,16 +37,16 @@ export async function enableReportSound(){
 export function disableReportSound(){
  try{window.localStorage.removeItem(SOUND_KEY);}catch{/* protected browser */}
 }
-export function useStaffCompletionMonitor(){
+export function useStaffCompletionMonitor(canViewDashboard=true){
  const settings=useDashboardSettings();
- const enabled=settings.showReportHealth;
+ const enabled=canViewDashboard && settings.showReportHealth;
  const refresh=settingsRefreshMs(settings);
  const registration=useQuery({...staffCompletenessQuery(refresh),enabled});
  const insijam=useQuery({...insijamCompletenessQuery(refresh),enabled});
  const state=useQuery({...stateReportQuery(refresh),enabled});
  const first=registration.data,second=insijam.data;
  const allComplete=!!(first&&second&&first.status==="complete"&&second.status==="complete"&&first.totalCount>0&&second.totalCount>0&&first.date===second.date);
- const summary=first&&second ? {
+ const summary=enabled&&first&&second ? {
   date:first.date,
   complete:allComplete,
   registration:first,

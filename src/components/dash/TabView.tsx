@@ -1,3 +1,5 @@
+import { TABS } from "@/lib/tabs";
+import { useSectionActions } from "@/lib/dashboard-access-context";
 import {useDashboardSettings} from "@/lib/dashboard-settings";
 import {Link} from "@tanstack/react-router";
 import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
@@ -22,6 +24,7 @@ const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 2 
  * Show the main verified metric first. Full rows/exports are optional.
  */
 export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSelectedMonthChange, dateRange }: { title: string; grid: string[][]; detailsOnly?: boolean; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; dateRange?: DateFilter | undefined }) {
+  const can = useSectionActions(TABS.find(tab=>tab.title===title)?.slug ?? "");
   const settings=useDashboardSettings();
   const { table, mappingError } = useMemo(() => {
     try { return { table: normalizeGrid(resolveMappedGrid(grid,title), title), mappingError: null as string | null }; }
@@ -130,12 +133,12 @@ export function TabView({ title, grid, detailsOnly = false, selectedMonth, onSel
                 <Input aria-label="په راپور کې پلټنه" placeholder="په جدول کې پلټنه" className="min-h-11 ps-9"
                   value={search} onChange={event => { setSearch(event.target.value); setShown(settings.tablePageSize); }} />
               </div>
-              <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filteredRows.length}>
+              {can("export") && <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filteredRows.length}>
                 <Download className="h-4 w-4" /> CSV
-              </Button>
-              <Button size="sm" variant="outline" onClick={e => printSection(e.currentTarget)} disabled={!filteredRows.length}>
+              </Button>}
+              {can("print") && <Button size="sm" variant="outline" onClick={e => printSection(e.currentTarget)} disabled={!filteredRows.length}>
                 <Printer className="h-4 w-4" /> چاپ
-              </Button>
+              </Button>}
             </div>
             <div className="max-h-[460px] w-full overflow-auto rounded-lg border">
               <Table>

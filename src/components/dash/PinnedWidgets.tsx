@@ -1,3 +1,4 @@
+import { useSectionActions } from "@/lib/dashboard-access-context";
 import { useState } from "react";
 import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,13 +16,14 @@ import { useAccountTodos } from "@/lib/use-account-todos";
 
 const label:{[K in WidgetId]:string}={todo:"دندې",advice:"د راپورونو بشپړتیا"};
 function TodoContent() {
+ const can=useSectionActions("dashboard");
  const {todos,loading,loadError,writeError,migrationError,saving,add,toggle,remove,refresh}=useAccountTodos();
  const [draft,setDraft]=useState("");
  const [error,setError]=useState("");
  const pending=todos.filter(t=>!t.done);
  return (
   <div className="space-y-3">
-   <form className="flex gap-2" onSubmit={async event=>{
+   {can("create") && <form className="flex gap-2" onSubmit={async event=>{
      event.preventDefault();
      if(!draft.trim())return;
      setError("");
@@ -29,7 +31,7 @@ function TodoContent() {
     }}>
     <Input value={draft} maxLength={180} onChange={event=>setDraft(event.target.value)} placeholder="نوې دنده ولیکئ" aria-label="نوې دنده" className="min-h-11 min-w-0 bg-background" />
     <Button type="submit" disabled={!draft.trim()||saving||!!loadError} size="icon" className="h-11 w-11 shrink-0" aria-label="دنده اضافه کړئ"><Plus className="h-4 w-4"/></Button>
-   </form>
+   </form>}
    {(loadError||writeError||migrationError||error) && (
     <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
      {loadError?"د دندو له خوندي ذخیرې سره اړیکه ناکامه شوه. ":writeError||error?"وروستی بدلون نه دی خوندي شوی. ":""}
@@ -42,11 +44,11 @@ function TodoContent() {
     {!loading&&!loadError&&todos.length===0&&<p className="py-5 text-center text-sm text-muted-foreground">تر اوسه دنده نه ده ثبت شوې.</p>}
     {todos.map(t=>(
      <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/35 px-3 py-2">
-      <button type="button" disabled={saving} onClick={async()=>{try{await toggle(t.id,!t.done);}catch{setError("د حالت بدلون ونه ساتل شو.");}}}
+      <button type="button" disabled={saving||!can("edit")} onClick={async()=>{try{await toggle(t.id,!t.done);}catch{setError("د حالت بدلون ونه ساتل شو.");}}}
        aria-label={t.done?"دنده بېرته پاتې کړئ":"دنده بشپړه کړئ"} aria-pressed={t.done}
        className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors "+(t.done?"bg-primary text-primary-foreground":"bg-card hover:border-primary")}>{t.done&&<Check className="h-4 w-4"/>}</button>
       <span className={"min-w-0 flex-1 break-words text-sm "+(t.done?"text-muted-foreground line-through":"")}>{t.title}</span>
-      <button type="button" disabled={saving} onClick={async()=>{try{await remove(t.id);}catch{setError("دنده لرې نه شوه.");}}}
+      <button type="button" disabled={saving||!can("delete")} onClick={async()=>{try{await remove(t.id);}catch{setError("دنده لرې نه شوه.");}}}
        aria-label="دنده لرې کړئ" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4"/></button>
      </div>
     ))}
