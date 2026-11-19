@@ -36,7 +36,7 @@ function StaffReconciliationPage(){
   </div>
   {report.isLoading&&<p role="status">راپورونه لوستل کېږي…</p>}
   {(report.isError||report.data?.error)&&<p role="alert" className="rounded-lg border border-destructive/30 p-3 text-destructive">د راپور معلومات ونه لوستل شول. د Google Sheets اړیکه او د میاشتې ټب وګورئ.</p>}
-  {report.data?.tab&&<p className="text-xs text-muted-foreground">د کارمندانو ټب: {report.data.tab} · تخنیکي ټب: کنټرول</p>}
+  {report.data?.tab&&<p className="text-xs text-muted-foreground">د کارمندانو ټب: {report.data.tab} · تخنیکي راپور: کنټرول کیفیت</p>}
   <div className="grid grid-cols-3 gap-2">{([['مطابق',count('equal')],['توپیر',count('mismatch')],['نیمګړي',count('missing')]] as const).map(([label,value])=><div key={label} className="rounded-xl border p-3 text-center"><p className="text-2xl font-bold">{display(value)}</p><p className="text-xs text-muted-foreground">{label}</p></div>)}</div>
   <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3 print:hidden" role="tablist" aria-label="د مطابقت ډول">
    <Link to="/dashboard/reconciliation" search={{}} role="tab" aria-selected={false} className="flex min-h-10 items-center justify-center rounded-md px-2 text-center text-sm">د ورځو مطابقت</Link>

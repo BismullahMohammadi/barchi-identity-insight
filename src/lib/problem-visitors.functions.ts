@@ -1,3 +1,4 @@
+import { loadProblemVisitors } from "./problem-visitor-sheet.server";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -6,12 +7,9 @@ import { requireDashboardPermission } from "./dashboard-permissions.server";
 
 export type ProblemVisitor = { id:string; full_name:string; father_name:string; issue:string; status:"active"|"resolved"; created_at:string };
 type Command = {action:"add";full_name:string;father_name:string;issue:string} | {action:"status";id:string;status:"active"|"resolved"} | {action:"delete";id:string};
-export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context}):Promise<ProblemVisitor[]>=>{
- setResponseHeader("Cache-Control","private, no-store");await requireDashboardPermission(context,"problem-visitors");
- const db=context.supabase as unknown as SupabaseClient;
- const {data,error}=await db.from("problem_visitors").select("id,full_name,father_name,issue,status,created_at").eq("user_id",context.userId).order("created_at",{ascending:false}).limit(500);
- if(error)throw new Error("PROBLEM_VISITORS_READ_FAILED");
- return data as ProblemVisitor[];
+export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ setResponseHeader("Cache-Control","private, no-store");
+ return loadProblemVisitors(context);
 });
 export const changeProblemVisitor=createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
  .validator((data:Command)=>{

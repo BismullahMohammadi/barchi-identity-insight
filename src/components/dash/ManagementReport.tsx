@@ -78,7 +78,7 @@ function TeamTable({table,rows,columns,identity}: {table:NormalizedTable;rows:Ce
   const reported=records.filter(r=>r.value!==null);
   const max=Math.max(1,...reported.map(r=>r.value??0));
   return (
-    <section className="dashboard-panel overflow-hidden" aria-label={identity?"د تثبیت هویت د کارمندانو فعالیت":"د کنټرول د ټیمونو فعالیت"}>
+    <section className="dashboard-panel overflow-hidden" aria-label={identity?"د تثبیت هویت د کارمندانو فعالیت":"د کنټرول کیفیت د ټیمونو فعالیت"}>
       <div className="border-b px-4 py-3">
         <h2 className="font-bold">{identity?"د هر کارمند فعالیت":"د هر ټیم فعالیت"}</h2>
         <p className="mt-1 text-xs text-muted-foreground">د ټاکلې مودې ثبت شوې شمېرې · تش کالمونه صفر نه ګڼل کېږي</p>
@@ -149,11 +149,11 @@ export function ManagementReport({kind,title,grid,dateRange}: {kind:Kind;title:s
     {label:"تعین سن",value:metric(9)},
     {label:"مجموعي تثبیت هویت",value:metric(10),tone:"teal"},
   );
-  if(kind==="control") cards.push({label:"د کیفیت کنټرول پاس دوسیې",value:metric(6),tone:"teal"});
+  if(kind==="control") cards.push({label:"د کنټرول کیفیت له خوا تایید شوې دوسیې",value:metric(6),tone:"teal"});
   if(kind==="archive-scan") cards.push(
     {label:"سکن شوې ورقې",value:metric(3),tone:"teal"},
-    {label:"کنټرول شوې ورقې",value:metric(6),tone:"blue"},
-    {label:"نا کنټرول شوې ورقې",value:metric(7),tone:"amber"},
+    {label:"د کنټرول کیفیت کتل شوې ورقې",value:metric(6),tone:"blue"},
+    {label:"د کنټرول کیفیت ناکتل شوې ورقې",value:metric(7),tone:"amber"},
   );
   if(kind==="annual") cards.push(
     {label:"مجموعي عواید",value:metric(14),currency:true},
@@ -188,10 +188,10 @@ export function ManagementReport({kind,title,grid,dateRange}: {kind:Kind;title:s
       {kind==="archive-scan" && (
         <section className="dashboard-panel space-y-3 p-4 sm:p-5">
           <h2 className="font-bold">د کارمندانو ثبت شوی فعالیت</h2>
-          <p className="text-xs text-muted-foreground">د سکن او کنټرول جلا کالمونه؛ تش کالمونه صفر نه ګڼل کېږي.</p>
+          <p className="text-xs text-muted-foreground">د سکن او کنټرول کیفیت جلا کالمونه؛ تش کالمونه صفر نه ګڼل کېږي.</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {([1,2,4,5] as const).map(col=><div key={col} className="rounded-xl border bg-muted/25 p-3">
-              <p className="text-sm text-muted-foreground">{col<3?"سکن":"کنټرول"} · {table.headers[col]}</p>
+              <p className="text-sm text-muted-foreground">{col<3?"سکن":"کنټرول کیفیت"} · {table.headers[col]}</p>
               <p className="mt-2 text-2xl font-extrabold tabular-nums text-primary">{metric(col)===null?"—":format(metric(col)!)}</p>
             </div>)}
           </div>

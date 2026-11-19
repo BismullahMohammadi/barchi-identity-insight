@@ -1,3 +1,4 @@
+import { loadProblemVisitors } from "./problem-visitor-sheet.server";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -16,7 +17,6 @@ import {extractRejectedFiles,normalizeFileCode} from "./rejection-reasons";
 import {birthCardConfirmations,dailyApprovalDetails} from "./birth-card-confirmations";
 import {matchesRegisteredPerson} from "./registration-match";
 import {findPotentialProblemMatches} from "./problem-visitor-matching";
-import type {ProblemVisitor} from "./problem-visitors.functions";
 import type {SupabaseClient} from "@supabase/supabase-js";
 import {MONTH_NAMES} from "./monthly-staff-completeness";
 import {sheetConnectionHeaders} from "./sheets-access.server";
@@ -366,11 +366,9 @@ export const getRecentReferrals=createServerFn({method:"GET"})
     registration:{...newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),people:mergeRegistrationKinds(allRegistered,extraConfirmed)},
     fetchedAt:Date.now()
   };
-  const db=context.supabase as unknown as SupabaseClient;
-  const {data:watchList,error:watchError}=await hasDashboardPermission(context,"problem-visitors") ? await db.from("problem_visitors")
-    .select("id,full_name,father_name,issue,status,created_at").eq("user_id",context.userId).eq("status","active").limit(500) : {data:[],error:null};
-  if(watchError) throw new Error("PROBLEM_VISITORS_READ_FAILED");
-  const matches=findPotentialProblemMatches(watchList as ProblemVisitor[],fullGroups);
+  const watchList = await hasDashboardPermission(context,"problem-visitors")
+    ? (await loadProblemVisitors(context,true)).visitors : [];
+  const matches=findPotentialProblemMatches(watchList,fullGroups);
   return {
     newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),birthCardAddedCount,fetchedAt:Date.now(),
     potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))

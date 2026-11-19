@@ -15,7 +15,7 @@ export function ProblemVisitorsPage() {
  const [name,setName]=useState("");
  const [father,setFather]=useState("");
  const [issue,setIssue]=useState("");
- const q=useQuery({queryKey:["problem-visitors"],queryFn:()=>getProblemVisitors(),retry:false});
+ const q=useQuery({queryKey:["problem-visitors"],queryFn:()=>getProblemVisitors(),refetchInterval:60_000,retry:false});
  const mutation=useMutation({mutationFn:changeProblemVisitor,onSuccess:async()=>{await qc.invalidateQueries({queryKey:["problem-visitors"]});}});
  async function add(e:React.FormEvent){e.preventDefault();await mutation.mutateAsync({data:{action:"add",full_name:name,father_name:father,issue}});setName("");setFather("");setIssue("");}
  return <div className="space-y-5">
@@ -29,9 +29,11 @@ export function ProblemVisitorsPage() {
    <Button type="submit" disabled={mutation.isPending}><Plus className="h-4 w-4"/> ثبتول</Button>
    {mutation.isError&&<p role="alert" className="text-sm text-destructive">د ثبت یا بدلون غوښتنه ناکامه شوه. د ډیټابېس تنظیمات او اجازه وګورئ.</p>}
   </form>}
-  <section className="dashboard-panel p-4 sm:p-5"><h2 className="mb-3 font-bold">ثبت شوي مراجعین ({q.data?.length??0})</h2>
-   {q.isLoading?<p>معلومات رااخیستل کېږي…</p>:q.error?<p role="alert" className="text-destructive">لېست ونه لوستل شو. بیا هڅه وکړئ؛ که ستونزه پاتې وي، له عمومي مدیر سره اړیکه ونیسئ.</p>:q.data?.length===0?<p className="text-muted-foreground">تر اوسه مراجع نه دی ثبت شوی.</p>:
-    <div className="space-y-3">{q.data?.map(v=><article key={v.id} className="rounded-xl border p-3">
+  {q.data?.skipped===null && <p role="status">د شیټ همغږي بشپړه نه شوه. خوندي شوي ثبتونه ښکاري.</p>}
+  {!!q.data?.skipped && <p role="status">د نیمګړو یا ناسمو معلوماتو له امله {q.data.skipped} قطارونه وارد نه شول.</p>}
+  <section className="dashboard-panel p-4 sm:p-5"><h2 className="mb-3 font-bold">ثبت شوي مراجعین ({q.data?.visitors.length??0})</h2>
+   {q.isLoading?<p>معلومات رااخیستل کېږي…</p>:q.error?<p role="alert" className="text-destructive">لېست ونه لوستل شو. بیا هڅه وکړئ؛ که ستونزه پاتې وي، له عمومي مدیر سره اړیکه ونیسئ.</p>:q.data?.visitors.length===0?<p className="text-muted-foreground">تر اوسه مراجع نه دی ثبت شوی.</p>:
+    <div className="space-y-3">{q.data?.visitors.map(v=><article key={v.id} className="rounded-xl border p-3">
      <div className="flex items-start justify-between gap-2"><div><p className="font-bold">{v.full_name}</p><p className="text-sm text-muted-foreground">د پلار نوم: {v.father_name}</p></div><span className="text-xs">{v.status==="active"?"فعال":"حل شوی"}</span></div>
      <p className="mt-2 whitespace-pre-wrap text-sm">{v.issue}</p>
      <div className="mt-3 flex flex-wrap gap-2">

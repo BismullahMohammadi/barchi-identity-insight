@@ -1,0 +1,23 @@
+name: Sync problem visitor sheet
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sync-problem-visitors
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Import new rows into authorized accounts
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SCHEDULE_SUPABASE_URL: ${{ secrets.SCHEDULE_SUPABASE_URL }}
+          SCHEDULE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SCHEDULE_SUPABASE_SERVICE_ROLE_KEY }}
+        run: bun scripts/sync-problem-visitors.ts

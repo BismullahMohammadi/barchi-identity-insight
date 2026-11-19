@@ -155,7 +155,7 @@ export function DashboardSettingsPage(){
    <div className="border-t pt-4"><h2 className="font-extrabold">د نورو راپورونو کالمونه</h2><p className="mt-1 text-xs text-muted-foreground">راپور وټاکئ او د شیټ نوی کالم نوم ولیکئ.</p></div>
    <label className="grid max-w-md gap-2 text-sm font-semibold">راپور
     <select className="h-11 rounded-xl border bg-background px-3" value={sheet} onChange={e=>{setSheet(e.target.value);setAliasSaved(false);setReportTest("");}}>
-     {Object.keys(SHEET_COLUMNS).filter(s=>s!=="ریاست ته ګزارش").map(s=><option key={s} value={s}>{s}</option>)}
+     {Object.keys(SHEET_COLUMNS).filter(s=>s!=="ریاست ته ګزارش").map(s=><option key={s} value={s}>{TABS.find(tab=>tab.title===s)?.label??s}</option>)}
     </select>
    </label>
    <div className="grid gap-3 sm:grid-cols-2">{Object.entries(SHEET_COLUMNS[sheet]?.expectedHeaders??{}).map(([index,expected])=><label key={index} className="grid gap-1 text-xs font-semibold">{expected} <span className="text-muted-foreground">(کالم {Number(index)+1})</span>
