@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {useGlobalDateRange} from "@/lib/global-date-range";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -7,12 +8,13 @@ import { TabView } from "@/components/dash/TabView";
 import { errorText, sheetQuery } from "@/lib/queries";
 import { getTab, sectionLabels } from "@/lib/tabs";
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
-import { DashboardSettingsPage } from "@/components/dash/DashboardSettingsPage";
 import { ManagementReport, isManagementReport } from "@/components/dash/ManagementReport";
-import { ProblemVisitorsPage } from "@/components/dash/ProblemVisitorsPage";
-import { SimpleDieselReport } from "@/components/dash/SimpleDieselReport";
-import { ManagedUsersPage } from "@/components/dash/ManagedUsersPage";
-import { PassedFilesLookup } from "@/components/dash/PassedFilesLookup";
+
+const DashboardSettingsPage = lazy(() => import("@/components/dash/DashboardSettingsPage").then(module => ({ default: module.DashboardSettingsPage })));
+const ManagedUsersPage = lazy(() => import("@/components/dash/ManagedUsersPage").then(module => ({ default: module.ManagedUsersPage })));
+const SimpleDieselReport = lazy(() => import("@/components/dash/SimpleDieselReport").then(module => ({ default: module.SimpleDieselReport })));
+const ProblemVisitorsPage = lazy(() => import("@/components/dash/ProblemVisitorsPage").then(module => ({ default: module.ProblemVisitorsPage })));
+const PassedFilesLookup = lazy(() => import("@/components/dash/PassedFilesLookup").then(module => ({ default: module.PassedFilesLookup })));
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
@@ -35,6 +37,10 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
 
 function TabPage() {
   const { slug } = Route.useParams();
+  return <Suspense fallback={<p role="status">برخه پرانیستل کېږي…</p>}><Section slug={slug} /></Suspense>;
+}
+
+function Section({slug}: {slug:string}) {
   if (slug === "admin-users") return <OwnerOnly><ManagedUsersPage /></OwnerOnly>;
   if (slug === "settings") return <DashboardSettingsPage />;
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;

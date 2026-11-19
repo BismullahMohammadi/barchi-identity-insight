@@ -43,9 +43,9 @@ export function useStaffCompletionMonitor(canViewDashboard=true){
  const refresh=settingsRefreshMs(settings);
  const registration=useQuery({...staffCompletenessQuery(refresh),enabled});
  const insijam=useQuery({...insijamCompletenessQuery(refresh),enabled});
- const state=useQuery({...stateReportQuery(refresh),enabled});
  const first=registration.data,second=insijam.data;
  const allComplete=!!(first&&second&&first.status==="complete"&&second.status==="complete"&&first.totalCount>0&&second.totalCount>0&&first.date===second.date);
+ const state=useQuery({...stateReportQuery(refresh),enabled:enabled && allComplete});
  const summary=enabled&&first&&second ? {
   date:first.date,
   complete:allComplete,
@@ -67,7 +67,7 @@ export function useStaffCompletionMonitor(canViewDashboard=true){
  return {
   data:summary,
   isLoading:registration.isLoading||insijam.isLoading||state.isLoading,
-  error:registration.error||insijam.error||state.error,
-  refetch:async()=>{await Promise.all([registration.refetch(),insijam.refetch(),state.refetch()]);},
+  error:registration.error||insijam.error||(allComplete ? state.error : null),
+  refetch:async()=>{await Promise.all([registration.refetch(),insijam.refetch(),...(allComplete ? [state.refetch()] : [])]);},
  };
 }

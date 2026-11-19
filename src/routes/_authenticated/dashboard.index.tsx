@@ -6,7 +6,7 @@ import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpLeft, ChartNoAxesColumn, RefreshCw, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { accessQuery, errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
@@ -15,13 +15,38 @@ import { holidayOfToday } from "@/lib/holidays";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
 import { type OverviewPeriod } from "@/lib/overview-period";
 import { deriveOverviewFive } from "@/lib/overview-five";
-import { WeeklyActivityChart } from "@/components/dash/WeeklyActivityChart";
 import { recentReferralsQuery } from "@/lib/queries";
 import type { ReferralGroup, RegistrationDiagnostic, RecentReferral } from "@/lib/recent-referrals";
 import { matchesRegisteredPerson } from "@/lib/registration-match";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
+
+const WeeklyActivityChart = lazy(() => import("@/components/dash/WeeklyActivityChart").then(module => ({ default: module.WeeklyActivityChart })));
+
+function WeeklyChartSection() {
+  const container = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!container.current || !("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "300px" });
+    observer.observe(container.current);
+    const beforePrint = () => setVisible(true);
+    window.addEventListener("beforeprint", beforePrint);
+    return () => { observer.disconnect(); window.removeEventListener("beforeprint", beforePrint); };
+  }, []);
+  return <div ref={container} className="min-h-64">
+    {visible && <Suspense fallback={<p role="status">ګراف پرانیستل کېږي…</p>}><WeeklyActivityChart /></Suspense>}
+  </div>;
+}
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -133,7 +158,11 @@ function Overview() {
   },[recentData?.newReferrals]);
 
 
-  const overview = q.data ? deriveOverviewFive(q.data.tabs,period,today,yesterday,range) : null;
+  const {y:year,m:month,d:day} = today;
+  const {y:previousYear,m:previousMonth,d:previousDay} = yesterday;
+  const overview = useMemo(() => q.data ? deriveOverviewFive(q.data.tabs, period,
+    {y:year,m:month,d:day}, {y:previousYear,m:previousMonth,d:previousDay}, range) : null,
+    [q.data,period,range,year,month,day,previousYear,previousMonth,previousDay]);
   const unavailable = !overview;
   const mainCards:SummaryMetric[] = overview ? [
     {...PLACEHOLDERS[0]!,...overview.individual},
@@ -286,7 +315,7 @@ function Overview() {
       )}
 
 
-      <WeeklyActivityChart />
+      {settings.showCharts && canView("weekly") && <WeeklyChartSection />}
 
 
 

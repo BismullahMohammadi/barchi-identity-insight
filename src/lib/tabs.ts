@@ -17,7 +17,7 @@ export const TABS: TabDef[] = [
   { slug: "annual", title: "کالنی ګزارش", label: "کلنی راپور", description: "د ۱۴۰۵ کال لنډیز" },
 ];
 
-export const OVERVIEW_SLUGS = ["total", "bank", "identity", "distribution", "services", "control"];
+export const OVERVIEW_SLUGS = ["total", "bank", "identity", "distribution", "services"];
 export const TOTAL_REPORT_SLUGS = ["total", "services", "arrivals"];
 
 export function getTab(slug: string): TabDef | undefined {

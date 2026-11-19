@@ -21,8 +21,9 @@ export function parseJalali(raw: string): JDate | null {
 }
 export function jKey(j: JDate): number { return j.y * 10000 + j.m * 100 + j.d; }
 export function formatJ(j: JDate): string { return `${j.y}/${String(j.m).padStart(2,"0")}/${String(j.d).padStart(2,"0")}`; }
+const kabulDateFormatter = new Intl.DateTimeFormat("en-US-u-ca-persian", {timeZone:"Asia/Kabul",year:"numeric",month:"numeric",day:"numeric"});
 function localJalali(date: Date): JDate {
-  const parts = new Intl.DateTimeFormat("en-US-u-ca-persian", {timeZone:"Asia/Kabul",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(date);
+  const parts = kabulDateFormatter.formatToParts(date);
   const get = (type: string) => Number(parts.find(p=>p.type===type)?.value);
   return {y:get("year"),m:get("month"),d:get("day")};
 }

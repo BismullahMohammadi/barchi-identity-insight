@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { hasDashboardPermission, type DashboardContext } from './dashboard-permissions.server';
+import { hasDashboardPermission, hasDashboardPermissions, type DashboardContext } from './dashboard-permissions.server';
 
 afterEach(()=>vi.unstubAllEnvs());
 const context=(row:unknown,error:unknown=null,email='manager@example.org')=>({
@@ -12,6 +12,13 @@ describe('server-side manager permission checks',()=>{
    vi.stubEnv('OWNER_EMAILS','owner@example.org');
    expect(await hasDashboardPermission(context(null),'total')).toBe(false);
    expect(await hasDashboardPermission(context({active:false,role:'manager',permissions:{total:['view']}}),'total')).toBe(false);
+ });
+ it('checks all requested sheets with one manager profile read',async()=>{
+   const c=context({active:true,role:'manager',permissions:{identity:['view'],total:['view']}});
+   const reads=vi.spyOn(c.supabase,'from');
+   expect(await hasDashboardPermissions(c,['identity','total'])).toBe(true);
+   expect(reads).toHaveBeenCalledTimes(1);
+   expect(await hasDashboardPermissions(c,['identity','bank'])).toBe(false);
  });
  it('denies wrong section or action',async()=>{
    vi.stubEnv('OWNER_EMAILS','owner@example.org');

@@ -1,9 +1,10 @@
 import { formatJ, parseJalali, type JDate } from "./jalali";
 import type { Cell } from "./normalize";
 
+const formatter=new Intl.DateTimeFormat("en-US-u-ca-persian",{timeZone:"UTC",year:"numeric",month:"numeric",day:"numeric"});
+
 /** Calendar conversion uses Intl Persian calendar; no hardcoded yearly holiday list. */
 export function isFridayJalali(date:JDate):boolean{
- const formatter=new Intl.DateTimeFormat("en-US-u-ca-persian",{timeZone:"UTC",year:"numeric",month:"numeric",day:"numeric"});
  const start=Date.UTC(date.y+621,2,18);
  const dayIndex=date.m<=6?(date.m-1)*31+date.d-1:186+(date.m-7)*30+date.d-1;
  for(let shift=0;shift<6;shift++){

@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
-import { hasDashboardPermission } from "./dashboard-permissions.server";
+import { hasDashboardPermission, hasDashboardPermissions } from "./dashboard-permissions.server";
 import { SPREADSHEET_ID, TABS } from "./tabs";
 import { todayJalali, yesterdayJalali, formatJ, jKey, parseJalali, type JDate } from "./jalali";
 import { isFridayJalali } from "./holidays";
@@ -52,7 +52,7 @@ export const getSheetTabs = createServerFn({ method: "POST" })
   })
   .handler(async ({data,context}):Promise<SheetPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
-    if (!(await Promise.all(data.slugs.map(slug=>hasDashboardPermission(context,slug,"view")))).every(Boolean)) throw new Error("ACCESS_DENIED");
+    if (!await hasDashboardPermissions(context,data.slugs)) throw new Error("ACCESS_DENIED");
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
