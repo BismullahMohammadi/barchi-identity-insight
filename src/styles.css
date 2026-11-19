@@ -326,3 +326,41 @@
   .report-print-footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #cbd9d6; font-size: 9pt; color: #425c61; }
   .reconciliation-print-report a { text-decoration: none !important; color: inherit !important; }
 }
+
+.home-launch { display: none; }
+@media screen and (display-mode: standalone) {
+  .home-launch { display: flex; }
+  .home-launch + main { display: none; }
+}
+@media screen {
+  .home-launch[data-ios-standalone="true"] { display: flex; }
+  .home-launch[data-ios-standalone="true"] + main { display: none; }
+}
+.home-launch {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background: #164f55;
+  color: #e4faf3;
+}
+.home-launch-mark {
+  position: relative;
+  padding: 12px;
+}
+.home-launch-mark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid #518084;
+  border-top-color: #e7c273;
+  border-radius: 50%;
+  animation: launch-turn 1.4s linear infinite;
+}
+@keyframes launch-turn { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+  .home-launch-mark::before { animation: none; }
+}

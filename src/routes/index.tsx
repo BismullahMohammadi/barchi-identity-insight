@@ -21,7 +21,11 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
+let launchFinished = false;
+
 function Landing() {
+  const [launchPending, setLaunchPending] = useState(() => !launchFinished);
+  const [iosStandalone, setIosStandalone] = useState(false);
   const navigate = useNavigate();
   const [signedIn, setSignedIn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -29,11 +33,18 @@ function Landing() {
 
   useEffect(() => {
     let mounted = true;
+    setIosStandalone((navigator as Navigator & {standalone?: boolean}).standalone === true);
+    const finishLaunch = () => {
+      if (!mounted) return;
+      launchFinished = true;
+      setLaunchPending(false);
+    };
+    const deadline = window.setTimeout(finishLaunch, 8000);
     supabase.auth.getUser().then(({data,error}) => {
       if (!mounted) return;
       if (error && !isAuthSessionMissingError(error)) setLoginError("د حساب د تایید خدمت ته اړیکه ونه شوه. د انټرنټ یا Supabase اتصال وګورئ.");
       else setSignedIn(!!data.user);
-    }).catch(() => { if (mounted) setLoginError("د حساب د تایید اتصال ناکام شو. بیا هڅه وکړئ."); });
+    }).catch(() => { if (mounted) setLoginError("د حساب د تایید اتصال ناکام شو. بیا هڅه وکړئ."); }).finally(() => { window.clearTimeout(deadline); finishLaunch(); });
     const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
       if (!mounted) return;
       if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="TOKEN_REFRESHED"){
@@ -41,7 +52,7 @@ function Landing() {
         if(session?.user) setLoginError(null);
       }
     });
-    return () => { mounted=false; subscription.unsubscribe(); };
+    return () => { mounted=false; window.clearTimeout(deadline); subscription.unsubscribe(); };
   }, []);
 
   async function signIn() {
@@ -74,6 +85,11 @@ function Landing() {
   }
 
   return (
+    <>
+      {launchPending && <div className="home-launch" data-ios-standalone={iosStandalone} role="status" dir="rtl">
+        <div className="home-launch-mark"><img src="/favicon.svg" width="72" height="72" alt="" /></div>
+        <span>سیستم پرانیستل کېږي…</span>
+      </div>}
     <main className="relative min-h-screen overflow-hidden bg-[#eef9f6] text-[#123e46]">
       <div className="pointer-events-none absolute inset-0 opacity-25 pattern-dots" aria-hidden />
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
@@ -112,5 +128,6 @@ function Landing() {
         </div>
       </div>
     </main>
+    </>
   );
 }
