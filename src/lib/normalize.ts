@@ -31,7 +31,7 @@ export function normalizeGrid(grid: string[][], sheetTitle?: string): Normalized
   const mapping = sheetTitle ? SHEET_COLUMNS[sheetTitle] : undefined;
   if (mapping && sheetTitle === "ریاست ته ګزارش") return normalizeDirectorate(grid);
   if (mapping) return normalizeMapped(grid, mapping);
-  const width = Math.max(0, ...grid.map((r) => r.length));
+  const width = grid.reduce((width, row) => Math.max(width, row.length), 0);
   const filled = (r: string[]) => r.filter((c) => String(c ?? "").trim() !== "").length;
 
   // Header: within the first 10 rows, the row with the most non-numeric text cells.
@@ -137,7 +137,12 @@ export function filterByDate(t: NormalizedTable, f: DateFilter): { rows: Cell[][
 }
 
 export function sumColumn(rows: Cell[][], col: number): number {
-  return rows.filter((r) => !isTotalRow(r)).reduce((a, r) => a + (typeof r[col] === "number" ? (r[col] as number) : 0), 0);
+  let total = 0;
+  for (const row of rows) {
+    const value = row[col];
+    if (typeof value === "number" && !isTotalRow(row)) total += value;
+  }
+  return total;
 }
 
 export function toCsv(headers: string[], rows: Cell[][]): string {
