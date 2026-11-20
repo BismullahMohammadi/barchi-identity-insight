@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "د دشت برچي eNID ډشبورډ ۱۴۰۵ — خصوصي ننوتل" },
-      { name: "description", content: "د دشت برچي د الکترونیکي تذکرو مرکز د راپورونو خصوصي ډشبورډ." },
+      { title: "د ۱۴۰۵ کال د دشت برچي الکترونیکي تذکرو مرکز ډشبورډ" },
+      { name: "description", content: "د دشت برچي الکترونیکي تذکرو مرکز د ۱۴۰۵ هجري شمسي  کال د راپورونو ډشبورډ" },
       { property: "og:title", content: "د دشت برچي eNID ډشبورډ ۱۴۰۵" },
       { property: "og:description", content: "د دشت برچي مرکز راپورونه." },
       { property: "og:type", content: "website" },
@@ -62,7 +62,7 @@ function Landing() {
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
-        setLoginError("په ګوګل حساب ننوتل ناکام شول. خپل حساب وګورئ او بیا هڅه وکړئ.");
+        setLoginError("په ګوګل حساب لاګېن کېدل ناکام شول. خپل حساب وګورئ او بیا هڅه وکړئ.");
         return;
       }
       if (result.redirected) return;
@@ -74,7 +74,7 @@ function Landing() {
       setSignedIn(true);
       navigate({to:"/dashboard"});
     } catch {
-      setLoginError("د ننوتلو خدمت ته اړیکه ونه شوه. انټرنټ وګورئ او بیا هڅه وکړئ.");
+      setLoginError("لاګېن ناکام شوو. انټرنټ وګورئ او بیا هڅه وکړئ.");
     } finally {
       setBusy(false);
     }
@@ -97,10 +97,10 @@ function Landing() {
         {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
         <div className="mt-10 flex flex-wrap gap-3">
           {signedIn ? (
-            <Button asChild variant="hero" size="lg"><Link to="/dashboard">ډشبورډ ته لاړ شئ</Link></Button>
+            <Button asChild variant="hero" size="lg"><Link to="/dashboard">دشبورډ پرانیزئ</Link></Button>
           ) : (
             <Button variant="hero" size="lg" onClick={signIn} disabled={busy}>
-              {busy ? "د ننوتلو هڅه روانه ده…" : "په ګوګل حساب ننوتل"}
+              {busy ? " د لاکېن کېدلو په حال کې…" : "خپل ګوګل اکونټ سره لاګېن شئ"}
             </Button>
           )}
         </div>
