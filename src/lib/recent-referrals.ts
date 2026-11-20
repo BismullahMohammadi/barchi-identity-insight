@@ -1,6 +1,6 @@
 import {jKey,toLatinDigits,type JDate,formatJ} from "./jalali";
 import {selectTodayCoordinationTab} from "./daily-forms";
-export type RecentReferral={name:string;father:string;familyMembers:number|null;fileCode?:string|undefined;rejectionReason?:string|undefined;birthCardConfirmed?:boolean|undefined;dailyApproved?:boolean|undefined;team?:string|undefined;recordKey?:string|undefined};
+export type RecentReferral={sourceTab?:string|null;sourceDate?:string|null;name:string;father:string;familyMembers:number|null;fileCode?:string|undefined;rejectionReason?:string|undefined;birthCardConfirmed?:boolean|undefined;dailyApproved?:boolean|undefined;team?:string|undefined;recordKey?:string|undefined};
 export type ReferralGroup={date:string|null;people:RecentReferral[];source:string|null;diagnostic?:RegistrationDiagnostic|undefined;requestedDate?:string|undefined};
 export type RecentReferrals={newReferrals:ReferralGroup;registration:ReferralGroup;teamCounts?:[number,number,number,number];fetchedAt:number;birthCardAddedCount?:number;matchHistorySaved?:boolean;potentialMatches?:{key:string;visitorId?:string;fullName:string;fatherName:string;section:"intake"|"registration";date:string|null}[]};
 

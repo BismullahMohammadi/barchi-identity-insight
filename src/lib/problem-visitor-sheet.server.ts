@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { visitorWorkbook, visitorRange, parseProblemVisitorSheet } from "./problem-visitor-sheet";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -41,9 +42,13 @@ export async function loadProblemVisitors(context: DashboardContext, activeOnly=
 }
 
 
-export async function rememberProblemMatches(userId: string, visitors: ProblemVisitor[]) {
+export const matchRecordKey = (key:string) => createHash("sha256").update(key).digest("hex");
+
+export async function rememberProblemMatches(userId: string, matches: ReturnType<typeof import("./problem-visitor-matching").findPotentialProblemMatches>) {
+  if (!matches.length) return true;
+  const visitors = matches.map(m => m.visitor);
   const ids = [...new Set(visitors.filter(v => !v.first_matched_at).map(v => v.id))];
-  if (!ids.length) return true;
+
   const admin = supabaseAdmin as unknown as SupabaseClient;
   for (let offset = 0; offset < ids.length; offset += 100) {
     const { error } = await admin.from("problem_visitors")
@@ -51,6 +56,17 @@ export async function rememberProblemMatches(userId: string, visitors: ProblemVi
       .eq("user_id", userId).eq("status", "active").is("first_matched_at", null)
       .in("id", ids.slice(offset, offset + 100));
     if (error) return false;
+  }
+  const entries = matches.map(({visitor,record,key,confidence}) => ({
+    visitor_id: visitor.id, key:matchRecordKey(key), detail: {
+      name: record.name, father: record.father, section: record.section, date: record.date,
+      sheet: record.source, familyMembers: record.familyMembers, fileCode: record.fileCode || null,
+      team: record.team || null, confidence,
+    },
+  }));
+  for (let offset=0; offset<entries.length; offset+=200) {
+    const {error} = await admin.rpc("save_problem_match_details",{account_id:userId,entries:entries.slice(offset,offset+200)});
+    if(error) return false;
   }
   return true;
 }

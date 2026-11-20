@@ -1,4 +1,4 @@
-import { loadProblemVisitors, rememberProblemMatches } from "./problem-visitor-sheet.server";
+import { loadProblemVisitors, matchRecordKey, rememberProblemMatches } from "./problem-visitor-sheet.server";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -331,7 +331,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
     return false;
    }
    return true;
-  }).map(person=>({...person,birthCardConfirmed:true,team:"ثبت تولد",familyMembers:birthConfirmed.get(normalizeFileCode(person.fileCode))??person.familyMembers}));
+  }).map(person=>({...person,sourceTab:dailyVerification?.name??null,sourceDate:formatJ(today),birthCardConfirmed:true,team:"ثبت تولد",familyMembers:birthConfirmed.get(normalizeFileCode(person.fileCode))??person.familyMembers}));
   for(const person of newReferrals.people){
    const code=normalizeFileCode(person.fileCode);
    if(code&&birthConfirmed.has(code)&&!person.rejectionReason)person.birthCardConfirmed=true;
@@ -360,18 +360,18 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const birthCardAddedCount=extraConfirmed.reduce((sum,p)=>sum+(p.familyMembers??0),0);
   // Server-only full daily collections: no full person lists are returned to the browser.
   const fullGroups={
-    newReferrals:newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY),
+    newReferrals:{...newReferrals,source:collection??null},
     registration:{...newestRegisteredPeople(coordinationTitles,registrationLoad,today,Number.POSITIVE_INFINITY),people:mergeRegistrationKinds(allRegistered,extraConfirmed)},
     fetchedAt:Date.now()
   };
   const watchList = await hasDashboardPermission(context,"problem-visitors")
     ? (await loadProblemVisitors(context,true)).visitors : [];
   const matches=findPotentialProblemMatches(watchList,fullGroups);
-  const matchHistorySaved = await rememberProblemMatches(context.userId, matches.map(match => match.visitor));
+  const matchHistorySaved = await rememberProblemMatches(context.userId, matches);
   return {
     matchHistorySaved,
     newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),birthCardAddedCount,fetchedAt:Date.now(),
-    potentialMatches:matches.map(m=>({key:m.key,visitorId:m.visitor.id,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
+    potentialMatches:matches.map(m=>({key:matchRecordKey(m.key),visitorId:m.visitor.id,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
   };
  });
 
@@ -400,7 +400,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
    usedTabs.push(tab);
    const path="'"+tab.replace(/'/g,"''")+"'!A1:H5000";
    const collection=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR");
-   intake.push(...collectedPeopleInRange(collection.values??[],from,to));
+   intake.push(...collectedPeopleInRange(collection.values??[],from,to).map(p=>({...p,sourceTab:tab,sourceDate:p.recordKey?.split(":")[0]??null})));
   }
   if(usedTabs.length!==months.length)throw new Error("HISTORICAL_INTAKE_MONTH_MISSING");
   const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR");
@@ -414,7 +414,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
    const result=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"/values/"+encodeURIComponent(tabPath)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"COORDINATION_SHEETS_ERROR");
    const grid=result.values??[];
    const group=newestRegisteredPeople([day.name],{date:day.date,grid},day.date,Number.POSITIVE_INFINITY);
-   registration.push(...group.people.map(p=>({...p,recordKey:formatJ(day.date)+":"+p.name+":"+p.father})));
+   registration.push(...group.people.map(p=>({...p,sourceTab:day.name,sourceDate:formatJ(day.date)})));
    const counts=registrationTeamCounts(grid);
    counts.forEach((n,i)=>{teamCounts[i]=(teamCounts[i]??0)+n;});
   }
@@ -424,7 +424,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   if (await hasDashboardPermission(context, "problem-visitors")) {
     const { visitors } = await loadProblemVisitors(context, true);
     const matches = findPotentialProblemMatches(visitors, result);
-    result.matchHistorySaved = await rememberProblemMatches(context.userId, matches.map(match => match.visitor));
+    result.matchHistorySaved = await rememberProblemMatches(context.userId, matches);
   }
   return result;
  });

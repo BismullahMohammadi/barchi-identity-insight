@@ -21,3 +21,20 @@ describe("problem visitor fuzzy matching",()=>{
   expect(found[0]?.confidence).toBe("normalized-exact");
  });
 });
+
+it("recognizes invisible direction marks and adjacent swapped letters while keeping short names strict",()=>{
+ expect(nameMatch("محمد\u200fرحیم","محمدرحیم")).toBe("exact");
+ expect(nameMatch("عبدالرحمان","عبدالر محان")).toBe("similar");
+ expect(nameMatch("حسن","حـنس")).toBeNull();
+});
+
+it("preserves distinct case files and the source date for historical matches",()=>{
+ const person={name:"احمد",father:"علي",familyMembers:0,sourceDate:"1405/08/01",sourceTab:"sheet"};
+ const visitor:ProblemVisitor={id:"v",full_name:person.name,father_name:person.father,issue:"test",created_at:"",status:"active"};
+ const data={newReferrals:{date:"period",source:null,people:["1","2"].map(fileCode=>({...person,fileCode}))},
+   registration:{date:null,source:null,people:[]},fetchedAt:0};
+ const matches=findPotentialProblemMatches([visitor],data);
+ expect(matches).toHaveLength(2);
+ expect(matches[0]?.record).toMatchObject({source:"sheet",date:"1405/08/01",familyMembers:0});
+ expect(findPotentialProblemMatches([{...visitor,status:"resolved"}],data)).toEqual([]);
+});

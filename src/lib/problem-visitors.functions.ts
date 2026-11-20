@@ -33,3 +33,28 @@ export const changeProblemVisitor=createServerFn({method:"POST"}).middleware([re
   }
   return {ok:true};
  });
+
+export type MatchDetail = {
+ name:string; father:string; section:"intake"|"registration"; date:string|null; sheet:string|null;
+ familyMembers:number|null; fileCode:string|null; team:string|null; confidence:"normalized-exact"|"possible";
+};
+export const getProblemMatchDetails = createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
+ .validator((id:string)=>{
+   if(typeof id!=="string" || !/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id))throw new Error("INVALID_REQUEST");
+   return id;
+ }).handler(async({data:id,context})=>{
+   setResponseHeader("Cache-Control","private, no-store");
+   await requireDashboardPermission(context,"problem-visitors");
+   await requireDashboardPermission(context,"dashboard");
+   const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+   const db=supabaseAdmin as unknown as SupabaseClient;
+   const details: MatchDetail[]=[];
+   for(let offset=0;;offset+=200){
+     const {data,error}=await db.from("problem_match_details")
+       .select("detail,problem_visitors!inner(user_id)").eq("visitor_id",id).eq("problem_visitors.user_id",context.userId)
+       .order("recorded_at",{ascending:false}).order("record_key").range(offset,offset+199);
+     if(error)throw new Error("MATCH_DETAILS_READ_FAILED");
+     details.push(...data.map(row=>row.detail as MatchDetail));
+     if(data.length<200)return details;
+   }
+ });
