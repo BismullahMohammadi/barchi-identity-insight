@@ -27,13 +27,30 @@ export async function loadProblemVisitors(context: DashboardContext, activeOnly=
   catch { skipped = null; }
   const visitors: ProblemVisitor[] = [];
   for (let offset=0; ; offset+=500) {
-    let query=context.supabase.from("problem_visitors").select("id,full_name,father_name,issue,status,created_at")
+    let query=context.supabase.from("problem_visitors").select("*")
       .eq("user_id",context.userId).order("created_at",{ascending:false}).order("id");
     if (activeOnly) query=query.eq("status","active");
     const {data,error}=await query.range(offset,offset+499);
     if (error) throw new Error("PROBLEM_VISITORS_READ_FAILED");
-    visitors.push(...data as ProblemVisitor[]);
+    for (const { id, full_name, father_name, issue, status, created_at, first_matched_at } of data) {
+      visitors.push({ id, full_name, father_name, issue, status, created_at, first_matched_at });
+    }
     if (data.length<500) break;
   }
   return {visitors,skipped};
+}
+
+
+export async function rememberProblemMatches(userId: string, visitors: ProblemVisitor[]) {
+  const ids = [...new Set(visitors.filter(v => !v.first_matched_at).map(v => v.id))];
+  if (!ids.length) return true;
+  const admin = supabaseAdmin as unknown as SupabaseClient;
+  for (let offset = 0; offset < ids.length; offset += 100) {
+    const { error } = await admin.from("problem_visitors")
+      .update({ first_matched_at: new Date().toISOString() })
+      .eq("user_id", userId).eq("status", "active").is("first_matched_at", null)
+      .in("id", ids.slice(offset, offset + 100));
+    if (error) return false;
+  }
+  return true;
 }

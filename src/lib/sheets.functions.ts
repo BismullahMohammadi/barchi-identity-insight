@@ -1,4 +1,4 @@
-import { loadProblemVisitors } from "./problem-visitor-sheet.server";
+import { loadProblemVisitors, rememberProblemMatches } from "./problem-visitor-sheet.server";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -367,9 +367,11 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   const watchList = await hasDashboardPermission(context,"problem-visitors")
     ? (await loadProblemVisitors(context,true)).visitors : [];
   const matches=findPotentialProblemMatches(watchList,fullGroups);
+  const matchHistorySaved = await rememberProblemMatches(context.userId, matches.map(match => match.visitor));
   return {
+    matchHistorySaved,
     newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),birthCardAddedCount,fetchedAt:Date.now(),
-    potentialMatches:matches.map(m=>({key:m.key,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
+    potentialMatches:matches.map(m=>({key:m.key,visitorId:m.visitor.id,fullName:m.visitor.full_name,fatherName:m.visitor.father_name,section:m.record.section,date:m.record.date}))
   };
  });
 
@@ -416,7 +418,13 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
    const counts=registrationTeamCounts(grid);
    counts.forEach((n,i)=>{teamCounts[i]=(teamCounts[i]??0)+n;});
   }
-  return {newReferrals:{date:formatJ(from)+" — "+formatJ(to),people:intake,source:usedTabs.join("، ")||null},
+  const result = {matchHistorySaved:true,newReferrals:{date:formatJ(from)+" — "+formatJ(to),people:intake,source:usedTabs.join("، ")||null},
    registration:{date:formatJ(from)+" — "+formatJ(to),people:registration,source:null},
    teamCounts,birthCardAddedCount:0,fetchedAt:Date.now(),historical:true};
+  if (await hasDashboardPermission(context, "problem-visitors")) {
+    const { visitors } = await loadProblemVisitors(context, true);
+    const matches = findPotentialProblemMatches(visitors, result);
+    result.matchHistorySaved = await rememberProblemMatches(context.userId, matches.map(match => match.visitor));
+  }
+  return result;
  });
