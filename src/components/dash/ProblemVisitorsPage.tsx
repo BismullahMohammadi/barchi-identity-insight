@@ -1,11 +1,12 @@
 import { useSectionActions } from "@/lib/dashboard-access-context";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2, X, UserRound, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import * as Dialog from "@radix-ui/react-dialog";
+import { scanVisitorArchive } from "@/lib/sheets.functions";
 import {
   getProblemMatchDetails,
   getProblemVisitors,
@@ -36,6 +37,35 @@ export function ProblemVisitorsPage() {
     refetchInterval: 60_000,
     retry: false,
   });
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const [scanned, setScanned] = useState(0);
+  const activeIds = q.data?.visitors.filter((v) => v.status === "active").map((v) => v.id);
+  const archive = useQuery({
+    queryKey: ["visitor-archive", activeIds],
+    enabled: dashboard("view") && !!activeIds?.length,
+    staleTime: 300_000,
+    refetchInterval: 600_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    queryFn: async ({ signal }) => {
+      let cursor: { book: number; offset: number } | null = { book: 0, offset: 0 };
+      let count = 0;
+      setScanned(0);
+      while (cursor) {
+        signal.throwIfAborted();
+        const page: { next: { book: number; offset: number } | null; scanned: number } =
+          await scanVisitorArchive({ data: cursor, signal });
+        count += page.scanned;
+        setScanned(count);
+        cursor = page.next;
+      }
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["problem-visitors"] }),
+        qc.invalidateQueries({ queryKey: ["problem-match-details"] }),
+      ]);
+      return count;
+    },
+  });
   const selected = q.data?.visitors.find((v) => v.id === selectedId);
   const mutation = useMutation({
     mutationFn: changeProblemVisitor,
@@ -61,6 +91,25 @@ export function ProblemVisitorsPage() {
         </p>
       </div>
       {dashboard("view") && <ProblemVisitorAlerts />}
+      {dashboard("view") && !!activeIds?.length && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2 text-sm">
+          <span role="status">
+            {archive.isFetching
+              ? `لټون روان دی · ${scanned} شیټونه کتل شوي`
+              : archive.isError
+                ? "د ټولو شیټونو لټون بشپړ نه شو."
+                : `${archive.data ?? 0} شیټونه کتل شوي`}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={archive.isFetching}
+            onClick={() => archive.refetch()}
+          >
+            بیا پلټل
+          </Button>
+        </div>
+      )}
       {recent.data?.matchHistorySaved === false && (
         <p role="status">د اوسني تطابق سابقه خوندي نه شوه. د ډیټابېس تنظیمات وګورئ.</p>
       )}
@@ -150,7 +199,10 @@ export function ProblemVisitorsPage() {
                     <button
                       type="button"
                       className="py-1 text-sm font-bold underline after:absolute after:inset-0 after:rounded-lg focus-visible:outline-primary"
-                      onClick={() => setSelectedId(v.id)}
+                      onClick={(event) => {
+                        opener.current = event.currentTarget;
+                        setSelectedId(v.id);
+                      }}
                       aria-label={v.full_name + " — د تطابق تفصیل"}
                     >
                       د تطابق تفصیل
@@ -200,53 +252,87 @@ export function ProblemVisitorsPage() {
           </div>
         )}
       </section>
-      <Sheet
+      <Dialog.Root
         open={!!selected}
         onOpenChange={(open) => {
           if (!open) setSelectedId(null);
         }}
       >
-        <SheetContent side="right" dir="rtl" className="w-[95vw] overflow-y-auto sm:max-w-xl">
-          <SheetTitle>{selected?.full_name}</SheetTitle>
-          <SheetDescription>د پلار نوم: {selected?.father_name}</SheetDescription>
-          <p className="my-3 whitespace-pre-wrap break-words text-sm">{selected?.issue}</p>
-          {details.isPending ? (
-            <p role="status">د تطابق معلومات رااخیستل کېږي…</p>
-          ) : details.isError ? (
-            <button onClick={() => details.refetch()}>معلومات ونه لوستل شول؛ بیا هڅه وکړئ</button>
-          ) : !details.data.length ? (
-            <p>د دې تطابق د سرچینې تفصیل تر اوسه نه دی خوندي شوی.</p>
-          ) : (
-            details.data.map((d, i) => (
-              <section key={i} className="mb-3 rounded-lg border p-3">
-                <h3 className="font-bold">
-                  {d.section === "intake" ? "نوي معرفي شوي" : "ثبت‌نام ته معرفي"}
-                </h3>
-                <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-                  {Object.entries({
-                    شیټ: d.sheet,
-                    نېټه: d.date,
-                    "په لېست کې نوم": d.name,
-                    "د پلار نوم": d.father,
-                    "د کورنۍ غړي": d.familyMembers,
-                    "د دوسیې کوډ": d.fileCode,
-                    ټیم: d.team,
-                    "د تطابق ډول":
-                      d.confidence === "normalized-exact"
-                        ? "نوم او د پلار نوم برابر دي"
-                        : "ورته لیکدود؛ تایید ته اړتیا لري",
-                  }).map(([label, value]) => (
-                    <div key={label} className="contents">
-                      <dt className="text-muted-foreground">{label}</dt>
-                      <dd className="break-words">{value ?? "نامعلوم"}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ))
-          )}
-        </SheetContent>
-      </Sheet>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm" />
+          <Dialog.Content
+            dir="rtl"
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              opener.current?.focus();
+            }}
+            className="fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border bg-background text-start shadow-2xl motion-safe:animate-in motion-safe:fade-in-0"
+          >
+            <header className="flex items-center gap-3 border-b bg-muted/45 p-4 sm:p-6">
+              <UserRound
+                aria-hidden
+                className="size-12 shrink-0 rounded-2xl bg-primary/10 p-3 text-primary"
+              />
+              <div className="min-w-0 flex-1">
+                <Dialog.Title className="break-words text-xl font-extrabold">
+                  {selected?.full_name}
+                </Dialog.Title>
+                <Dialog.Description className="break-words text-sm text-muted-foreground">
+                  د پلار نوم: {selected?.father_name}
+                </Dialog.Description>
+              </div>
+              <Dialog.Close
+                aria-label="بندول"
+                className="grid size-11 shrink-0 place-items-center rounded-full border bg-background hover:bg-muted"
+              >
+                <X className="size-5" />
+              </Dialog.Close>
+            </header>
+            <div className="overflow-y-auto overscroll-contain p-4 sm:p-6">
+              <h3 className="text-xs font-bold text-muted-foreground">ثبت شوې ستونزه</h3>
+              <p className="my-3 whitespace-pre-wrap break-words text-sm">{selected?.issue}</p>
+              {details.isPending ? (
+                <p role="status">د تطابق معلومات رااخیستل کېږي…</p>
+              ) : details.isError ? (
+                <button onClick={() => details.refetch()}>
+                  معلومات ونه لوستل شول؛ بیا هڅه وکړئ
+                </button>
+              ) : !details.data.length ? (
+                <p>د دې تطابق د سرچینې تفصیل تر اوسه نه دی خوندي شوی.</p>
+              ) : (
+                details.data.map((d, i) => (
+                  <section key={i} className="mb-3 overflow-hidden rounded-2xl border">
+                    <h3 className="flex items-center gap-2 border-b bg-muted/50 px-4 py-3 font-bold">
+                      <Files className="size-4 text-primary" />
+                      {d.section === "intake" ? "نوي معرفي شوي" : "ثبت‌نام ته معرفي"}
+                    </h3>
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-4 p-4 text-sm sm:grid-cols-3">
+                      {Object.entries({
+                        شیټ: d.sheet,
+                        نېټه: d.date,
+                        "په لېست کې نوم": d.name,
+                        "د پلار نوم": d.father,
+                        "د کورنۍ غړي": d.familyMembers,
+                        "د دوسیې کوډ": d.fileCode,
+                        ټیم: d.team,
+                        "د تطابق ډول":
+                          d.confidence === "normalized-exact"
+                            ? "نوم او د پلار نوم برابر دي"
+                            : "ورته لیکدود؛ تایید ته اړتیا لري",
+                      }).map(([label, value]) => (
+                        <div key={label} className="min-w-0 space-y-1">
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className="break-words">{value ?? "نامعلوم"}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                ))
+              )}
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       <p className="flex gap-2 text-xs text-muted-foreground">
         <AlertTriangle className="h-4 w-4 shrink-0" />د نوم او پلار نوم تطابق یوازې احتمالي نښه ده؛
         د هویت تر تایید مخکې پرې اداري پرېکړه مه کوئ.

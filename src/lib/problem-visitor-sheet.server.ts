@@ -26,6 +26,10 @@ export async function loadProblemVisitors(context: DashboardContext, activeOnly=
   let skipped: number | null;
   try { skipped = await importSheet(context.userId); }
   catch { skipped = null; }
+  return {visitors: await readVisitorRows(context, activeOnly), skipped};
+}
+
+export async function readVisitorRows(context: DashboardContext, activeOnly: boolean) {
   const visitors: ProblemVisitor[] = [];
   for (let offset=0; ; offset+=500) {
     let query=context.supabase.from("problem_visitors").select("*")
@@ -38,7 +42,7 @@ export async function loadProblemVisitors(context: DashboardContext, activeOnly=
     }
     if (data.length<500) break;
   }
-  return {visitors,skipped};
+  return visitors;
 }
 
 

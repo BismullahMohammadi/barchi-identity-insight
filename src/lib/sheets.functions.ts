@@ -428,3 +428,38 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   }
   return result;
  });
+
+/** Read complete visitor workbooks independently of the dashboard's daily summary. */
+export const scanVisitorArchive = createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
+ .validator((input:{book:number;offset:number})=>{
+   if(![0,1].includes(input?.book)||!Number.isSafeInteger(input.offset)||input.offset<0)throw new Error("INVALID_ARCHIVE_PAGE");
+   return input;
+ }).handler(async({data,context})=>{
+  setResponseHeader("Cache-Control","private, no-store");
+  if(!(await hasDashboardPermissions(context,["dashboard","problem-visitors"])))throw new Error("ACCESS_DENIED");
+  const {readVisitorRows}=await import("./problem-visitor-sheet.server");
+  const visitors=await readVisitorRows(context,true);
+  if(!visitors.length)return {next:null,scanned:0};
+  const {archivePeople}=await import("./visitor-archive");
+  const {normalizedPerson}=await import("./problem-visitor-matching");
+  const headers=sheetConnectionHeaders();
+  const url=GATEWAY_URL+"/spreadsheets/"+[DAILY_FORMS_SPREADSHEET_ID,COORDINATION_SPREADSHEET_ID][data.book];
+  const metadata=await sheetsGet<{sheets:{properties:{title:string}}[]}>(url+"?fields=sheets(properties(title))",headers,"ARCHIVE_METADATA");
+  const titles=metadata.sheets.map(s=>s.properties.title).filter(t=>normalizedPerson(t)!==normalizedPerson("مراجعین مشکلاتی")).sort();
+  const batch=titles.slice(data.offset,data.offset+6);
+  if(batch.length){
+    const query=new URLSearchParams();
+    batch.forEach(t=>query.append("ranges","'"+t.replace(/'/g,"''")+"'"));
+    const response=await sheetsGet<{valueRanges:{values?:string[][]}[]}>(url+"/values:batchGet?"+query,headers,"ARCHIVE_READ");
+    if(response.valueRanges.length!==batch.length)throw new Error("ARCHIVE_INCOMPLETE");
+    for(const [i,title] of batch.entries()){
+      const people=archivePeople(title,response.valueRanges[i]?.values??[],todayJalali(),data.book===1);
+      const group={date:null,source:title,people},empty={date:null,source:null,people:[]};
+      const matches=findPotentialProblemMatches(visitors,{newReferrals:data.book===0?group:empty,registration:data.book===1?group:empty,fetchedAt:Date.now()});
+      if(!await rememberProblemMatches(context.userId,matches))throw new Error("ARCHIVE_SAVE");
+    }
+  }
+  const offset=data.offset+batch.length;
+  const next=offset<titles.length?{book:data.book,offset}:data.book===0?{book:1,offset:0}:null;
+  return {next,scanned:batch.length};
+ });
