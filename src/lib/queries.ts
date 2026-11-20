@@ -65,7 +65,7 @@ export const stateReportQuery=(refreshMs=REFRESH_MS)=>queryOptions({
 export function errorText(err: unknown): string {
   const m = String((err as Error)?.message ?? err);
   if (m.includes("ACCESS_DENIED")) return "د دې برخې د لیدلو لپاره له عمومي مدیر څخه اجازه وغواړئ.";
-  if (m.includes("INSIJAM_SHEETS_ERROR_403") || m.includes("INSIJAM_SHEETS_ERROR_404")) return "د انسجام شیټ ونه موندل شو یا د لوستلو اجازه نشته.";
+  if (m.includes("INSIJAM_SHEETS_ERROR_403") || m.includes("INSIJAM_SHEETS_ERROR_404")) return "د انسجام شیټ ونه موندل شو یا د لیدلو اجازه نده درکول شوي.";
   if (m.includes("INSIJAM_SHEETS_ERROR")) return "د انسجام میاشتنی راپور ونه لوستل شو.";
   if (m.includes("STATE_REPORT_ERROR")) return "د «ریاست ته ګزارش» اصلي ټاب ونه لوستل شو.";
   if (m.includes("STAFF_SHEETS_ERROR_403") || m.includes("STAFF_SHEETS_ERROR_404")) return "د کارمندانو نوي Google Sheet ته د لوستلو اجازه نشته. د Lovable Google اتصال کې ورته لاسرسی ورکړئ.";
