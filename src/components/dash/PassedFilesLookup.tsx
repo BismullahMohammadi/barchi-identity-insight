@@ -23,7 +23,6 @@ export function PassedFilesLookup(){
  const [employee,setEmployee]=useState('ټول کارمندان');
  const [submitted,setSubmitted]=useState(()=>({from:todayValue(),to:todayValue(),query:''}));
  const report=useQuery({queryKey:['passed-files',submitted.from,submitted.to,submitted.query],queryFn:()=>getPassedFiles({data:submitted}),enabled:hasSearched&&submitted.from<=submitted.to,retry:false,staleTime:120000});
- const normalizedSearch=search.trim().toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/\s+/g,'');
  const rows=(report.data?.rows??[]).filter(r=>(Boolean(submitted.query)||employee==='ټول کارمندان'||r.employee===employee));
  const showWorkType=employee==='محمد نبي بهزاد'||(employee==='ټول کارمندان'&&rows.some(r=>r.employee==='محمد نبي بهزاد'));
  const incomplete=!!report.data?.warnings.length;

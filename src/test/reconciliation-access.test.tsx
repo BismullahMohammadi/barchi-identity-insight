@@ -13,7 +13,7 @@ afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 it("shows the reconciliation menu to a manager granted only that report", () => {
   render(<Nav permissions={{reconciliation:["view"]}} />);
   expect(screen.getAllByRole("link")).toHaveLength(1);
-  expect(screen.getByRole("link", {name:"د راپورونو مطابقت"})).toHaveAttribute("href","/dashboard/reconciliation");
+  expect(screen.getByRole("link", {name:"د راپورونو پرتله"})).toHaveAttribute("href","/dashboard/reconciliation");
 });
 
 it("rechecks the manager's active grant before serving cached reconciliation results", async () => {

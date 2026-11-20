@@ -200,8 +200,6 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
   const data=await resp.json() as {values?:unknown[][]};
   const report=inspectStaffDay(data.values??[],yesterday,month);
   const isSaturday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat";
-  const prevGregorian=new Date(Date.now()-(new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(new Date())==="Sat"?2:1)*86_400_000);
-  const weekday=new Intl.DateTimeFormat("en-US",{weekday:"short",timeZone:"Asia/Kabul"}).format(prevGregorian);
   // Do not accuse staff of missing their reports on a regular Friday closure.
   if(isFridayJalali(yesterday) && report.submittedCount===0 && report.totalCount>0){
    return {...report,status:"nonwork",missing:[],message:"تېره ورځ جمعه وه؛ د رخصتۍ په ورځ د راپور نه ثبتېدل نیمګړتیا نه ګڼل کېږي."};

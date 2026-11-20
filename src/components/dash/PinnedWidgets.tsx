@@ -1,12 +1,10 @@
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import { useState } from "react";
-import { AlertCircle, ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { ArrowLeftRight, Check, GripVertical, ClipboardCheck, ListTodo, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sheetQuery, errorText } from "@/lib/queries";
-import { useDashboardSettings, settingsRefreshMs } from "@/lib/dashboard-settings";
-import { yesterdayJalali } from "@/lib/jalali";
+import { errorText } from "@/lib/queries";
+import { useDashboardSettings } from "@/lib/dashboard-settings";
 import {enableReportSound,disableReportSound,isReportSoundEnabled,useStaffCompletionMonitor} from "@/lib/staff-completion-alerts";
 import {stateReportTsv,type StateReport} from "@/lib/state-report-copy";
 import {toast} from "sonner";

@@ -1,4 +1,4 @@
-import { formatJ, parseJalali, type JDate } from "./jalali";
+import { parseJalali, type JDate } from "./jalali";
 import type { Cell } from "./normalize";
 
 const formatter=new Intl.DateTimeFormat("en-US-u-ca-persian",{timeZone:"UTC",year:"numeric",month:"numeric",day:"numeric"});

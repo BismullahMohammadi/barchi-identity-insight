@@ -1,7 +1,7 @@
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import {useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
-import {Settings2,RefreshCw,RotateCcw,LayoutDashboard,Table2,FileSpreadsheet,ShieldCheck,Check,Activity,Users,BarChart3,PanelsTopLeft,ListTodo} from "lucide-react";
+import {Settings2,RefreshCw,RotateCcw,Table2,FileSpreadsheet,ShieldCheck,Check,Activity,Users,BarChart3,PanelsTopLeft,ListTodo} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
 import {useDashboardSettings,saveDashboardSettings,resetDashboardSettings,type DashboardSettings} from "@/lib/dashboard-settings";

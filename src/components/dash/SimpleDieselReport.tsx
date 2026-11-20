@@ -18,7 +18,6 @@ export function SimpleDieselReport(){
  const endDelivered=deliveries.filter(x=>{const dt=parseJalali(x.date);return !x.isCarryover&&dt!==null&&jKey(dt)>checkpoint&&(selectedEnd===null||jKey(dt)<=selectedEnd);}).reduce((sum,x)=>sum+x.liters,0);
  const endConsumed=endRecords.reduce((sum,r)=>sum+(r.consumedLiters??0),0);
  const historicalStock=selectedEnd!==null&&selectedEnd>=checkpoint&&!endPartial&&d?.reconciliation.physicalStock!=null?d.reconciliation.physicalStock+endDelivered-endConsumed:null;
- const allDelivered=deliveries.reduce((s,x)=>s+x.liters,0);
  const undated=deliveries.filter(x=>!x.isCarryover&&!x.date.trim());
  const undatedLiters=undated.reduce((s,x)=>s+x.liters,0);
  // Last 400L treated as after physical count based on user confirmation; other old deliveries excluded.

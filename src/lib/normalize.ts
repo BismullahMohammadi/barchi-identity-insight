@@ -1,5 +1,4 @@
 import { jKey, parseJalali, toLatinDigits, type JDate } from "./jalali";
-import { sheetSchema } from "./sheet-schema";
 import { SHEET_COLUMNS, headerMatches } from "./sheet-columns";
 
 export type Cell = string | number | null;
@@ -112,7 +111,6 @@ function normalizeMapped(grid: string[][], config: import("./sheet-columns").She
  * Transpose to allow meaningful per-service comparison without adding totals twice.
  */
 function normalizeDirectorate(grid:string[][]):NormalizedTable {
-  const width = Math.max(0,...grid.map(r=>r.length));
   const headings = grid[0] ?? [];
   const totalCol = headings.findIndex(h=>String(h??"").trim()==="جمله");
   if (totalCol<1) throw new Error("SHEET_MAPPING_MISMATCH: جمله");

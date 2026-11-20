@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TabView } from "@/components/dash/TabView";
 import { JALALI_MONTHS } from "@/lib/jalali";
 import { filterByDate, isTotalRow, normalizeGrid, sumColumn, type Cell, type NormalizedTable, type DateFilter } from "@/lib/normalize";
-import { SHEET_COLUMNS } from "@/lib/sheet-columns";
 import { resolveMappedGrid, COLUMN_ALIAS_KEY } from "@/lib/sheet-mapping-preferences";
 import { latestActivitySignal } from "@/lib/management-insight";
 import { ARCHIVE_PERIOD_OPTIONS, archivePeriodRange, archivePeriodCaption, type ArchivePeriod } from "@/lib/archive-period";

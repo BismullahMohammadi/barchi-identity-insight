@@ -54,7 +54,6 @@ function ReconciliationPage() {
   const counts = { mismatch: 0, equal: 0, missing: 0, holiday: 0 };
   data.rows.forEach(row => counts[row.status]++);
   const hasSourceError = !!data.local.error || !!data.province.error;
-  const mismatches = data.rows.filter(row => row.status === 'mismatch');
   const days = Array.from(new Set(data.rows.map(row => row.day))).sort((a,b) => a-b);
   const visibleMetrics = metricDefinitions.filter(([,label]) => label.toLocaleLowerCase().includes(searchText.trim().toLocaleLowerCase()));
   const visibleDays = onlyDifferences ? days.filter(day => data.rows.some(row => row.day===day && row.status==='mismatch' && visibleMetrics.some(([key])=>key===row.metric))) : days;

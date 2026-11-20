@@ -18,7 +18,6 @@ export const TABS: TabDef[] = [
 ];
 
 export const OVERVIEW_SLUGS = ["total", "bank", "identity", "distribution", "services"];
-export const TOTAL_REPORT_SLUGS = ["total", "services", "arrivals"];
 
 export function getTab(slug: string): TabDef | undefined {
   return TABS.find((t) => t.slug === slug);

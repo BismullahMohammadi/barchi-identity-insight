@@ -2,7 +2,7 @@ import { AnimatedNumber } from "@/components/dash/AnimatedNumber";
 import "@/components/dash/dashboard-motion.css";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fuel, Plus, RefreshCw, Download, BarChart3, ClipboardList, History, Info, ArrowDownToLine, ArrowUpFromLine, Gauge } from "lucide-react";
+import { Fuel, Plus, RefreshCw, Download, ClipboardList, History, Info, ArrowDownToLine, ArrowUpFromLine, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

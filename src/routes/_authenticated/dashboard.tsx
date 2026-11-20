@@ -3,8 +3,7 @@ import {GlobalDateProvider} from "@/lib/global-date-range";
 import {GlobalJalaliPicker} from "@/components/dash/GlobalJalaliPicker";
 import { createFileRoute, Link, Navigate, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { todayJalali, JALALI_MONTHS } from "@/lib/jalali";
+import { useState } from "react";
 import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -101,8 +100,6 @@ function DashboardLayoutContent() {
   const firstSection = DASHBOARD_SECTIONS.find(key => canAccess(profile,key));
   const completion = useStaffCompletionMonitor(canDashboard);
   const [open, setOpen] = useState(false);
-  const [today,setToday]=useState<ReturnType<typeof todayJalali>|null>(null);
-  useEffect(()=>{const update=()=>setToday(todayJalali());update();const timer=window.setInterval(update,60_000);return ()=>window.clearInterval(timer);},[]);
   const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{
     if(typeof window==="undefined")return false;
     try{return window.localStorage.getItem("barchi-sidebar-collapsed")==="1";}catch{return false;}
