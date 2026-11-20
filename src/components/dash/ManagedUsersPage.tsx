@@ -56,11 +56,11 @@ export function ManagedUsersPage() {
  const filteredUsers=users.data?.filter(u=>[u.email,u.display_name].some(v=>v.toLowerCase().includes(filter.trim().toLowerCase())));
  const activeManagers=users.data?.filter(u=>u.role==='manager'&&u.active).length??0;
  return <section dir="rtl" className="space-y-6">
-  <div><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1></div>
+  <div className="dashboard-page-heading"><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1></div>
   {users.error && <p role="alert" className="rounded-lg border p-3 text-destructive">د کاروونکو لېست ونه لوستل شو. د مدیر حساب او د ډیټابېس د لاسرسي تنظیمات وګورئ.</p>}
-  <div className="rounded-xl border bg-card p-4 space-y-3">
+  <div className="dashboard-panel p-4 sm:p-5 space-y-3">
    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-bold">ثبت شوي مدیران ({users.data?.length??0}) — فعال: {activeManagers}</h2><Button type="button" variant="outline" size="sm" onClick={()=>void users.refetch()} disabled={users.isFetching}>لېست تازه کړئ</Button></div>
-   <input aria-label="د کاروونکو لټون" className="w-full rounded-lg border bg-background p-2 text-sm" placeholder="په نوم یا ایمیل لټون…" value={filter} onChange={e=>setFilter(e.target.value)}/>
+   <input aria-label="د کاروونکو لټون" className="w-full min-h-11 rounded-xl border border-input bg-card px-3 py-2 text-sm" placeholder="په نوم یا ایمیل لټون…" value={filter} onChange={e=>setFilter(e.target.value)}/>
    {users.isLoading && <p>معلومات لوستل کېږي…</p>}
    {filteredUsers?.length===0&&<p className="text-sm text-muted-foreground">په دې نوم یا برېښنالیک کاروونکی ونه موندل شو.</p>}
    {filteredUsers?.map(u=><div key={u.user_id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2">
@@ -69,10 +69,10 @@ export function ManagedUsersPage() {
     {u.role==='manager'&&<Button variant="outline" onClick={()=>{setEditing(u.user_id);setEmail(u.email);setName(u.display_name);setActive(u.active);setPermissions(u.permissions??{});setError('');setNotice('');}}>صلاحیتونه بدل کړئ</Button>}
    </div>)}
   </div>
-  <form className="space-y-4 rounded-xl border bg-card p-4" onSubmit={e=>{e.preventDefault();setError('');setNotice('');if(countViews(permissions)===0&&!window.confirm('دې حساب ته د لیدلو هېڅ اجازه نه ده ټاکل شوې. ایا غواړئ همداسې ثبت شي؟'))return;if(editing)update.mutate();else invite.mutate();}}>
+  <form className="dashboard-panel space-y-4 p-4 sm:p-5" onSubmit={e=>{e.preventDefault();setError('');setNotice('');if(countViews(permissions)===0&&!window.confirm('دې حساب ته د لیدلو هېڅ اجازه نه ده ټاکل شوې. ایا غواړئ همداسې ثبت شي؟'))return;if(editing)update.mutate();else invite.mutate();}}>
    <h2 className="font-bold">{editing?'د مدیر صلاحیتونه اصلاح کړئ':'نوي مدیر ته بلنه ورکړئ'}</h2>
-   <label className="block text-sm">نوم<input className="mt-1 w-full rounded-lg border bg-background p-2" required maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label>
-   <label className="block text-sm">ایمیل<input className="mt-1 w-full rounded-lg border bg-background p-2" dir="ltr" type="email" required disabled={!!editing} value={email} onChange={e=>setEmail(e.target.value)}/></label>
+   <label className="block text-sm">نوم<input className="mt-1 w-full min-h-11 rounded-xl border border-input bg-card px-3 py-2" required maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label>
+   <label className="block text-sm">ایمیل<input className="mt-1 w-full min-h-11 rounded-xl border border-input bg-card px-3 py-2" dir="ltr" type="email" required disabled={!!editing} value={email} onChange={e=>setEmail(e.target.value)}/></label>
    {editing&&<label className="flex items-center gap-2"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/> حساب فعال دی</label>}
    <PermissionEditor value={permissions} onChange={setPermissions}/>
    <p className="text-xs text-muted-foreground">د اضافه کولو، اصلاح، حذف، چاپ او صادرولو اجازه د لیدلو اجازه هم فعالوي. د لیدلو په لرې کولو سره د هماغې برخې نور صلاحیتونه هم لرې کېږي.</p>

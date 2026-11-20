@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from "react";
+import {Sheet,SheetTrigger,SheetContent,SheetTitle} from "@/components/ui/sheet";
 import {Bell,ShieldAlert} from "lucide-react";
 import {Link} from "@tanstack/react-router";
 import {Button} from "@/components/ui/button";
@@ -27,12 +28,12 @@ export function ProblemNotificationBell({matches}:{matches:Match[]}){
  },[matches]);
  async function request(){if(!("Notification" in window))return;try{setPermission(await Notification.requestPermission());}catch{/* Browser notifications may be disabled. */}}
  const count=matches.length;
- return <div className="relative">
-  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl" aria-label={"خبرتیاوې: "+count} aria-expanded={open} onClick={()=>setOpen(v=>!v)}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -end-1 -top-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{count>99?"99+":count}</span>}</Button>
-  {open&&<div role="dialog" aria-label="خبرتیاوې" className="absolute end-0 top-12 z-50 w-[min(88vw,320px)] rounded-2xl border bg-card p-4 shadow-xl">
-   <div className="flex items-center justify-between gap-3"><b>خبرتیاوې</b><button className="text-xs text-muted-foreground" onClick={()=>setOpen(false)}>بندول</button></div>
+ return <Sheet open={open} onOpenChange={setOpen}><SheetTrigger asChild>
+  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl" aria-label={"خبرتیاوې: "+count} aria-expanded={open}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -end-1 -top-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{count>99?"99+":count}</span>}</Button></SheetTrigger>
+  <SheetContent side="center" dir="rtl" aria-describedby={undefined} className="block max-w-md overflow-y-auto p-5">
+   <SheetTitle className="pe-12 leading-10">خبرتیاوې</SheetTitle>
    <p className="mt-3 flex items-center gap-2 rounded-xl bg-muted p-3 text-sm"><ShieldAlert className="h-4 w-4 text-amber-600"/>{count?String(count)+" احتمالي مطابق شوي مراجعین":"نوی تطابق نشته"}</p>
    <Link to="/dashboard/$slug" params={{slug:"problem-visitors"}} className="mt-3 block rounded-lg bg-primary px-3 py-2 text-center text-sm font-bold text-primary-foreground" onClick={()=>setOpen(false)}>لېست وګورئ</Link>
    <div className="mt-3 border-t pt-3 text-xs">{permission==="granted"?"د وسیلې خبرتیاوې فعالې دي (کله چې سیستم خلاص وي)":permission==="denied"?"اجازه بنده ده؛ په براوزر تنظیماتو کې یې فعاله کړئ.":permission==="unsupported"?"دا براوزر عمومي خبرتیا نه ملاتړ کوي.":<button className="rounded-lg border px-3 py-2" onClick={request}>عمومي خبرتیاوې فعالې کړئ</button>}</div>
-  </div>}</div>;
+  </SheetContent></Sheet>;
 }

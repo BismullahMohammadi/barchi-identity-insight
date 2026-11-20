@@ -96,7 +96,7 @@ function ReconciliationPage() {
   const months = Array.from({ length: 12 }, (_, i) => ({ year: today.y, month: i+1 }));
   if (year !== today.y) months.unshift(...Array.from({length:12},(_,i)=>({year,month:i+1})));
   return <main dir="rtl" className="space-y-4 pb-8">
-    <header className="flex flex-wrap items-center justify-between gap-3">
+    <header className="dashboard-page-heading flex flex-wrap items-center justify-between gap-3">
       <h1 className="text-xl font-bold">د راپورونو مطابقت</h1>
       <div className="flex items-center gap-2">
         <select aria-label="میاشت" className="min-h-10 rounded-lg border bg-card px-3" value={`${year}-${month}`} onChange={e=>changeMonth(e.target.value)}>

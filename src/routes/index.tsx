@@ -86,24 +86,25 @@ function Landing() {
         <div className="home-launch-mark"><img src="/favicon.svg" width="72" height="72" alt="" /></div>
         <span>سیستم پرانیستل کېږي…</span>
       </div>}
-    <main className="relative min-h-screen overflow-hidden bg-[#eef9f6] text-[#123e46]">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 opacity-25 pattern-dots" aria-hidden />
-      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
-        <h1 className="font-display text-4xl font-extrabold leading-tight md:text-6xl">
+      <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-4 py-10 sm:px-8">
+        <section className="rounded-3xl border bg-card p-6 shadow-card sm:p-12"><img src="/favicon.svg" alt="" width="56" height="56" className="mb-6 rounded-2xl" />
+        <h1 className="font-display text-3xl font-extrabold leading-snug sm:text-5xl">
           د دشت برچي د الکترونیکي تذکرو مرکز
-          <span className="block text-[#0b6b74]">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
+          <span className="mt-3 block text-xl text-primary sm:text-3xl">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
         </h1>
         {!signedIn && <p className="mt-6 max-w-xl text-lg">د راپورونو د کتلو لپاره په خپل مجاز ګوګل حساب ننوځئ.</p>}
         {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
         <div className="mt-10 flex flex-wrap gap-3">
           {signedIn ? (
-            <Button asChild variant="hero" size="lg"><Link to="/dashboard">دشبورډ پرانیزئ</Link></Button>
+            <Button asChild variant="default" size="lg"><Link to="/dashboard">ډشبورډ پرانیزئ</Link></Button>
           ) : (
-            <Button variant="hero" size="lg" onClick={signIn} disabled={busy}>
-              {busy ? " د لاکېن کېدلو په حال کې…" : "خپل ګوګل اکونټ سره لاګېن شئ"}
+            <Button variant="default" size="lg" onClick={signIn} disabled={busy}>
+              {busy ? "ننوتل روان دي…" : "په ګوګل حساب ننوځئ"}
             </Button>
           )}
-        </div>
+        </div></section>
       </div>
     </main>
     </>

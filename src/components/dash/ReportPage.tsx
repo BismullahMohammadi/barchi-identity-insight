@@ -21,7 +21,7 @@ export default function ReportPage({ slug }: { slug: string }) {
 
   return (
     <div className="space-y-5">
-      <div>
+      <div className="dashboard-page-heading">
         <h1 className="font-display text-2xl font-extrabold md:text-3xl">{tab.label}</h1>
       </div>
       <SyncBar

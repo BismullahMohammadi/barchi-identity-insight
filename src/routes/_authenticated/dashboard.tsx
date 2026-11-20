@@ -3,7 +3,7 @@ import {GlobalDateProvider} from "@/lib/global-date-range";
 import {GlobalJalaliPicker} from "@/components/dash/GlobalJalaliPicker";
 import { createFileRoute, Link, Navigate, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -36,7 +36,7 @@ export function Nav({ onNavigate,matchCount=0,owner=false,permissions={} }: { on
   const canView=(section:string)=>canAccess({owner,permissions},section);
   const icons: Record<string, typeof Files> = {total:Files,identity:ContactRound,control:ClipboardCheck,services:Blocks,distribution:PackageCheck,arrivals:Truck,"archive-scan":ScanLine,bank:Landmark,annual:CalendarRange};
   const cls = "group flex min-h-11 items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-sidebar-accent hover:translate-x-[-2px] focus-visible:ring-2 focus-visible:ring-sidebar-primary";
-  const active = { className: `${cls} border-sidebar-primary/20 bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
+  const active = { className: `${cls} border-sidebar-primary/25 border-s-[3px] border-s-sidebar-primary bg-sidebar-accent text-sidebar-foreground font-extrabold shadow-sm` };
   const groups = [
     { title: "اصلي عملیاتي راپورونه", slugs: ["total", "identity", "control", "services", "distribution", "bank"] },
     { title: "نور راپورونه", slugs: ["arrivals", "archive-scan", "annual"] },
@@ -109,6 +109,7 @@ function DashboardLayoutContent() {
     try{window.localStorage.setItem("barchi-sidebar-collapsed",next?"1":"0");}catch{/* browser storage may be disabled */}
     return next;
   });
+  const toolsButton = useRef<HTMLButtonElement>(null);
   const [toolsOpen, setToolsOpen] = useState(false);
   const settings = useDashboardSettings();
   const showTools = settings.showTodo || settings.showReportHealth;
@@ -127,7 +128,7 @@ function DashboardLayoutContent() {
   }
 
   const brand = (
-    <div className="mb-5 rounded-2xl border border-sidebar-border bg-sidebar-accent/35 px-4 py-5">
+    <div className="mb-4 rounded-2xl border border-sidebar-border bg-gradient-to-bl from-sidebar-accent to-sidebar px-4 py-4 pe-14">
       <p className="text-xs font-semibold tracking-wide text-sidebar-primary">eNID · ۱۴۰۵</p>
       <h2 className="mt-1 font-display text-lg font-extrabold">د دشت برچي مرکز</h2>
     </div>
@@ -137,7 +138,7 @@ function DashboardLayoutContent() {
     <DashboardAccessContext.Provider value={profile}><div dir="rtl" lang="ps" className="min-h-screen md:flex">
       <a href="#main-dashboard-content" className="sr-only fixed start-4 top-2 z-50 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only">اصلي منځپانګې ته لاړ شئ</a>
       <aside id="desktop-dashboard-sidebar" className={"no-print shrink-0 border-e border-sidebar-border bg-sidebar p-4 text-sidebar-foreground "+(sidebarCollapsed?"hidden":"hidden w-64 lg:block")}>
-        <div className="sticky top-0 flex h-screen flex-col py-3">
+        <div className="sticky top-0 flex h-dvh flex-col py-3">
           {brand}
           <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pe-1"><Nav matchCount={matchCount} owner={profile?.owner===true} permissions={profile?.permissions ?? {}} /></div>
           {canAccess(profile, "settings") && <div className="mt-3 border-t border-sidebar-border pt-3"><SettingsLink /></div>}
@@ -155,10 +156,10 @@ function DashboardLayoutContent() {
       </Sheet>
       {canDashboard && showTools && (
         <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
-          <SheetContent side="left" className="no-print flex h-full w-full max-w-md flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-[480px]">
-            <div className="shrink-0 border-b px-5 pb-4 pt-6">
+          <SheetContent side="center" dir="rtl" aria-describedby="tools-description" onCloseAutoFocus={event=>{event.preventDefault();toolsButton.current?.focus();}} className="no-print gap-0 bg-card p-0">
+            <div className="shrink-0 border-b bg-muted/45 px-5 py-5 pe-16">
               <SheetTitle className="text-lg font-extrabold">دندې او د راپورونو بشپړتیا</SheetTitle>
-              <p className="mt-1 text-sm text-muted-foreground">خوندي دندې او د راپورونو د ثبت وضعیت</p>
+              <p id="tools-description" className="mt-1 text-sm text-muted-foreground">خوندي دندې او د راپورونو د ثبت وضعیت</p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5">
               <PinnedWidgets layout="stacked" />
@@ -181,7 +182,7 @@ function DashboardLayoutContent() {
               <GlobalJalaliPicker />
               {canMatch && <ProblemNotificationBell matches={matchesQuery.data?.potentialMatches??[]}/>}
               {canDashboard && showTools && (
-                <Button variant="outline" size="icon" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه" aria-haspopup="dialog" aria-expanded={toolsOpen}
+                <Button ref={toolsButton} variant="outline" size="icon" onClick={() => setToolsOpen(true)} aria-label="دندې او راپورونه" aria-haspopup="dialog" aria-expanded={toolsOpen}
                   title={reportsReady?(reportsComplete?"د راپورونو بشپړتیا تایید شوې":"د راپورونو بشپړتیا نیمګړې ده"):"دندې او راپورونه"}
                   className="h-9 w-9 shrink-0 rounded-xl sm:h-10 sm:w-auto sm:gap-2 sm:px-3">
                   <PanelRightOpen aria-hidden="true" className="h-4 w-4"/>

@@ -236,7 +236,7 @@ function Overview() {
         ))}
         </div>
         <Button variant="outline" size="sm" className="ms-auto shrink-0 rounded-full" onClick={()=>void q.refetch()} disabled={q.isFetching}>
-          <RefreshCw className={"h-4 w-4 "+(q.isFetching?"animate-spin":"")}/>{q.isFetching?"ریفریش کېږي…":"ریفریش"}
+          <RefreshCw className={"h-4 w-4 "+(q.isFetching?"animate-spin":"")}/>{q.isFetching?"تازه کېږي…":"تازه کول"}
         </Button>
       </div>
 

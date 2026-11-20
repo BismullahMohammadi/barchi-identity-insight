@@ -84,7 +84,7 @@ export function ProblemVisitorsPage() {
   }
   return (
     <div className="space-y-5">
-      <div>
+      <div className="dashboard-page-heading">
         <h1 className="text-2xl font-extrabold">د مراجعینو ثبت شوې ستونزې</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           ثبتونه د مراجع د نوم او د پلار د نوم د پرتله کولو لپاره کارېږي.
