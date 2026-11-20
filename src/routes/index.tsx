@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
+import { LoginChair } from "@/components/LoginChair";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -88,15 +89,17 @@ function Landing() {
       </div>}
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 opacity-25 pattern-dots" aria-hidden />
-      <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-4 py-10 sm:px-8">
-        <section className="rounded-3xl border bg-card p-6 shadow-card sm:p-12"><img src="/favicon.svg" alt="" width="56" height="56" className="mb-6 rounded-2xl" />
+      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-10 sm:px-8">
+        <section className="grid gap-5 rounded-3xl border bg-card p-4 shadow-card sm:p-6 md:grid-cols-[1.2fr_1fr] md:items-stretch md:gap-8">
+          <div className="md:col-start-2 md:row-start-1"><LoginChair /></div>
+          <div className="self-center px-2 pb-2 md:col-start-1 md:row-start-1 md:p-5"><img src="/favicon.svg" alt="" width="56" height="56" className="mb-4 size-10 rounded-xl md:mb-6 md:size-14" />
         <h1 className="font-display text-3xl font-extrabold leading-snug sm:text-5xl">
           د دشت برچي د الکترونیکي تذکرو مرکز
           <span className="mt-3 block text-xl text-primary sm:text-3xl">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
         </h1>
         {!signedIn && <p className="mt-6 max-w-xl text-lg">د راپورونو د کتلو لپاره په خپل مجاز ګوګل حساب ننوځئ.</p>}
         {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
-        <div className="mt-10 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
           {signedIn ? (
             <Button asChild variant="default" size="lg"><Link to="/dashboard">ډشبورډ پرانیزئ</Link></Button>
           ) : (
@@ -104,7 +107,7 @@ function Landing() {
               {busy ? "ننوتل روان دي…" : "په ګوګل حساب ننوځئ"}
             </Button>
           )}
-        </div></section>
+        </div></div></section>
       </div>
     </main>
     </>
