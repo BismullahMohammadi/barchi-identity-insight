@@ -379,3 +379,31 @@
 @media (prefers-reduced-motion: reduce) {
   .home-launch-mark::before { animation: none; }
 }
+
+/* Distinct exit keyframes let Radix keep the surface mounted until it fades out. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .window-panel {
+    --window-x: 0px;
+    --window-y: 6px;
+    --window-scale: .985;
+  }
+  .window-panel[data-placement="right"] { --window-x: 100%; --window-y: 0px; --window-scale: 1; }
+  .window-panel[data-placement="left"] { --window-x: -100%; --window-y: 0px; --window-scale: 1; }
+  .window-panel[data-placement="top"] { --window-y: -100%; --window-scale: 1; }
+  .window-panel[data-placement="bottom"] { --window-y: 100%; --window-scale: 1; }
+
+  .window-panel[data-state="open"] { animation: window-enter 200ms cubic-bezier(.2,.8,.2,1); }
+  .window-panel[data-state="closed"] { animation: window-exit 150ms ease-in both; }
+  .window-scrim[data-state="open"] { animation: scrim-enter 200ms ease-out; }
+  .window-scrim[data-state="closed"] { animation: scrim-exit 150ms ease-in both; }
+}
+@keyframes window-enter {
+  from { opacity: 0; transform: translate(var(--window-x), var(--window-y)) scale(var(--window-scale)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes window-exit {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translate(var(--window-x), var(--window-y)) scale(var(--window-scale)); }
+}
+@keyframes scrim-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrim-exit { from { opacity: 1; } to { opacity: 0; } }

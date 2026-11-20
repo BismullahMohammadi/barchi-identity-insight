@@ -21,6 +21,7 @@ export function ProblemVisitorsPage() {
   const dashboard = useSectionActions("dashboard");
   const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: dashboard("view") });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
+  const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
@@ -202,6 +203,7 @@ export function ProblemVisitorsPage() {
                       onClick={(event) => {
                         opener.current = event.currentTarget;
                         setSelectedId(v.id);
+                        setDetailOpen(true);
                       }}
                       aria-label={v.full_name + " — د تطابق تفصیل"}
                     >
@@ -253,20 +255,19 @@ export function ProblemVisitorsPage() {
         )}
       </section>
       <Dialog.Root
-        open={!!selected}
-        onOpenChange={(open) => {
-          if (!open) setSelectedId(null);
-        }}
+        open={detailOpen && !!selected}
+        onOpenChange={setDetailOpen}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm" />
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm window-scrim" />
           <Dialog.Content
             dir="rtl"
             onCloseAutoFocus={(event) => {
               event.preventDefault();
+              setSelectedId(null);
               opener.current?.focus();
             }}
-            className="fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border bg-background text-start shadow-2xl motion-safe:animate-in motion-safe:fade-in-0"
+            className="fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border bg-background text-start shadow-2xl window-panel"
           >
             <header className="flex items-center gap-3 border-b bg-muted/45 p-4 sm:p-6">
               <UserRound
