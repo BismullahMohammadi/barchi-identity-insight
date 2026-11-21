@@ -448,6 +448,33 @@
 }
 
 @media screen {
+  .chair-visitor {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: -4%;
+    width: 31%;
+    height: 78%;
+    transform: translateX(125%);
+    transition: transform 850ms cubic-bezier(.22, .9, .24, 1);
+  }
+  .chair-visitor > span { position: absolute; display: block; background: #164a50; }
+  .visitor-head { top: 0; left: 36%; width: 27%; aspect-ratio: 1; border-radius: 50%; background: #c89170 !important; }
+  .visitor-body { top: 18%; left: 22%; width: 54%; height: 42%; border-radius: 45% 45% 20% 20%; }
+  .visitor-arm { top: 24%; width: 18%; height: 38%; border-radius: 999px; transform-origin: 50% 8%; }
+  .visitor-arm-left { left: 12%; transform: rotate(22deg); }
+  .visitor-arm-right { right: 10%; transform: rotate(-28deg); }
+  .visitor-leg { top: 53%; width: 20%; height: 43%; border-radius: 999px; transform-origin: 50% 8%; }
+  .visitor-leg-left { left: 27%; transform: rotate(10deg); }
+  .visitor-leg-right { right: 22%; transform: rotate(-9deg); }
+  .login-chair-scene:hover .chair-visitor,
+  .login-chair-scene:focus-visible .chair-visitor { transform: translateX(-4%); }
+}
+@media screen and (prefers-reduced-motion: reduce) {
+  .chair-visitor { transition: none; }
+}
+
+@media screen {
   .note-fan { display: inline-block; position: relative; aspect-ratio: 1280 / 655; pointer-events: none; }
   .note-layer { transform-origin: inherit; position: absolute; inset: 0; background: url("/artwork/banknotes-below.webp") center / 100% 100% no-repeat; }
 }

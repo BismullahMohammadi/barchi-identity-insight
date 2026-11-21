@@ -89,7 +89,7 @@ function Landing() {
         <span>سیستم پرانیستل کېږي…</span>
       </div>}
     <main dir="rtl" className="grid min-h-dvh place-items-center bg-background px-4 py-6 text-foreground sm:py-12">
-      <section className="grid w-full max-w-4xl overflow-hidden rounded-3xl border bg-card shadow-card md:grid-cols-[1.2fr_1fr]">
+      <section className="grid w-full max-w-4xl overflow-hidden rounded-3xl bg-card shadow-card md:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-6 p-6 sm:p-10 md:justify-center md:py-14">
           <div className="flex items-center gap-3 text-sm font-bold text-primary">
             <img src="/favicon.svg" width="44" height="44" alt="" />
@@ -108,8 +108,8 @@ function Landing() {
             )}
           </div>
         </div>
-        <div className="relative isolate grid place-items-center overflow-hidden bg-[#174f54] p-4 sm:p-7 md:p-8">
-          <div className="w-full max-w-72 overflow-hidden rounded-t-[8rem] rounded-b-2xl bg-[#e2efea] p-2 shadow-lg">
+        <div className="relative isolate grid place-items-center overflow-hidden bg-[radial-gradient(circle_at_62%_24%,#3e7d7a_0,transparent_40%),linear-gradient(145deg,#174f54,#103b42)] p-4 sm:p-7 md:p-8">
+          <div className="w-full max-w-72 overflow-hidden rounded-[2rem] bg-[#e2efea] p-2 shadow-[0_18px_45px_#092e355c]">
             <LoginChair />
           </div>
           <RotatingTazkira className="absolute bottom-4 start-5 w-16 sm:start-8 md:bottom-12 md:w-24" />
