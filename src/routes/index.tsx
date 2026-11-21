@@ -88,30 +88,33 @@ function Landing() {
         <div className="home-launch-mark"><img src="/favicon.svg" width="72" height="72" alt="" /></div>
         <span>سیستم پرانیستل کېږي…</span>
       </div>}
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 opacity-25 pattern-dots" aria-hidden />
-      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-10 sm:px-8">
-        <section className="grid gap-5 rounded-3xl border bg-card p-4 shadow-card sm:p-6 md:grid-cols-[1.2fr_1fr] md:items-stretch md:gap-8">
-          <div className="md:col-start-2 md:row-start-1"><LoginChair /></div>
-          <div className="self-center px-2 pb-2 md:col-start-1 md:row-start-1 md:p-5">
-            <RotatingTazkira className="mb-5 w-24 sm:w-32" />
-        <h1 className="font-display text-3xl font-extrabold leading-snug sm:text-5xl">
-          د دشت برچي د الکترونیکي تذکرو مرکز
-          <span className="mt-3 block text-xl text-primary sm:text-3xl">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
-        </h1>
-        {!signedIn && <p className="mt-6 max-w-xl text-lg">د راپورونو د کتلو لپاره په خپل مجاز ګوګل حساب ننوځئ.</p>}
-        {loginError && <div role="alert" className="mt-6 max-w-xl rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-950">{loginError}</div>}
-        <div className="mt-6 flex flex-wrap gap-3">
-          {signedIn ? (
-            <Button asChild variant="default" size="lg"><Link to="/dashboard">ډشبورډ پرانیزئ</Link></Button>
-          ) : (
-            <Button variant="default" size="lg" onClick={signIn} disabled={busy}>
-              {busy ? "ننوتل روان دي…" : "په ګوګل حساب ننوځئ"}
-            </Button>
-          )}
+    <main dir="rtl" className="grid min-h-dvh place-items-center bg-background px-4 py-6 text-foreground sm:py-12">
+      <section className="grid w-full max-w-4xl overflow-hidden rounded-3xl border bg-card shadow-card md:grid-cols-[1.2fr_1fr]">
+        <div className="flex flex-col gap-6 p-6 sm:p-10 md:justify-center md:py-14">
+          <div className="flex items-center gap-3 text-sm font-bold text-primary">
+            <img src="/favicon.svg" width="44" height="44" alt="" />
+            <span>تحلیلي ډشبورډ · ۱۴۰۵ هـ ش</span>
+          </div>
+          <h1 className="font-display text-3xl font-extrabold leading-relaxed sm:text-4xl">د دشت برچي د الکترونیکي تذکرو مرکز</h1>
+          <div className="space-y-4 border-t pt-5">
+            {!signedIn && <p className="text-sm leading-7 text-muted-foreground">د راپورونو د کتلو لپاره په خپل مجاز ګوګل حساب ننوځئ.</p>}
+            {loginError && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{loginError}</p>}
+            {signedIn ? (
+              <Button asChild size="lg" className="w-full"><Link to="/dashboard">ډشبورډ پرانیزئ</Link></Button>
+            ) : (
+              <Button size="lg" className="w-full" onClick={signIn} disabled={busy}>
+                {busy ? "ننوتل روان دي…" : "په ګوګل حساب ننوځئ"}
+              </Button>
+            )}
+          </div>
         </div>
-        </div></section>
-      </div>
+        <div className="relative isolate grid place-items-center overflow-hidden bg-[#174f54] p-4 sm:p-7 md:p-8">
+          <div className="w-full max-w-72 overflow-hidden rounded-t-[8rem] rounded-b-2xl bg-[#e2efea] p-2 shadow-lg">
+            <LoginChair />
+          </div>
+          <RotatingTazkira className="absolute bottom-4 start-5 w-16 sm:start-8 md:bottom-12 md:w-24" />
+        </div>
+      </section>
     </main>
     </>
   );

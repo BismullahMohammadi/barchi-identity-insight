@@ -59,7 +59,16 @@ export function SectionArtwork({ slug, className }: { slug: string; className?: 
         className={`distribution-person no-print h-auto ${className ?? "w-24 sm:w-28"}`}
       />
     );
-  if (slug === "total" || slug === "services")
+  if (slug === "services" || slug === "new-card") {
+    const renewal = slug === "services";
+    return (
+      <span aria-hidden="true" className={`issue-art no-print ${renewal ? "renewal-art" : "new-id-art"} ${className ?? "w-20 sm:w-28"}`}>
+        {renewal && <img className="previous-id" src="/artwork/tazkira-back.webp" alt="" />}
+        <img className="issued-id" src="/artwork/tazkira-front.webp" alt="" />
+      </span>
+    );
+  }
+  if (slug === "total")
     return (
       <span aria-hidden="true" className={`id-stack no-print ${className ?? "w-20 sm:w-28"}`}>
         {[-1, 0, 1].map((i) => (

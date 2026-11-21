@@ -62,11 +62,11 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
-type SummaryMetric = {slug:string;label:string;value:number|null;change:number|null;icon:typeof Files;tone:"teal"|"blue"|"amber"|"violet"|"emerald";money?:boolean;description?:string};
+type SummaryMetric = {slug:string;artwork?: "new-card";label:string;value:number|null;change:number|null;icon:typeof Files;tone:"teal"|"blue"|"amber"|"violet"|"emerald";money?:boolean;description?:string};
 const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
  {slug:"services",label:"مثنی او تجدید",value:null,change:null,icon:Files,tone:"violet",description:"د خدماتو مجموعي ثبتونه"},
- {slug:"total",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"blue",description:"یوازې پاس شوي"},
+ {slug:"total",artwork:"new-card",label:"نوي تذکرې (جدید)",value:null,change:null,icon:Files,tone:"blue",description:"یوازې پاس شوي"},
  {slug:"bank",label:"ټول عواید",value:null,change:null,icon:Landmark,tone:"amber",money:true,description:"د نوي ثبت او خدماتو عواید"},
  {slug:"identity",label:"تثبیت هویت",value:null,change:null,icon:ShieldCheck,tone:"violet"},
  {slug:"distribution",label:"توزیع",value:null,change:null,icon:PackageCheck,tone:"emerald"},
@@ -195,7 +195,7 @@ function Overview() {
             </span>
             <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
           </div>
-          <SectionArtwork slug={item.slug} className="w-16 shrink-0 sm:w-20" />
+          <SectionArtwork slug={item.artwork ?? item.slug} className="w-16 shrink-0 sm:w-20" />
         </div>
         <div>
           <div className="flex flex-wrap items-baseline gap-2">
