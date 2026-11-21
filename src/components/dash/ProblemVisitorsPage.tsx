@@ -1,3 +1,4 @@
+import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -86,7 +87,7 @@ export function ProblemVisitorsPage() {
   return (
     <div className="space-y-5">
       <div className="dashboard-page-heading">
-        <h1 className="text-2xl font-extrabold">د مراجعینو ثبت شوې ستونزې</h1>
+        <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-extrabold">د مراجعینو ثبت شوې ستونزې</h1><RotatingTazkira className="w-14 shrink-0 sm:w-16" /></div>
         <p className="mt-1 text-sm text-muted-foreground">
           ثبتونه د مراجع د نوم او د پلار د نوم د پرتله کولو لپاره کارېږي.
         </p>

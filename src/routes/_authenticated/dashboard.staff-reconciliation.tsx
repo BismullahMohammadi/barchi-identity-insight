@@ -1,3 +1,4 @@
+import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -21,7 +22,7 @@ function StaffReconciliationPage(){
  const count=(status:string)=>rows.filter(r=>r.status===status).length;
  return <main data-print-target dir="rtl" className="space-y-4 pb-8">
   <header className="dashboard-page-heading flex flex-wrap items-center justify-between gap-3">
-   <div><h1 className="text-xl font-bold">د کارکوونکو او تخنیکي راپورونو مطابقت</h1><p className="text-sm text-muted-foreground">تصدیق انفرادي (۴ کارمندان) او ثبت تولد (بهزاد)</p></div>
+   <div><div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">د کارکوونکو او تخنیکي راپورونو مطابقت</h1><RotatingTazkira className="w-14 shrink-0 sm:w-16" /></div><p className="text-sm text-muted-foreground">تصدیق انفرادي (۴ کارمندان) او ثبت تولد (بهزاد)</p></div>
    <div className="flex flex-wrap gap-2 print:hidden">
     <Link to="/dashboard/reconciliation" className="rounded-lg border px-3 py-2 text-sm">عمومي مطابقت</Link>
     {can("print") && <Button variant="outline" size="sm" onClick={()=>window.print()}><Printer className="h-4 w-4"/>چاپ</Button>}

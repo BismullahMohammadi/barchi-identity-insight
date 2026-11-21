@@ -1,3 +1,4 @@
+import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ export function ManagedUsersPage() {
  const filteredUsers=users.data?.filter(u=>[u.email,u.display_name].some(v=>v.toLowerCase().includes(filter.trim().toLowerCase())));
  const activeManagers=users.data?.filter(u=>u.role==='manager'&&u.active).length??0;
  return <section dir="rtl" className="space-y-6">
-  <div className="dashboard-page-heading"><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1></div>
+  <div className="dashboard-page-heading"><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-extrabold">د کاروونکو او صلاحیتونو مدیریت</h1><RotatingTazkira className="w-14 shrink-0 sm:w-16" /></div></div>
   {users.error && <p role="alert" className="rounded-lg border p-3 text-destructive">د کاروونکو لېست ونه لوستل شو. د مدیر حساب او د ډیټابېس د لاسرسي تنظیمات وګورئ.</p>}
   <div className="dashboard-panel p-4 sm:p-5 space-y-3">
    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-bold">ثبت شوي مدیران ({users.data?.length??0}) — فعال: {activeManagers}</h2><Button type="button" variant="outline" size="sm" onClick={()=>void users.refetch()} disabled={users.isFetching}>لېست تازه کړئ</Button></div>

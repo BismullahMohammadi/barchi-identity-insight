@@ -8,7 +8,7 @@ import "@/components/dash/dashboard-motion.css";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpLeft, ChartNoAxesColumn, RefreshCw, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
+import { ChartNoAxesColumn, RefreshCw, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { accessQuery, errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
@@ -195,7 +195,7 @@ function Overview() {
             </span>
             <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
           </div>
-          {item.slug === "identity" ? <RotatingTazkira className="w-14 shrink-0 sm:w-16" /> : item.money ? <AfghaniBanknotes className="w-16 shrink-0 sm:w-20" /> : <ArrowUpLeft aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground opacity-65 transition-transform duration-200 group-hover:-translate-x-1 group-hover:-translate-y-1"/>}
+          {item.money ? <AfghaniBanknotes className="w-16 shrink-0 sm:w-20" /> : <RotatingTazkira className="w-14 shrink-0 sm:w-16" />}
         </div>
         <div>
           <div className="flex flex-wrap items-baseline gap-2">

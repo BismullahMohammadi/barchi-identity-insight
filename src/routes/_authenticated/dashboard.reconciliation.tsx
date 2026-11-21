@@ -1,3 +1,4 @@
+import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import { createFileRoute } from '@tanstack/react-router';
 import { queryOptions, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
@@ -97,7 +98,7 @@ function ReconciliationPage() {
   if (year !== today.y) months.unshift(...Array.from({length:12},(_,i)=>({year,month:i+1})));
   return <main dir="rtl" className="space-y-4 pb-8">
     <header className="dashboard-page-heading flex flex-wrap items-center justify-between gap-3">
-      <h1 className="text-xl font-bold">د راپورونو مطابقت</h1>
+      <div className="flex flex-wrap items-center gap-3"><h1 className="text-xl font-bold">د راپورونو مطابقت</h1><RotatingTazkira className="w-14 shrink-0 sm:w-16" /></div>
       <div className="flex items-center gap-2">
         <select aria-label="میاشت" className="min-h-10 rounded-lg border bg-card px-3" value={`${year}-${month}`} onChange={e=>changeMonth(e.target.value)}>
           {months.map(m=><option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>{JALALI_MONTHS[m.month-1]} {m.year}</option>)}

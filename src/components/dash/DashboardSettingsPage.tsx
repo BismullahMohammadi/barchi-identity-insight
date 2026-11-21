@@ -1,3 +1,4 @@
+import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import {useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
@@ -94,7 +95,7 @@ export function DashboardSettingsPage(){
  const flags=[{key:"showDailyVisitors",label:"ورځني مراجعین",Icon:Users},{key:"showCharts",label:"ګرافونه",Icon:BarChart3},{key:"compactCards",label:"کوچني کارتونه",Icon:PanelsTopLeft},{key:"showTodo",label:"زما دندې",Icon:ListTodo},{key:"showReportHealth",label:"د راپورونو بشپړتیا",Icon:Activity}] as const;
  return <div className="mx-auto max-w-6xl space-y-4 pb-10">
   <header className="dashboard-page-heading flex flex-wrap items-center justify-between gap-3">
-   <div><h1 className="flex items-center gap-2 text-2xl font-extrabold"><Settings2 className="h-6 w-6 text-primary"/>تنظیمات</h1></div>
+   <div><div className="flex flex-wrap items-center gap-3"><h1 className="flex items-center gap-2 text-2xl font-extrabold"><Settings2 className="h-6 w-6 text-primary"/>تنظیمات</h1><RotatingTazkira className="w-14 shrink-0 sm:w-16" /></div></div>
    {saved&&<span role="status" className="inline-flex items-center gap-1 text-xs text-primary"><Check className="h-4 w-4"/>خوندي شول</span>}
   </header>
   <nav className="grid grid-cols-2 gap-2 rounded-2xl border bg-card p-2 sm:grid-cols-4" aria-label="د تنظیماتو برخې">
