@@ -1,4 +1,3 @@
-import { TazkiraSample } from "@/components/TazkiraSample";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
@@ -93,7 +92,8 @@ function Landing() {
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-10 sm:px-8">
         <section className="grid gap-5 rounded-3xl border bg-card p-4 shadow-card sm:p-6 md:grid-cols-[1.2fr_1fr] md:items-stretch md:gap-8">
           <div className="md:col-start-2 md:row-start-1"><LoginChair /></div>
-          <div className="self-center px-2 pb-2 md:col-start-1 md:row-start-1 md:p-5"><img src="/favicon.svg" alt="" width="56" height="56" className="mb-4 size-10 rounded-xl md:mb-6 md:size-14" />
+          <div className="self-center px-2 pb-2 md:col-start-1 md:row-start-1 md:p-5">
+            <img src="/tazkira-motif.webp" alt="" width="432" height="272" className="mb-5 h-auto w-24 -rotate-3 rounded-lg shadow-sm ring-1 ring-black/10 sm:w-32" />
         <h1 className="font-display text-3xl font-extrabold leading-snug sm:text-5xl">
           د دشت برچي د الکترونیکي تذکرو مرکز
           <span className="mt-3 block text-xl text-primary sm:text-3xl">تحلیلي ډشبورډ ۱۴۰۵ هـ ش</span>
@@ -109,7 +109,7 @@ function Landing() {
             </Button>
           )}
         </div>
-        <div className="mt-2"><TazkiraSample /></div></div></section>
+        </div></section>
       </div>
     </main>
     </>
