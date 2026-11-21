@@ -1,4 +1,4 @@
-import { AfghaniNote, RotatingTazkira } from "@/components/DashboardArtwork";
+import { AfghaniBanknotes, RotatingTazkira } from "@/components/DashboardArtwork";
 import {getHistoricalReferrals} from "@/lib/sheets.functions";
 import {formatJ} from "@/lib/jalali";
 import {useGlobalDateRange} from "@/lib/global-date-range";
@@ -195,7 +195,7 @@ function Overview() {
             </span>
             <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
           </div>
-          {item.slug === "identity" ? <RotatingTazkira className="w-12 shrink-0" /> : item.money ? <AfghaniNote className="w-14 shrink-0" /> : <ArrowUpLeft aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground opacity-65 transition-transform duration-200 group-hover:-translate-x-1 group-hover:-translate-y-1"/>}
+          {item.slug === "identity" ? <RotatingTazkira className="w-14 shrink-0 sm:w-16" /> : item.money ? <AfghaniBanknotes className="w-16 shrink-0 sm:w-20" /> : <ArrowUpLeft aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground opacity-65 transition-transform duration-200 group-hover:-translate-x-1 group-hover:-translate-y-1"/>}
         </div>
         <div>
           <div className="flex flex-wrap items-baseline gap-2">

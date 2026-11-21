@@ -67,7 +67,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
-      { rel: "license", href: "/artwork-credits.txt", type: "text/plain", title: "د انځورونو سرچینې" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.svg?v=2", type: "image/svg+xml", sizes: "any" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },

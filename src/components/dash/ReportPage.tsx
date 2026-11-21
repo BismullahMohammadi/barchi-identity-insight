@@ -1,4 +1,4 @@
-import { AfghaniNote, RotatingTazkira } from "@/components/DashboardArtwork";
+import { AfghaniBanknotes, RotatingTazkira } from "@/components/DashboardArtwork";
 import { lazy } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTab } from "@/lib/tabs";
@@ -25,7 +25,7 @@ export default function ReportPage({ slug }: { slug: string }) {
       <div className="dashboard-page-heading flex flex-wrap items-center justify-between gap-x-4">
         <h1 className="font-display text-2xl font-extrabold md:text-3xl">{tab.label}</h1>
         {slug === "identity" && <RotatingTazkira />}
-        {slug === "bank" && <AfghaniNote />}
+        {slug === "bank" && <AfghaniBanknotes />}
       </div>
       <SyncBar
         fetchedAt={q.data?.fetchedAt}

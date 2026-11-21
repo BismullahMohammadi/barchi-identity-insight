@@ -411,7 +411,7 @@
 @media screen {
   .tazkira-display {
     display: inline-block;
-    aspect-ratio: 86 / 54;
+    aspect-ratio: 1.7;
     perspective: 420px;
     pointer-events: none;
   }
@@ -429,17 +429,13 @@
     border-radius: 6% / 9%;
     backface-visibility: hidden;
     box-shadow: 0 2px 5px #18394133;
-    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: white;
   }
   .tazkira-back { transform: rotateY(180deg); }
-  .afghani-note {
-    display: inline-block;
-    aspect-ratio: 158 / 66;
-    border-radius: 2px;
-    pointer-events: none;
-    box-shadow: 0 2px 5px #18394133;
-    transform: rotate(-4deg);
-  }
+
 }
 
 @media screen and (prefers-reduced-motion: no-preference) {
@@ -449,15 +445,4 @@
   0%, 14% { transform: rotateZ(-3deg) rotateY(0); }
   42%, 62% { transform: rotateZ(-3deg) rotateY(180deg); }
   90%, 100% { transform: rotateZ(-3deg) rotateY(360deg); }
-}
-
-@media screen {
-  .tazkira-face, .afghani-note { overflow: hidden; }
-  .tazkira-face img, .afghani-note img {
-    width: 100%;
-    height: 200%;
-    max-width: none;
-    object-fit: cover;
-  }
-  .tazkira-back img { transform: translateY(-50%); }
 }
