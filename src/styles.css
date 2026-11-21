@@ -407,3 +407,57 @@
 }
 @keyframes scrim-enter { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scrim-exit { from { opacity: 1; } to { opacity: 0; } }
+
+@media screen {
+  .tazkira-display {
+    display: inline-block;
+    aspect-ratio: 86 / 54;
+    perspective: 420px;
+    pointer-events: none;
+  }
+  .tazkira-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform: rotateZ(-3deg);
+  }
+  .tazkira-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 6% / 9%;
+    backface-visibility: hidden;
+    box-shadow: 0 2px 5px #18394133;
+    background-repeat: no-repeat;
+  }
+  .tazkira-back { transform: rotateY(180deg); }
+  .afghani-note {
+    display: inline-block;
+    aspect-ratio: 158 / 66;
+    border-radius: 2px;
+    pointer-events: none;
+    box-shadow: 0 2px 5px #18394133;
+    transform: rotate(-4deg);
+  }
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  .tazkira-card { animation: tazkira-turn 12s linear infinite; }
+}
+@keyframes tazkira-turn {
+  0%, 14% { transform: rotateZ(-3deg) rotateY(0); }
+  42%, 62% { transform: rotateZ(-3deg) rotateY(180deg); }
+  90%, 100% { transform: rotateZ(-3deg) rotateY(360deg); }
+}
+
+@media screen {
+  .tazkira-face, .afghani-note { overflow: hidden; }
+  .tazkira-face img, .afghani-note img {
+    width: 100%;
+    height: 200%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .tazkira-back img { transform: translateY(-50%); }
+}

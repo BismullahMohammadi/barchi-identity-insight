@@ -1,3 +1,4 @@
+import { AfghaniNote, RotatingTazkira } from "@/components/DashboardArtwork";
 import { lazy } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTab } from "@/lib/tabs";
@@ -23,9 +24,8 @@ export default function ReportPage({ slug }: { slug: string }) {
     <div className="space-y-5">
       <div className="dashboard-page-heading flex flex-wrap items-center justify-between gap-x-4">
         <h1 className="font-display text-2xl font-extrabold md:text-3xl">{tab.label}</h1>
-        {slug === "identity" && (
-          <img src="/tazkira-motif.webp" alt="" width="432" height="272" className="no-print h-auto w-16 -rotate-3 rounded-md shadow-sm ring-1 ring-black/10 sm:w-24" />
-        )}
+        {slug === "identity" && <RotatingTazkira />}
+        {slug === "bank" && <AfghaniNote />}
       </div>
       <SyncBar
         fetchedAt={q.data?.fetchedAt}
