@@ -127,24 +127,35 @@ function DashboardLayoutContent() {
     navigate({ to: "/", replace: true });
   }
 
-  // Decorative Jam Minaret motif: stylized illustration, not a reproduction of a security document.
+  // Original eNID-inspired illustration: guilloche-like waves, mint/coral tones,
+  // and a stylized Jam Minaret silhouette. No official security artwork is copied.
   const brand = (
-    <div className="relative mb-4 isolate min-h-[116px] overflow-hidden rounded-2xl border border-[#b69a5a]/40 bg-[#123b36] px-4 py-4 pe-12 text-[#fff9e9] shadow-[0_8px_24px_-14px_rgba(10,45,38,0.8)]">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-80" style={{background:"radial-gradient(circle at 90% 0%, rgba(219,181,99,.23), transparent 55%), repeating-linear-gradient(125deg, transparent 0px, transparent 15px, rgba(232,202,139,.055) 16px, transparent 17px)"}} />
-      <svg aria-hidden="true" focusable="false" viewBox="0 0 110 170" className="pointer-events-none absolute bottom-[-20px] left-[-5px] h-[155px] w-[105px] opacity-[.32]" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M38 154 L45 50 L66 50 L73 154 Z" fill="#d4b16c" stroke="#f5dba0" strokeWidth="1.5"/>
-        <path d="M45 50 L49 35 L62 35 L66 50 Z M48 35 L51 24 L60 24 L63 35 Z M51 24 L54 15 L57 15 L60 24 Z" fill="#d4b16c" stroke="#f5dba0" strokeWidth="1.3"/>
-        <path d="M42 77 H69 M41 96 H70 M40 117 H71 M39 137 H72" stroke="#244a40" strokeWidth="4"/>
-        <path d="M44 83 L68 83 M43 103 L69 103 M42 123 L70 123" stroke="#f9e8b9" strokeWidth="1" strokeDasharray="3 3"/>
-        <path d="M54 57 V69 M59 57 V69 M51 87 V93 M60 87 V93 M49 108 V114 M62 108 V114" stroke="#31584d" strokeWidth="3"/>
-        <path d="M22 158 H90 M15 164 H97" stroke="#f2d79c" strokeWidth="1" opacity=".7"/>
-        <path d="M11 42 Q56 2 100 42 M6 52 Q56 9 105 52" stroke="#d9bc7e" strokeWidth="1" opacity=".5"/>
+    <div className="relative isolate mb-4 min-h-[132px] overflow-hidden rounded-2xl border border-[#e0c9a3] bg-[#fff2dc] px-4 py-4 pe-12 text-[#234d42] shadow-[0_6px_22px_-14px_rgba(70,91,65,.45)]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{background:"radial-gradient(ellipse at 15% 12%,rgba(247,164,110,.46),transparent 59%),radial-gradient(ellipse at 95% 100%,rgba(69,205,163,.44),transparent 63%),linear-gradient(120deg,#fff4e5,#fce8d6 48%,#e7f5df)"}} />
+      <svg aria-hidden="true" focusable="false" viewBox="0 0 260 142" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 h-full w-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="brand-micro-lines" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8 Q4 0 8 8" stroke="#3caa8b" strokeWidth=".5" opacity=".26"/></pattern>
+          <linearGradient id="brand-wave" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#eeaa78"/><stop offset=".53" stopColor="#7ddbb1"/><stop offset="1" stopColor="#2dbd98"/></linearGradient>
+          <linearGradient id="brand-minaret" x1="0" y1="0" x2="1" y2="0"><stop stopColor="#bd8855"/><stop offset=".45" stopColor="#f3d6a4"/><stop offset="1" stopColor="#c39162"/></linearGradient>
+        </defs>
+        <path d="M0 0 H260 V142 H0Z" fill="url(#brand-micro-lines)" opacity=".55"/>
+        {Array.from({length:17},(_,i)=><path key={i} d={`M-20 ${87+i*3.4} C37 ${24+i*3.4} 85 ${138+i*2.2} 146 ${72+i*3.3} S231 ${44+i*3.4} 280 ${76+i*3.4}`} stroke="url(#brand-wave)" strokeWidth={i%4===0?1.1:.62} opacity={i%4===0?.58:.39}/>)}
+        {Array.from({length:8},(_,i)=><ellipse key={i} cx="27" cy="27" rx={24+i*5} ry={15+i*4.2} stroke="#f1a46f" strokeWidth=".55" opacity=".32"/>)}
+        <g transform="translate(8 -1)" opacity=".73">
+          <path d="M29 147 L36 56 L60 56 L68 147Z" fill="url(#brand-minaret)" stroke="#aa7549" strokeWidth="1"/>
+          <path d="M35 56 L39 42 H57 L61 56Z M39 42 L42 30 H54 L57 42Z M42 30 L45 19 H51 L54 30Z M45 19 L48 10 L51 19Z" fill="#d5a371" stroke="#aa7549" strokeWidth=".9"/>
+          <path d="M34 70 H62 M33 89 H64 M32 109 H65 M31 129 H67" stroke="#976e50" strokeWidth="3.4"/>
+          <path d="M37 75 H61 M35 95 H63 M34 115 H64 M33 135 H65" stroke="#fff2cf" strokeWidth=".9" strokeDasharray="2 2"/>
+          <path d="M42 61 V67 M49 61 V67 M55 61 V67 M40 79 V85 M49 79 V85 M57 79 V85 M39 99 V105 M49 99 V105 M59 99 V105 M37 119 V125 M49 119 V125 M61 119 V125" stroke="#9c734e" strokeWidth="2.6"/>
+          <path d="M38 54 H59 M41 40 H56 M44 28 H53" stroke="#fff0c5" strokeWidth="1.5"/>
+        </g>
+        <path d="M3 139 H257" stroke="#b99562" strokeWidth=".7" opacity=".55"/>
       </svg>
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-3 bottom-2 h-px bg-gradient-to-l from-transparent via-[#d7b56d]/65 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#fff4e6]/95 via-[#fff1e0]/78 to-transparent" />
       <div className="relative z-10 max-w-[165px]">
-        <p className="text-[11px] font-bold tracking-[.12em] text-[#e8cb8e]">eNID · ۱۴۰۵</p>
-        <h2 className="mt-2 font-display text-[17px] font-extrabold leading-7 text-[#fff9e9]">د دشت برچي مرکز</h2>
-        <p className="mt-1 text-[10px] font-medium text-[#e5d8b5]">د الکترونیکي تذکرې راپورونه</p>
+        <p className="text-[10px] font-bold tracking-[.12em] text-[#956744]">eNID · ۱۴۰۵</p>
+        <h2 className="mt-2 font-display text-[17px] font-extrabold leading-7 text-[#1d5648]">د دشت برچي مرکز</h2>
+        <p className="mt-1 text-[10px] font-semibold text-[#557e6d]">د الکترونیکي تذکرې راپورونه</p>
       </div>
     </div>
   );
