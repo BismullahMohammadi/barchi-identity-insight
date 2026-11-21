@@ -1,4 +1,4 @@
-import { AfghaniBanknotes, RotatingTazkira } from "@/components/DashboardArtwork";
+import { SectionArtwork } from "@/components/DashboardArtwork";
 import {getHistoricalReferrals} from "@/lib/sheets.functions";
 import {formatJ} from "@/lib/jalali";
 import {useGlobalDateRange} from "@/lib/global-date-range";
@@ -195,7 +195,7 @@ function Overview() {
             </span>
             <h3 className="text-sm font-extrabold leading-6 text-foreground sm:text-base">{item.label}</h3>
           </div>
-          {item.money ? <AfghaniBanknotes className="w-16 shrink-0 sm:w-20" /> : <RotatingTazkira className="w-14 shrink-0 sm:w-16" />}
+          <SectionArtwork slug={item.slug} className="w-16 shrink-0 sm:w-20" />
         </div>
         <div>
           <div className="flex flex-wrap items-baseline gap-2">

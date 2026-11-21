@@ -449,12 +449,31 @@
 
 @media screen {
   .note-fan { display: inline-block; position: relative; aspect-ratio: 1280 / 655; pointer-events: none; }
-  .note-layer { transform-origin: inherit; position: absolute; inset: 0; background: url("/artwork/afghani-banknotes.webp") center / 100% 100% no-repeat; }
+  .note-layer { transform-origin: inherit; position: absolute; inset: 0; background: url("/artwork/banknotes-below.webp") center / 100% 100% no-repeat; }
 }
 @media screen and (prefers-reduced-motion: no-preference) {
-  .note-layer { animation: fold-banknotes 14s cubic-bezier(.45,0,.25,1) infinite; }
+  .note-layer, .note-cover { animation: fold-banknotes 14s cubic-bezier(.45,0,.25,1) infinite; }
 }
 @keyframes fold-banknotes {
   0%, 30%, 100% { transform: rotate(0); }
   56%, 72% { transform: rotate(var(--fold-angle)); }
+}
+
+@media screen {
+  .note-cover { position:absolute; inset:0; transform-origin:inherit; --fold-angle:-24deg; }
+  .note-cover img { position:absolute; left:62.5%; top:14.146%; width:37.25%; height:84.878%; }
+  .id-stack { display:inline-block; position:relative; aspect-ratio:1.7; pointer-events:none; }
+  .id-stack img { position:absolute; width:67%; left:16.5%; top:11%; border-radius:6%; box-shadow:0 1px 3px #173a4340; transform-origin:50% 95%; transform:rotate(calc(var(--spread) * 21deg)); }
+}
+@media screen and (prefers-reduced-motion:no-preference) {
+  .id-stack img { animation: gather-cards 11s ease-in-out infinite; }
+  .distribution-person { transform-origin:45% 95%; animation: present-card 6s ease-in-out infinite; }
+}
+@keyframes gather-cards {
+  0%,25%,100% { transform:translateX(calc(var(--spread) * 12%)) rotate(calc(var(--spread) * 21deg)); }
+  55%,70% { transform:translateX(calc(var(--spread) * 2%)) rotate(calc(var(--spread) * 2deg)); }
+}
+@keyframes present-card {
+  0%,100% { transform:rotate(-1deg); }
+  50% { transform:translateY(-2px) rotate(2deg); }
 }

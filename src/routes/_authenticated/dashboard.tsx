@@ -1,4 +1,3 @@
-import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { DashboardAccessContext } from "@/lib/dashboard-access-context";
 import {GlobalDateProvider} from "@/lib/global-date-range";
 import {GlobalJalaliPicker} from "@/components/dash/GlobalJalaliPicker";
@@ -177,7 +176,7 @@ function DashboardLayoutContent() {
               {sidebarCollapsed?<SidebarOpenIcon aria-hidden="true" className="h-5 w-5"/>:<PanelRightClose aria-hidden="true" className="h-5 w-5"/>}
             </Button>
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              {currentSlug === "dashboard" && <RotatingTazkira className="w-8 shrink-0 sm:w-12" />}
+              <img src="/favicon.svg" alt="" width="32" height="32" className="size-8 shrink-0 rounded-lg" />
               <p className="truncate text-sm font-extrabold leading-6 text-foreground sm:text-base">{pageTitle}</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">

@@ -40,6 +40,37 @@ export function AfghaniBanknotes({ className = "w-24 sm:w-32" }: { className?: s
           }
         />
       ))}
+      <span className="note-cover">
+        <img src="/artwork/banknote-top.webp" alt="" />
+      </span>
     </span>
   );
+}
+
+export function SectionArtwork({ slug, className }: { slug: string; className?: string }) {
+  if (slug === "bank") return <AfghaniBanknotes className={className ?? "w-24 sm:w-32"} />;
+  if (slug === "distribution")
+    return (
+      <img
+        alt=""
+        src="/artwork/distribution.webp"
+        width="320"
+        height="240"
+        className={`distribution-person no-print h-auto ${className ?? "w-24 sm:w-28"}`}
+      />
+    );
+  if (slug === "total" || slug === "services")
+    return (
+      <span aria-hidden="true" className={`id-stack no-print ${className ?? "w-20 sm:w-28"}`}>
+        {[-1, 0, 1].map((i) => (
+          <img
+            key={i}
+            alt=""
+            src="/artwork/tazkira-front.webp"
+            style={{ "--spread": i } as CSSProperties}
+          />
+        ))}
+      </span>
+    );
+  return <RotatingTazkira className={className ?? "w-20 sm:w-28"} />;
 }
