@@ -1,3 +1,4 @@
+import { TazkiraSample } from "@/components/TazkiraSample";
 import { lazy } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTab } from "@/lib/tabs";
@@ -21,8 +22,9 @@ export default function ReportPage({ slug }: { slug: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-page-heading">
+      <div className="dashboard-page-heading flex flex-wrap items-center justify-between gap-x-4">
         <h1 className="font-display text-2xl font-extrabold md:text-3xl">{tab.label}</h1>
+        {slug === "identity" && <TazkiraSample />}
       </div>
       <SyncBar
         fetchedAt={q.data?.fetchedAt}

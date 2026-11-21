@@ -1,3 +1,4 @@
+import { TazkiraSample } from "@/components/TazkiraSample";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
@@ -107,7 +108,8 @@ function Landing() {
               {busy ? "ننوتل روان دي…" : "په ګوګل حساب ننوځئ"}
             </Button>
           )}
-        </div></div></section>
+        </div>
+        <div className="mt-2"><TazkiraSample /></div></div></section>
       </div>
     </main>
     </>
