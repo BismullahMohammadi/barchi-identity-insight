@@ -4,7 +4,7 @@ import { findMonthlyBlock, reportNumber } from './reconciliation';
 import { todayJalali } from './jalali';
 const ID = '1CQW-MelUxvRSGqbRMatozoVkrCZlhcgxluhBscsQM0Q';
 const GATEWAY = 'https://connector-gateway.lovable.dev/google_sheets/v4';
-const CENTERS = ['دارالامان آسان خدمت','امکا آسان خدمت','آسان خدمت (VIP)','افشار آسان خدمت','د احمد شاه بابا مېنې مرکز','سرای شمالي مرکز','دشت برچي مرکز','دارالامان مرکز','خوشحال خان مرکز','سینما پامير مرکز','کارتې پروان مرکز','شهدا و معلولین مرکز','قره باغ مرکز'];
+const CENTERS = ['آسان خدمت دارالامان','آسان خدمت امکا','آسان خدمت (VIP)','آسان خدمت افشار','مرکز احمد شاه بابا مینه','مرکز سرای شمالی','مرکز دشت برچی','مرکز قصر دارالمان','مرکز خوشحال خان','مرکز سینما پامیر','مرکز کارته پروان','شهدا و معلولین','مرکز قره باغ'];
 type CenterQualityReport = {
  year: number;
  month: number;
