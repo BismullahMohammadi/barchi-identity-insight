@@ -127,10 +127,25 @@ function DashboardLayoutContent() {
     navigate({ to: "/", replace: true });
   }
 
+  // Decorative Jam Minaret motif: stylized illustration, not a reproduction of a security document.
   const brand = (
-    <div className="mb-4 rounded-2xl border border-sidebar-border bg-gradient-to-bl from-sidebar-accent to-sidebar px-4 py-4 pe-14">
-      <p className="text-xs font-semibold tracking-wide text-sidebar-primary">eNID · ۱۴۰۵</p>
-      <h2 className="mt-1 font-display text-lg font-extrabold">د دشت برچي مرکز</h2>
+    <div className="relative mb-4 isolate min-h-[116px] overflow-hidden rounded-2xl border border-[#b69a5a]/40 bg-[#123b36] px-4 py-4 pe-12 text-[#fff9e9] shadow-[0_8px_24px_-14px_rgba(10,45,38,0.8)]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-80" style={{background:"radial-gradient(circle at 90% 0%, rgba(219,181,99,.23), transparent 55%), repeating-linear-gradient(125deg, transparent 0px, transparent 15px, rgba(232,202,139,.055) 16px, transparent 17px)"}} />
+      <svg aria-hidden="true" focusable="false" viewBox="0 0 110 170" className="pointer-events-none absolute bottom-[-20px] left-[-5px] h-[155px] w-[105px] opacity-[.32]" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M38 154 L45 50 L66 50 L73 154 Z" fill="#d4b16c" stroke="#f5dba0" strokeWidth="1.5"/>
+        <path d="M45 50 L49 35 L62 35 L66 50 Z M48 35 L51 24 L60 24 L63 35 Z M51 24 L54 15 L57 15 L60 24 Z" fill="#d4b16c" stroke="#f5dba0" strokeWidth="1.3"/>
+        <path d="M42 77 H69 M41 96 H70 M40 117 H71 M39 137 H72" stroke="#244a40" strokeWidth="4"/>
+        <path d="M44 83 L68 83 M43 103 L69 103 M42 123 L70 123" stroke="#f9e8b9" strokeWidth="1" strokeDasharray="3 3"/>
+        <path d="M54 57 V69 M59 57 V69 M51 87 V93 M60 87 V93 M49 108 V114 M62 108 V114" stroke="#31584d" strokeWidth="3"/>
+        <path d="M22 158 H90 M15 164 H97" stroke="#f2d79c" strokeWidth="1" opacity=".7"/>
+        <path d="M11 42 Q56 2 100 42 M6 52 Q56 9 105 52" stroke="#d9bc7e" strokeWidth="1" opacity=".5"/>
+      </svg>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-3 bottom-2 h-px bg-gradient-to-l from-transparent via-[#d7b56d]/65 to-transparent" />
+      <div className="relative z-10 max-w-[165px]">
+        <p className="text-[11px] font-bold tracking-[.12em] text-[#e8cb8e]">eNID · ۱۴۰۵</p>
+        <h2 className="mt-2 font-display text-[17px] font-extrabold leading-7 text-[#fff9e9]">د دشت برچي مرکز</h2>
+        <p className="mt-1 text-[10px] font-medium text-[#e5d8b5]">د الکترونیکي تذکرې راپورونه</p>
+      </div>
     </div>
   );
 
