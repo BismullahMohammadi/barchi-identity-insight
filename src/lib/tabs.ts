@@ -10,7 +10,7 @@ export const TABS: TabDef[] = [
   { slug: "control", title: "کنټرول", label: "کنټرول کیفیت", description: "د کنټرول کیفیت برخې فعالیت" },
   { slug: "services", title: "خدمات", label: "له وېش ورسته خدامات", description: "خدماتي فعالیتونه" },
   { slug: "distribution", title: "توزیع", label: "د تذکرو وېش", description: "توزیع شوې تذکرې" },
-  { slug: "archive-scan", title: "د آرشیف او سکن", label: "د آرشیف دوسیو سکن", description: "د سکن او کنټرول کیفیت د کتل شوو او ناکتل شوو ورقو ورځنی راپور" },
+  { slug: "archive-scan", title: "د آرشیف دوسیو سکن", label: "د آرشیف دوسیو سکن", description: "د سکن او کنټرول کیفیت د کتل شوو او ناکتل شوو ورقو ورځنی راپور" },
   { slug: "arrivals", title: "راسیدلې تذکرې", label: "د تذکرو لېږد", description: "مرکز ته را رسېدلې او ناقصې تذکرې" },
   // Source for the overview trend only: not reintroduced to the sidebar/navigation.
   { slug: "weekly", title: "پاس شوي دوسیې (هفته وار)", label: "اونیز فعالیت", description: "د پاس شويو، مثنی او تجدید اونیزې شمېرې" },
