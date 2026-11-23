@@ -2,6 +2,10 @@
 
 An active manager's grants are stored in `public.dashboard_user_permissions` under their Supabase Auth user ID. In the user-management page, check the account email, active status and list of visible sections. For «د راپورونو مطابقت», grant «لیدل» on that section. This grants both the monthly report and staff reconciliation. The application reloads permissions every 15 seconds while open and on window focus.
 
+## Security incident / secret hygiene
+
+The repository's root `.env` was tracked despite the ignore rule and is being removed from the current tree. Treat every credential/token that may have been in it as compromised and rotate it immediately. This deletion does **not** remove the values from Git history; a coordinated history rewrite/force-push and verification of forks/caches is still required before production use. Do not publish until rotations, history cleanup, and the required hosting secrets are confirmed.
+
 ## Deployment
 
 Apply the repository's permissions migration on the Supabase project identified by `supabase/config.toml`. Configure the verified owner's email in the server-side `OWNER_EMAILS` setting and verify that the corresponding Auth user has the active database super-admin row. User invitations also require server-side `SUPABASE_SERVICE_ROLE_KEY` and working Supabase invitation email settings.
