@@ -22,6 +22,20 @@ const reportQuery = (year: number, month: number) => queryOptions({
   queryFn: () => getReconciliation({ data: { year, month } }),
   staleTime: 120000, retry: false, refetchOnWindowFocus: false,
 });
+function sourceSummary(source: {error:{code:string;status:number|null;retryAt:number|null}|null;block:string;mapped:number;unmapped:number;ambiguous:number}) {
+  if (source.error?.code === 'rate_limited') return 'د Google غوښتنې محدودې شوې؛ وروسته بیا هڅه وکړئ.';
+  if (source.error?.code === 'tab_missing') return 'د ټاکل شوي راپور ټب ونه موندل شو.';
+  if (source.error?.code === 'network_error') return 'له Google Sheets سره شبکه يي اړیکه ناکامه شوه.';
+  if (source.error?.status === 403) return 'د Sheet لوستلو اجازه نشته.';
+  if (source.error?.status === 404) return 'Sheet یا راپور ټب ونه موندل شو.';
+  if (source.error) return `د سرچینې لوستل ناکام شول (${source.error.status ?? source.error.code}).`;
+  if (source.block === 'month_missing') return 'د ټاکل شوې میاشتې سرلیک ونه موندل شو.';
+  if (source.block === 'ambiguous_month') return 'د میاشتې څو سرلیکونه وموندل شول.';
+  if (source.block === 'day_header_missing') return 'د میاشتې د ورځو سرلیکونه ونه موندل شول.';
+  if (source.ambiguous) return `${source.ambiguous} برخې تکراري یا مبهمې دي.`;
+  if (!source.mapped) return 'د راپور برخې ونه پېژندل شوې.';
+  return `${source.mapped} برخې پېژندل شوې${source.unmapped ? `؛ ${source.unmapped} نورې نه دي پېژندل شوې` : ''}.`;
+}
 export const Route = createFileRoute('/_authenticated/dashboard/reconciliation')({
   validateSearch: input => searchSchema.parse(input),
   loaderDeps: ({ search }) => ({ year: search.year, month: search.month }),
@@ -56,6 +70,7 @@ function ReconciliationPage() {
   const counts = { mismatch: 0, equal: 0, missing: 0, holiday: 0 };
   data.rows.forEach(row => counts[row.status]++);
   const hasSourceError = !!data.local.error || !!data.province.error;
+  const hasSourceProblem = hasSourceError || data.local.block !== 'available' || data.province.block !== 'available' || !!data.local.ambiguous || !!data.province.ambiguous || !data.local.mapped || !data.province.mapped;
   const days = Array.from(new Set(data.rows.map(row => row.day))).sort((a,b) => a-b);
   const visibleMetrics = metricDefinitions.filter(([,label]) => label.toLocaleLowerCase().includes(searchText.trim().toLocaleLowerCase()));
   const visibleDays = onlyDifferences ? days.filter(day => data.rows.some(row => row.day===day && row.status==='mismatch' && visibleMetrics.some(([key])=>key===row.metric))) : days;
@@ -109,7 +124,7 @@ function ReconciliationPage() {
         <Button variant="outline" size="icon" aria-label="تازه کول" title="تازه کول" disabled={refreshing} onClick={refresh}><RefreshCw className={`h-4 w-4 ${refreshing?'animate-spin':''}`}/></Button>
       </div>
     </header>
-    {(hasSourceError || data.stale || refreshError) && <p role="alert" className="flex items-center gap-2 rounded-lg bg-warning/10 p-3 text-sm"><AlertTriangle className="h-4 w-4 shrink-0"/>د سرچینې تازه معلومات نه دي تایید شوي؛ پایلې ممکن نیمګړې وي.</p>}
+    {(hasSourceProblem || data.stale || refreshError) && <div role="alert" className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0"/><div className="space-y-1"><p>د سرچینې تازه معلومات نه دي تایید شوي؛ پایلې ممکن نیمګړې وي.</p><p className="text-xs">زموږ راپور: {sourceSummary(data.local)}</p><p className="text-xs">د ریاست راپور: {sourceSummary(data.province)}</p></div></div>}
     <div className="grid grid-cols-3 gap-2">
       {([['توپیرونه',counts.mismatch,'text-destructive'],['برابر',counts.equal,'text-foreground'],['معلومات نشته',counts.missing,'text-muted-foreground']] as const).map(([label,value,color])=><div key={label} className="rounded-xl border p-3 text-center"><p className={`text-2xl font-bold tabular-nums ${color}`}>{number(value)}</p><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>)}
     </div>
