@@ -29,6 +29,8 @@ const ReportPage = lazy(() => import("@/components/dash/ReportPage"));
 
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
+    // The weekly sheet is a dashboard chart source, not a report route.
+    if (params.slug === "weekly") throw notFound();
     if (
       params.slug !== "admin-users" &&
       params.slug !== "settings" &&
