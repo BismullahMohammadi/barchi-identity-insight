@@ -7,6 +7,10 @@ begin
     raise exception 'dashboard_todos must exist before applying its ownership policies';
   end if;
 
+  if to_regprocedure('public.dashboard_has_action(text,text)') is null then
+    raise exception 'apply dashboard_section_policies before dashboard todo RLS';
+  end if;
+
   if not exists (
     select 1
     from information_schema.columns
