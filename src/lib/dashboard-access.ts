@@ -1,6 +1,6 @@
 export const DASHBOARD_SECTIONS = [
   'dashboard','total','identity','control','services','distribution','bank',
-  'arrivals','archive-scan','annual','problem-visitors','fuel-management',
+  'arrivals','archive-scan','annual','weekly','problem-visitors','fuel-management',
   'reconciliation','center-quality','settings',
 ] as const;
 export const DASHBOARD_ACTIONS = ['view','create','edit','delete','print','export'] as const;
