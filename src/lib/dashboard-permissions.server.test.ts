@@ -4,7 +4,7 @@ import {
   hasDashboardPermissions,
   type DashboardContext,
 } from "./dashboard-permissions.server";
-import { DASHBOARD_SECTIONS } from "./dashboard-access";
+import { canAccessOverviewSource, DASHBOARD_SECTIONS } from "./dashboard-access";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -74,6 +74,13 @@ describe("server-side manager permission checks", () => {
 
   it("makes the weekly chart a grantable dashboard section", () => {
     expect(DASHBOARD_SECTIONS).toContain("weekly");
+  });
+
+  it("limits dashboard fallback to the five overview sources", () => {
+    const access = { owner: false, permissions: { dashboard: ["view"] } };
+    expect(canAccessOverviewSource(access, "total")).toBe(true);
+    expect(canAccessOverviewSource(access, "weekly")).toBe(false);
+    expect(canAccessOverviewSource(access, "control")).toBe(false);
   });
 
   it("denies wrong section or action", async () => {
