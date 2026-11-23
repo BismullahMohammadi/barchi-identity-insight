@@ -8,11 +8,7 @@ import { canAccessOverviewSource, DASHBOARD_SECTIONS } from "./dashboard-access"
 
 afterEach(() => vi.unstubAllEnvs());
 
-const context = (
-  row: unknown,
-  error: unknown = null,
-  email = "manager@example.org",
-) =>
+const context = (row: unknown, error: unknown = null, email = "manager@example.org") =>
   ({
     claims: { email },
     userId: "12345678-1234-4234-8234-123456789abc",
@@ -66,9 +62,7 @@ describe("server-side manager permission checks", () => {
       ),
     ).toBe(true);
     expect(await hasDashboardPermissions(c, ["weekly"], "view", true)).toBe(false);
-    expect(await hasDashboardPermissions(c, ["total", "control"], "view", true)).toBe(
-      false,
-    );
+    expect(await hasDashboardPermissions(c, ["total", "control"], "view", true)).toBe(false);
     expect(await hasDashboardPermissions(c, ["total"], "view")).toBe(false);
   });
 
@@ -98,10 +92,7 @@ describe("server-side manager permission checks", () => {
   it("denies DB errors and untrusted role", async () => {
     vi.stubEnv("OWNER_EMAILS", "owner@example.org");
     expect(
-      await hasDashboardPermission(
-        context(null, { message: "database unavailable" }),
-        "total",
-      ),
+      await hasDashboardPermission(context(null, { message: "database unavailable" }), "total"),
     ).toBe(false);
     expect(
       await hasDashboardPermission(
