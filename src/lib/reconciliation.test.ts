@@ -102,3 +102,15 @@ describe('source monthly totals', () => {
     expect(compareSourceMonthlyTotals(l,p,1405,8,today).find(r=>r.metric==='family')).toMatchObject({local:null,status:'missing',reason:'metric_missing'});
   });
 });
+describe('new-month heading compatibility', () => {
+  it('accepts either known monthly heading label in both source sheets', () => {
+    const local = [['گزارش ماه (قوس) سال ۱۴۰۵'], [], ...Array.from({length:7},()=>[]), ['', ...days], ['تصدیق فامیلی', ...days.map(()=>'1')]];
+    const block = findMonthlyBlock(local, 1405, 9, 'local', 1405);
+    expect(block.status).toBe('available');
+    expect(block.metrics.has('family')).toBe(true);
+  });
+  it('matches requested year inside a fiscal-year range instead of rejecting the whole section', () => {
+    const local = [['بخشونه (قوس ۹) د ۱۴۰۵-۱۴۰۶ کال'], ...Array.from({length:7},()=>[]), ['', ...days], ['تصدیق فامیلی', ...days.map(()=>'1')]];
+    expect(findMonthlyBlock(local, 1405, 9, 'local', 1405).status).toBe('available');
+  });
+});
