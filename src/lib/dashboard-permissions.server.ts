@@ -21,7 +21,10 @@ export async function hasDashboardPermissions(context:DashboardContext,sections:
   if(error || !data || data.active!==true || data.role!=='manager')return false;
   const perms=data.permissions;
   if(!perms || typeof perms!=='object' || Array.isArray(perms))return false;
-  return sections.every(section => canAccess({owner:false, permissions:perms as Record<string,string[]>}, section, action));
+  const access={owner:false,permissions:perms as Record<string,string[]>};
+  const hasSectionAccess=sections.every(section => canAccess(access, section, action));
+  const hasOverviewAccess=allowOverviewSources && sections.every(section => (OVERVIEW_SLUGS as readonly string[]).includes(section)) && canAccess(access,'dashboard',action);
+  return hasSectionAccess || hasOverviewAccess;
 }
 export function hasDashboardPermission(context:DashboardContext,section:string,action:DashboardAction='view') {
   return hasDashboardPermissions(context,[section],action);
