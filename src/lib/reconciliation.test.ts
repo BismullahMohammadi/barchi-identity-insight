@@ -61,6 +61,13 @@ describe('report reconciliation', () => {
     expect(findMonthlyBlock(local, 1405, 9, 'local', 1405).status).toBe('available');
     expect(findMonthlyBlock(province, 1405, 9, 'province', 1405).status).toBe('available');
   });
+  it('matches Qaws when the source heading shows a fiscal-year range', () => {
+    const qawsDays = days.slice(0, 30);
+    const local: unknown[][] = [['بخشونه (قوس ۹) - سال مالی ۱۴۰۴-۱۴۰۵'], qawsDays];
+    const province: unknown[][] = [['گزارش ماه قوس سال مالی ۱۴۰۴-۱۴۰۵'], ['', '', '', '', '', '', ...qawsDays]];
+    expect(findMonthlyBlock(local, 1405, 9, 'local', 1405).status).toBe('available');
+    expect(findMonthlyBlock(province, 1405, 9, 'province', 1405).status).toBe('available');
+  });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();
     const block = findMonthlyBlock([...local, ['تصدیق فامیلی', 8]], 1405, 8, 'local', 1405);

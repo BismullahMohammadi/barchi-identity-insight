@@ -69,7 +69,7 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
     const text = reportText(row.join(' '));
     const isHeader = source === 'local' ? /بخشونه/.test(text) : /گزارش ماه/.test(text);
     const years = text.match(/1[34]\d{2}/g) ?? [];
-    if (isHeader && text.includes(monthName) && (years.length ? years.every(y => Number(y) === year) : year === currentYear)) headings.push(index);
+    if (isHeader && text.includes(monthName) && (years.length ? years.some(y => Number(y) === year) : year === currentYear)) headings.push(index);
   });
   if (headings.length !== 1) return empty(headings.length ? 'ambiguous_month' : 'month_missing');
   const start = headings[0];
