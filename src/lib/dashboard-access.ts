@@ -1,3 +1,5 @@
+import { OVERVIEW_SLUGS } from "./tabs";
+
 export const DASHBOARD_SECTIONS = [
   "dashboard",
   "total",
@@ -36,6 +38,18 @@ export function canAccess(
   if (access?.owner) return true;
   const grants = access?.permissions[section];
   return Array.isArray(grants) && grants.includes("view") && grants.includes(action);
+}
+
+export function canAccessOverviewSource(
+  access: Access | undefined,
+  section: string,
+  action = "view",
+): boolean {
+  return (
+    canAccess(access, section, action) ||
+    ((OVERVIEW_SLUGS as readonly string[]).includes(section) &&
+      canAccess(access, "dashboard", action))
+  );
 }
 
 export function sectionForPage(slug: string | undefined) {
