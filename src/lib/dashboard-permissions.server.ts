@@ -2,13 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { canAccess, canAccessOverviewSource } from "./dashboard-access";
 import { isEmailAllowed } from "./access";
 
-export type DashboardAction =
-  | "view"
-  | "create"
-  | "edit"
-  | "delete"
-  | "print"
-  | "export";
+export type DashboardAction = "view" | "create" | "edit" | "delete" | "print" | "export";
 
 export type DashboardContext = {
   claims: unknown;
@@ -18,10 +12,7 @@ export type DashboardContext = {
 
 export function isOwner(claims: unknown): boolean {
   const email = (claims as { email?: unknown } | null)?.email;
-  return isEmailAllowed(
-    typeof email === "string" ? email : null,
-    process.env["OWNER_EMAILS"],
-  );
+  return isEmailAllowed(typeof email === "string" ? email : null, process.env["OWNER_EMAILS"]);
 }
 
 export async function hasDashboardPermissions(
@@ -52,9 +43,7 @@ export async function hasDashboardPermissions(
     owner: false,
     permissions: perms as Record<string, string[]>,
   };
-  const hasSectionAccess = sections.every((section) =>
-    canAccess(access, section, action),
-  );
+  const hasSectionAccess = sections.every((section) => canAccess(access, section, action));
   const hasOverviewAccess =
     allowOverviewSources &&
     sections.every((section) => canAccessOverviewSource(access, section, action));
