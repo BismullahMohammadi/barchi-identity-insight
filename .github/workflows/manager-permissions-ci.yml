@@ -26,6 +26,6 @@ jobs:
       - run: bun install --frozen-lockfile
       # The repository-wide lint baseline contains legacy formatting violations outside this RBAC change.
       - run: bunx eslint src/lib/dashboard-access.ts src/lib/dashboard-permissions.server.ts src/lib/dashboard-permissions.server.test.ts
-      - run: bunx eslint --rule '{"prettier/prettier":"off"}' src/lib/sheets.functions.ts
+      - run: bunx eslint --rule '{"prettier/prettier":"off"}' src/lib/sheets.functions.ts src/routes/_authenticated/dashboard.index.tsx
       - run: bun run test
       - run: bun run build
