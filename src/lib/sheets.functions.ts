@@ -52,7 +52,7 @@ export const getSheetTabs = createServerFn({ method: "POST" })
   })
   .handler(async ({data,context}):Promise<SheetPayload> => {
     setResponseHeader("Cache-Control", "private, no-store");
-    if (!await hasDashboardPermissions(context,data.slugs)) throw new Error("ACCESS_DENIED");
+    if (!await hasDashboardPermissions(context,data.slugs,"view",true)) throw new Error("ACCESS_DENIED");
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
