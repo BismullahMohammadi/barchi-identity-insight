@@ -13,7 +13,7 @@ export function isOwner(claims:unknown):boolean {
   const email=(claims as {email?:unknown}|null)?.email;
   return isEmailAllowed(typeof email==='string'?email:null,process.env['OWNER_EMAILS']);
 }
-export async function hasDashboardPermissions(context:DashboardContext,sections:readonly string[],action:DashboardAction='view'):Promise<boolean> {
+export async function hasDashboardPermissions(context:DashboardContext,sections:readonly string[],action:DashboardAction='view',allowOverviewSources=false):Promise<boolean> {
   if(isOwner(context.claims))return true;
   if(!context.userId || !sections.length || !action)return false;
   const {data,error}=await context.supabase.from('dashboard_user_permissions')
