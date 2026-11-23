@@ -1,4 +1,4 @@
-import { JALALI_MONTHS, toLatinDigits, type JDate } from './jalali';
+import { JALALI_MONTHS, parseJalali, toLatinDigits, type JDate } from './jalali';
 import { isFridayJalali } from './holidays';
 
 export const metricDefinitions = [
@@ -60,6 +60,27 @@ export function findTotalColumn(headers: unknown[][], days: Map<number, number>)
     ? { totalColumn: candidates.values().next().value ?? null, totalHeaderStatus: 'available' }
     : { totalColumn: null, totalHeaderStatus: candidates.size ? 'ambiguous' : 'missing' };
 }
+function dayHeaderValue(value: unknown, year: number, month: number, monthName: string): number | null {
+  const text = reportText(value);
+  if (/^\d{1,2}$/.test(text)) {
+    const day = Number(text);
+    return day >= 1 && day <= 31 ? day : null;
+  }
+  const date = parseJalali(text);
+  if (date?.y === year && date.m === month) return date.d;
+  const escapedMonth = monthName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const dayMonth = text.match(new RegExp(`^(\\d{1,2})\\s*${escapedMonth}$`));
+  if (dayMonth) return Number(dayMonth[1]);
+  const monthDay = text.match(new RegExp(`^${escapedMonth}\\s*(\\d{1,2})$`));
+  if (monthDay) return Number(monthDay[1]);
+  const pair = text.match(/^(\d{1,2})\s*[./-]\s*(\d{1,2})$/);
+  if (pair) {
+    const first = Number(pair[1]), second = Number(pair[2]);
+    if (second === month && first >= 1 && first <= 31) return first;
+    if (first === month && second >= 1 && second <= 31) return second;
+  }
+  return null;
+}
 export function findMonthlyBlock(grid: unknown[][], year: number, month: number, source: 'local' | 'province', currentYear: number): ReportBlock {
   const empty = (status: ReportBlock['status'], headingRow: number | null = null): ReportBlock => ({ status, headingRow, days: new Map(), metrics: new Map(), unmapped: 0, ambiguous: [], totalColumn: null, totalHeaderStatus: 'missing' });
   const monthName = JALALI_MONTHS[month - 1];
@@ -79,16 +100,23 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
   const end = nextHeading < 0 ? grid.length : nextHeading;
   let dayRow = -1;
   for (let index = start; index < end; index++) {
-    const days = new Map<number, number>();
-    const duplicates = new Set<number>();
-    (grid[index] ?? []).forEach((cell, col) => {
-      const text = reportText(cell);
-      if (!/^\d{1,2}$/.test(text)) return;
-      const day = Number(text);
-      if (day < 1 || day > 31) return;
-      if (days.has(day)) duplicates.add(day); else days.set(day, col);
+    const row = grid[index] ?? [];
+    const values = row.map(cell => dayHeaderValue(cell, year, month, monthName));
+    const candidates: Map<number, number>[] = [];
+    values.forEach((value, startCol) => {
+      if (value !== 1) return;
+      const days = new Map<number, number>();
+      let expected = 1;
+      for (let col = startCol; col < values.length && expected <= 31; col++) {
+        if (values[col] !== expected) break;
+        days.set(expected, col);
+        expected++;
+      }
+      if (days.size >= 28 && !values.slice(startCol + days.size).some(day => day !== null && days.has(day))) candidates.push(days);
     });
-    if (days.size >= 28 && !duplicates.size) { block.days = days; dayRow = index; break; }
+    const longest = Math.max(0, ...candidates.map(candidate => candidate.size));
+    const best = candidates.filter(candidate => candidate.size === longest);
+    if (longest >= 28 && best.length === 1) { block.days = best[0]!; dayRow = index; break; }
   }
   if (dayRow < 0) return empty('day_header_missing', start + 1);
   Object.assign(block, findTotalColumn(grid.slice(start, dayRow + 1), block.days));

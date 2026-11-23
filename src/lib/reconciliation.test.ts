@@ -68,6 +68,14 @@ describe('report reconciliation', () => {
     expect(findMonthlyBlock(local, 1405, 9, 'local', 1405).status).toBe('available');
     expect(findMonthlyBlock(province, 1405, 9, 'province', 1405).status).toBe('available');
   });
+  it('maps Jalali date labels and ignores a duplicate serial value before the day sequence', () => {
+    const dateHeaders = Array.from({ length: 30 }, (_, index) => `۱۴۰۵/۰۹/${String(index + 1).padStart(2, '0')}`);
+    const local: unknown[][] = [['بخشونه (قوس ۹)'], ['1', ...dateHeaders]];
+    const block = findMonthlyBlock(local, 1405, 9, 'local', 1405);
+    expect(block.status).toBe('available');
+    expect(block.days.get(1)).toBe(1);
+    expect(block.days.get(30)).toBe(30);
+  });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();
     const block = findMonthlyBlock([...local, ['تصدیق فامیلی', 8]], 1405, 8, 'local', 1405);
