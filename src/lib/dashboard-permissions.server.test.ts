@@ -21,6 +21,16 @@ describe('server-side manager permission checks',()=>{
    expect(reads).toHaveBeenCalledTimes(1);
    expect(await hasDashboardPermissions(c,['identity','bank'])).toBe(false);
  });
+ it('allows dashboard view for overview sources without granting unrelated sheets',async()=>{
+   const c=context({active:true,role:'manager',permissions:{dashboard:['view']}});
+   expect(await hasDashboardPermissions(c,['total','bank','identity','distribution','services'],'view',true)).toBe(true);
+   expect(await hasDashboardPermissions(c,['weekly'],'view',true)).toBe(false);
+   expect(await hasDashboardPermissions(c,['total','control'],'view',true)).toBe(false);
+   expect(await hasDashboardPermissions(c,['total'],'view')).toBe(false);
+ });
+ it('makes the weekly chart a grantable dashboard section',()=>{
+   expect(DASHBOARD_SECTIONS).toContain('weekly');
+ });
  it('denies wrong section or action',async()=>{
    vi.stubEnv('OWNER_EMAILS','owner@example.org');
    const c=context({active:true,role:'manager',permissions:{total:['view']}});
