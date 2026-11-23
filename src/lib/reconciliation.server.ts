@@ -48,7 +48,7 @@ async function sourceSnapshot(source: keyof typeof SOURCES, userId: string, head
       const meta = await readJson<{ sheets?: { properties?: { title: string; sheetId: number } }[] }>(`${GATEWAY}/spreadsheets/${config.id}?fields=sheets(properties(title,sheetId))`, headers);
       const sheet = meta.sheets?.find(s => s.properties?.title === config.tab)?.properties;
       if (!sheet) throw new ReadError({ code: 'tab_missing', status: null, retryAt: null });
-      const query = new URLSearchParams({ ranges: `'${config.tab}'!A1:AL800`, valueRenderOption: 'FORMATTED_VALUE', majorDimension: 'ROWS' });
+      const query = new URLSearchParams({ ranges: `'${config.tab}'!A1:AZ3000`, valueRenderOption: 'FORMATTED_VALUE', majorDimension: 'ROWS' });
       const data = await readJson<{ valueRanges?: { values?: unknown[][] }[] }>(`${GATEWAY}/spreadsheets/${config.id}/values:batchGet?${query}`, headers);
       return { snapshot: { grid: data.valueRanges?.[0]?.values ?? [], gid: sheet.sheetId, fetchedAt: Date.now() }, expires: Date.now() + 120000 };
     } catch (error) {

@@ -65,20 +65,35 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
   const monthName = JALALI_MONTHS[month - 1];
   if (!monthName) return empty('month_missing');
   const headings: number[] = [];
-  grid.forEach((row, index) => {
+  const isMonthHeading = (row: unknown[]) => {
     const text = reportText(row.join(' '));
-    const isHeader = source === 'local' ? /بخشونه/.test(text) : /گزارش ماه/.test(text);
+    // Both report sources have used both heading labels over time. Accept either,
+    // but still require the requested Jalali month to avoid matching data rows.
+    const preferredHeading = source === 'local' ? /بخشونه/ : /گزارش\s*ماه|گزارشات\s*ماه/;
+    const alternateHeading = source === 'local' ? /گزارش\s*ماه|گزارشات\s*ماه/ : /بخشونه/;
+    const heading = preferredHeading.test(text) || alternateHeading.test(text);
+    const normalizedMonth = reportText(monthName).replace(/[\s()،,؛:：\-_/]/g, '');
+    const normalizedText = text.replace(/[\s()،,؛:：\-_/]/g, '');
+    const monthMatches = normalizedText.includes(normalizedMonth);
+    return heading && monthMatches;
+  };
+  grid.forEach((row, index) => {
+    if (!isMonthHeading(row)) return;
+    const text = reportText(row.join(' '));
     const years = text.match(/1[34]\d{2}/g) ?? [];
-    if (isHeader && text.includes(monthName) && (years.length ? years.every(y => Number(y) === year) : year === currentYear)) headings.push(index);
+    // Some sheets label a section with a fiscal-year range (e.g. 1405-1406).
+    // Match the requested year if it is explicitly present; use currentYear only
+    // when the heading has no year at all.
+    if (years.length ? years.includes(String(year)) : year === currentYear) headings.push(index);
   });
   if (headings.length !== 1) return empty(headings.length ? 'ambiguous_month' : 'month_missing');
   const start = headings[0];
   if (start === undefined) return empty('month_missing');
   const block = empty('available', start + 1);
-  const nextHeading = grid.findIndex((row, index) => index > start && /بخشونه|گزارش ماه/.test(reportText(row.join(' '))));
+  const nextHeading = grid.findIndex((row, index) => index > start && isMonthHeading(row));
   const end = nextHeading < 0 ? grid.length : nextHeading;
   let dayRow = -1;
-  for (let index = start; index < Math.min(start + 5, end); index++) {
+  for (let index = start; index < Math.min(start + 9, end); index++) {
     const days = new Map<number, number>();
     const duplicates = new Set<number>();
     (grid[index] ?? []).forEach((cell, col) => {
