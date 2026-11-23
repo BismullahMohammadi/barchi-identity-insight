@@ -19,6 +19,10 @@ Prefer working locally? You need Node.js and npm — [install with nvm](https://
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
+cp .env.example .env
+# Edit .env and use a newly provisioned Supabase URL and publishable key.
 npm i
 npm run dev
 ```
+
+Create your own Supabase project and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env` for local development. Do not copy the previously tracked values from Git history. Keep service-role keys, `OWNER_EMAILS`, Google/Lovable credentials, and scheduled-workflow secrets server-side or in GitHub Actions secrets; never use a `VITE_` prefix for them. `.env` is ignored by Git.
