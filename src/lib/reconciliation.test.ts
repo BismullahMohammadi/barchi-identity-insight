@@ -76,6 +76,14 @@ describe('report reconciliation', () => {
     expect(block.days.get(1)).toBe(1);
     expect(block.days.get(30)).toBe(30);
   });
+  it('maps day-first Jalali date headings used by Sheets', () => {
+    const dateHeaders = Array.from({ length: 30 }, (_, index) => `${String(index + 1).padStart(2, '0')}/۰۹/۱۴۰۵`);
+    const local: unknown[][] = [['بخشونه (قوس ۹)'], dateHeaders];
+    const block = findMonthlyBlock(local, 1405, 9, 'local', 1405);
+    expect(block.status).toBe('available');
+    expect(block.days.get(1)).toBe(0);
+    expect(block.days.get(30)).toBe(29);
+  });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();
     const block = findMonthlyBlock([...local, ['تصدیق فامیلی', 8]], 1405, 8, 'local', 1405);

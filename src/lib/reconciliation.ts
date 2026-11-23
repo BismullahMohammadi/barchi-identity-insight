@@ -68,6 +68,11 @@ function dayHeaderValue(value: unknown, year: number, month: number, monthName: 
   }
   const date = parseJalali(text);
   if (date?.y === year && date.m === month) return date.d;
+  const dayFirstDate = text.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](1[34]\d{2})$/);
+  if (dayFirstDate && Number(dayFirstDate[2]) === month && Number(dayFirstDate[3]) === year) {
+    const day = Number(dayFirstDate[1]);
+    if (day >= 1 && day <= 31) return day;
+  }
   const escapedMonth = monthName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const dayMonth = text.match(new RegExp(`^(\\d{1,2})\\s*${escapedMonth}$`));
   if (dayMonth) return Number(dayMonth[1]);
