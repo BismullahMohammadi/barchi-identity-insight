@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { canAccess } from './dashboard-access';
 import { isEmailAllowed } from './access';
+import { OVERVIEW_SLUGS } from './tabs';
 
 export type DashboardAction = 'view'|'create'|'edit'|'delete'|'print'|'export';
 export type DashboardContext = {
