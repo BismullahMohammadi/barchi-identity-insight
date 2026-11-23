@@ -37,8 +37,8 @@ function PermissionEditor({value,onChange}:{value:Perms;onChange:(next:Perms)=>v
        onChange={e=>{
         const current=value[section]??[];
         const next:Perms={...value,[section]:e.target.checked?[...new Set([...current,action,...(action==='view'?[]:['view'])])]:action==='view'?[]:current.filter(a=>a!==action)};
-        if(section==='weekly'&&action==='view'&&e.target.checked) next.dashboard=[...new Set([...(next.dashboard??[]),'view'])];
-        if(section==='dashboard'&&action==='view'&&!e.target.checked) next.weekly=[];
+        if(section==='weekly'&&action==='view'&&e.target.checked) next['dashboard']=[...new Set([...(next['dashboard']??[]),'view'])];
+        if(section==='dashboard'&&action==='view'&&!e.target.checked) next['weekly']=[];
         onChange(next);
        }}
       /></td>)}
