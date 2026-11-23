@@ -19,14 +19,7 @@ export const DASHBOARD_SECTIONS = [
   "settings",
 ] as const;
 
-export const DASHBOARD_ACTIONS = [
-  "view",
-  "create",
-  "edit",
-  "delete",
-  "print",
-  "export",
-] as const;
+export const DASHBOARD_ACTIONS = ["view", "create", "edit", "delete", "print", "export"] as const;
 
 type Access = { owner: boolean; permissions: Record<string, string[]> };
 
@@ -40,11 +33,7 @@ export function canAccess(
   return Array.isArray(grants) && grants.includes("view") && grants.includes(action);
 }
 
-export function canAccessOverviewSource(
-  access: Access | undefined,
-  section: string,
-  action = "view",
-): boolean {
+export function canAccessOverviewSource(access: Access | undefined, section: string, action = "view"): boolean {
   return (
     canAccess(access, section, action) ||
     ((OVERVIEW_SLUGS as readonly string[]).includes(section) &&
