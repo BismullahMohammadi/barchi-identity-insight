@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { canAccess } from "./dashboard-access";
+import { canAccess, canAccessOverviewSource } from "./dashboard-access";
 import { isEmailAllowed } from "./access";
-import { OVERVIEW_SLUGS } from "./tabs";
 
 export type DashboardAction =
   | "view"
@@ -58,10 +57,7 @@ export async function hasDashboardPermissions(
   );
   const hasOverviewAccess =
     allowOverviewSources &&
-    sections.every((section) =>
-      (OVERVIEW_SLUGS as readonly string[]).includes(section),
-    ) &&
-    canAccess(access, "dashboard", action);
+    sections.every((section) => canAccessOverviewSource(access, section, action));
 
   return hasSectionAccess || hasOverviewAccess;
 }
