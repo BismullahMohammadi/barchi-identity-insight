@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { RefreshCw, AlertTriangle, Search, X, Printer, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getReconciliation } from '@/lib/reconciliation.functions';
+import { errorText } from '@/lib/queries';
 import { JALALI_MONTHS, todayJalali } from '@/lib/jalali';
 import { metricDefinitions } from '@/lib/reconciliation';
 import { StaffReconciliationMatrix } from '@/components/dash/StaffReconciliationMatrix';
@@ -37,7 +38,7 @@ export const Route = createFileRoute('/_authenticated/dashboard/reconciliation')
     { name: 'twitter:card', content: 'summary' },
   ] }),
   pendingComponent: () => <p role="status" className="py-10 text-muted-foreground">راپورونه لوستل کېږي…</p>,
-  errorComponent: () => <div role="alert" className="py-8">د راپورونو ونه لوستل شول. مهرباني وکړئ وروسته بیا هڅه وکړئ.</div>,
+  errorComponent: ({ error }) => <div role="alert" className="py-8">{errorText(error)}</div>,
   component: ReconciliationPage,
 });
 const number = (value: number | null) => value === null ? '—' : value.toLocaleString('fa-AF');

@@ -70,7 +70,7 @@ export function errorText(err: unknown): string {
   if (m.includes("STATE_REPORT_ERROR")) return "د «ریاست ته ګزارش» اصلي ټاب ونه لوستل شو.";
   if (m.includes("STAFF_SHEETS_ERROR_403") || m.includes("STAFF_SHEETS_ERROR_404")) return "د کارمندانو نوي Google Sheet ته د لوستلو اجازه نشته. د Lovable Google اتصال کې ورته لاسرسی ورکړئ.";
   if (m.includes("STAFF_SHEETS_ERROR")) return "د کارمندانو میاشتنی راپور ونه لوستل شو.";
-  if (m.includes("SHEETS_NOT_CONNECTED")) return "د ګوګل شیټ اړیکه نه ده جوړه شوې.";
+  if (m.includes("SHEETS_NOT_CONNECTED")) return "د Google Sheets د سرور اتصال نیمګړی دی؛ LOVABLE_API_KEY او GOOGLE_SHEETS_API_KEY تنظیم کړئ.";
   if (m.includes("REFERRAL_CELL_NOT_FOUND")) return "د نویو معرفي شویو مراجعینو سیل ونه موندل شو. تنظیمات ← Google Sheets کې یې وازمویئ.";
   if (m.includes("INVALID_REFERRAL_CELL")) return "د سیل پته ناسمه ده. بېلګه: AM2 یا G3.";
   if (m.includes("COORDINATION_CELL_NOT_NUMERIC")) return "د ثبت‌نام همغږۍ د شمېر سیل عدد نه لري. تنظیمات ← Google Sheets کې یې وازمویئ.";

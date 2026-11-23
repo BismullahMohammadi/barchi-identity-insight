@@ -30,6 +30,14 @@ describe("Archive scan header mapping",()=>{
   expect(table.rows[0]?.[3]).toBe(5);
   expect(table.rows[0]?.[6]).toBe(3);
  });
+ it("uses the source tab title when archive columns move",()=>{
+  const sourceTitle="د آرشیف او سکن";
+  const changed=[header[0],"new",...header.slice(1,6),"extra",...header.slice(6)];
+  const input:string[][]=[[],[],[],changed as string[],["۱۴۰۵/۰۱/۰۱","", "2","3","5","1","2","","3","2"]];
+  const table=normalizeGrid(resolveMappedGrid(input,sourceTitle),sourceTitle);
+  expect(table.rows[0]?.[3]).toBe(5);
+  expect(table.rows[0]?.[6]).toBe(3);
+ });
  it("does not guess if an expected repeated heading disappears",()=>{
   const bad=[[],[],[],header.filter((_,i)=>i!==6)];
   expect(()=>resolveMappedGrid(bad,title)).toThrow(/MISMATCH/);
