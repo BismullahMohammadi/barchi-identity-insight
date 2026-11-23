@@ -84,6 +84,16 @@ describe('report reconciliation', () => {
     expect(block.days.get(1)).toBe(0);
     expect(block.days.get(30)).toBe(29);
   });
+  it('maps Qaws headers where Friday labels share the day cell', () => {
+    const header = ['بخشونه (قوس ۹)', ...Array.from({ length: 30 }, (_, index) => {
+      const day = index + 1;
+      return [6, 13, 20, 27].includes(day) ? `${day} جمعه` : String(day);
+    }), 'جمله'];
+    const block = findMonthlyBlock([header], 1405, 9, 'local', 1405);
+    expect(block.status).toBe('available');
+    expect(block.days.get(6)).toBe(6);
+    expect(block.days.get(30)).toBe(30);
+  });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();
     const block = findMonthlyBlock([...local, ['تصدیق فامیلی', 8]], 1405, 8, 'local', 1405);

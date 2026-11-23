@@ -37,3 +37,4 @@ it("rechecks the manager's active grant before serving cached reconciliation res
   await expect(readReconciliation(month,context)).rejects.toThrow("ACCESS_DENIED");
   expect(fetch).toHaveBeenCalledTimes(2);
 });
+

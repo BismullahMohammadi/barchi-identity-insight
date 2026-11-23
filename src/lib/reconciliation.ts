@@ -66,6 +66,11 @@ function dayHeaderValue(value: unknown, year: number, month: number, monthName: 
     const day = Number(text);
     return day >= 1 && day <= 31 ? day : null;
   }
+  const dayWithHoliday = text.match(/^(\d{1,2})\s*جمعه$/);
+  if (dayWithHoliday) {
+    const day = Number(dayWithHoliday[1]);
+    return day >= 1 && day <= 31 ? day : null;
+  }
   const date = parseJalali(text);
   if (date?.y === year && date.m === month) return date.d;
   const dayFirstDate = text.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](1[34]\d{2})$/);
