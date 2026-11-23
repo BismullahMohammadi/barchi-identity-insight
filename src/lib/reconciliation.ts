@@ -69,7 +69,9 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
     const text = reportText(row.join(' '));
     // Both report sources have used both heading labels over time. Accept either,
     // but still require the requested Jalali month to avoid matching data rows.
-    const heading = /بخشونه|گزارش\s*ماه|گزارشات\s*ماه/.test(text);
+    const preferredHeading = source === 'local' ? /بخشونه/ : /گزارش\s*ماه|گزارشات\s*ماه/;
+    const alternateHeading = source === 'local' ? /گزارش\s*ماه|گزارشات\s*ماه/ : /بخشونه/;
+    const heading = preferredHeading.test(text) || alternateHeading.test(text);
     const normalizedMonth = reportText(monthName).replace(/[\s()،,؛:：\-_/]/g, '');
     const normalizedText = text.replace(/[\s()،,؛:：\-_/]/g, '');
     const monthMatches = normalizedText.includes(normalizedMonth);
