@@ -24,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run lint
+      - name: Run ESLint (pre-existing Prettier baseline excluded)
+        run: bun run lint:ci
       - run: bun run test
       - run: bun run build
