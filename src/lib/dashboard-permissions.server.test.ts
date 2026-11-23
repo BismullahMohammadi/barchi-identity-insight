@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { hasDashboardPermission, hasDashboardPermissions, type DashboardContext } from './dashboard-permissions.server';
+import { DASHBOARD_SECTIONS } from './dashboard-access';
 
 afterEach(()=>vi.unstubAllEnvs());
 const context=(row:unknown,error:unknown=null,email='manager@example.org')=>({
