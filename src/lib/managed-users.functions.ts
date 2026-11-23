@@ -19,11 +19,17 @@ const updateInput = z.object({
   permissions: permissionsSchema,
 });
 function normalizedPermissions(perms:Record<string,string[]>):Record<string,string[]> {
- return Object.fromEntries(Object.entries(perms).map(([section,stored])=>{
- const actions=stored.filter(action=>availableActions(section).includes(action));
- return [
-  section,actions.length && actions.some(action=>action!=='view') ? [...new Set(['view',...actions])] : actions,
- ];}));
+ const normalized:Record<string,string[]> = Object.fromEntries(Object.entries(perms).map(([section,stored])=>{
+  const actions=stored.filter(action=>availableActions(section).includes(action));
+  return [
+   section,actions.length && actions.some(action=>action!=='view') ? [...new Set(['view',...actions])] : actions,
+  ];
+ }));
+ // The weekly chart is rendered inside the dashboard, so it also requires dashboard:view.
+ if(normalized.weekly?.includes('view')) {
+  normalized.dashboard=[...new Set([...(normalized.dashboard??[]),'view'])];
+ }
+ return normalized;
 }
 type UserRecord = { user_id:string;email:string;display_name:string;role:string;active:boolean;permissions:Record<string,string[]>; invitationStatus?:'accepted'|'pending'|'existing'|'unknown' };
 function requireOwner(claims:unknown) {
