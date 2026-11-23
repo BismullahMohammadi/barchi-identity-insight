@@ -27,6 +27,11 @@ describe('server-side manager permission checks',()=>{
    expect(await hasDashboardPermission(c,'total','delete')).toBe(false);
    expect(await hasDashboardPermission(c,'total','view')).toBe(true);
  });
+ it('requires an explicit weekly grant for the dashboard trend source',async()=>{
+   vi.stubEnv('OWNER_EMAILS','owner@example.org');
+   expect(await hasDashboardPermission(context({active:true,role:'manager',permissions:{weekly:['view']}}),'weekly')).toBe(true);
+   expect(await hasDashboardPermission(context({active:true,role:'manager',permissions:{dashboard:['view']}}),'weekly')).toBe(false);
+ });
  it('denies DB errors and untrusted role',async()=>{
    vi.stubEnv('OWNER_EMAILS','owner@example.org');
    expect(await hasDashboardPermission(context(null,{message:'database unavailable'}),'total')).toBe(false);
