@@ -26,8 +26,8 @@ function normalizedPermissions(perms:Record<string,string[]>):Record<string,stri
   ];
  }));
  // The weekly chart is rendered inside the dashboard, so it also requires dashboard:view.
- if(normalized.weekly?.includes('view')) {
-  normalized.dashboard=[...new Set([...(normalized.dashboard??[]),'view'])];
+ if(normalized['weekly']?.includes('view')) {
+  normalized['dashboard']=[...new Set([...(normalized['dashboard']??[]),'view'])];
  }
  return normalized;
 }
