@@ -55,8 +55,9 @@ describe('report reconciliation', () => {
   });
   it('finds the Qaws day header after extra month-title rows', () => {
     const qawsDays = days.slice(0, 30);
-    const local: unknown[][] = [['بخشونه (قوس ۹)'], [], [], [], [], [], [], qawsDays];
-    const province: unknown[][] = [['گزارش ماه قوس سال مالی ۱۴۰۵'], [], [], [], [], [], [], ['', '', '', '', '', '', ...qawsDays]];
+    const extraRows = Array.from({ length: 18 }, () => []);
+    const local: unknown[][] = [['بخشونه (قوس ۹)'], ...extraRows, qawsDays];
+    const province: unknown[][] = [['گزارش ماه قوس سال مالی ۱۴۰۵'], ...extraRows, ['', '', '', '', '', '', ...qawsDays]];
     expect(findMonthlyBlock(local, 1405, 9, 'local', 1405).status).toBe('available');
     expect(findMonthlyBlock(province, 1405, 9, 'province', 1405).status).toBe('available');
   });
