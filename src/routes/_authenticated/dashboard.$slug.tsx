@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { accessQuery } from "@/lib/queries";
+import { canAccess } from "@/lib/dashboard-access";
 import { getTab, sectionLabels } from "@/lib/tabs";
 
 const DashboardSettingsPage = lazy(() =>
@@ -68,10 +69,23 @@ function Section({ slug }: { slug: string }) {
         <ManagedUsersPage />
       </OwnerOnly>
     );
-  if (slug === "settings") return <DashboardSettingsPage />;
+  if (slug === "settings")
+    return (
+      <PermissionOnly section="settings">
+        <DashboardSettingsPage />
+      </PermissionOnly>
+    );
   if (slug === "problem-visitors") return <ProblemVisitorsPage />;
   if (slug === "fuel-management") return <SimpleDieselReport />;
   return <ReportPage slug={slug} />;
+}
+
+function PermissionOnly({ section, children }: { section: string; children: React.ReactNode }) {
+  const access = useQuery(accessQuery);
+  if (access.isLoading) return <p>د لاسرسي ارزونه روانه ده…</p>;
+  if (!access.data || !canAccess(access.data, section))
+    return <p role="alert">دې برخې ته د لاسرسي اجازه نه لرئ. له عمومي مدیر څخه اجازه وغواړئ.</p>;
+  return <>{children}</>;
 }
 
 function OwnerOnly({ children }: { children: React.ReactNode }) {
