@@ -53,6 +53,13 @@ describe('report reconciliation', () => {
     expect(findMonthlyBlock([...local, ...local], 1405, 8, 'local', 1405).status).toBe('ambiguous_month');
     expect(compare(local, []).every(r => r.status === 'missing' || r.status === 'holiday')).toBe(true);
   });
+  it('finds the Qaws day header after extra month-title rows', () => {
+    const qawsDays = days.slice(0, 30);
+    const local: unknown[][] = [['بخشونه (قوس ۹)'], [], [], [], [], [], [], qawsDays];
+    const province: unknown[][] = [['گزارش ماه قوس سال مالی ۱۴۰۵'], [], [], [], [], [], [], ['', '', '', '', '', '', ...qawsDays]];
+    expect(findMonthlyBlock(local, 1405, 9, 'local', 1405).status).toBe('available');
+    expect(findMonthlyBlock(province, 1405, 9, 'province', 1405).status).toBe('available');
+  });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();
     const block = findMonthlyBlock([...local, ['تصدیق فامیلی', 8]], 1405, 8, 'local', 1405);

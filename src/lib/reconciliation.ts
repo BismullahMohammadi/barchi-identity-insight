@@ -78,7 +78,7 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
   const nextHeading = grid.findIndex((row, index) => index > start && /بخشونه|گزارش ماه/.test(reportText(row.join(' '))));
   const end = nextHeading < 0 ? grid.length : nextHeading;
   let dayRow = -1;
-  for (let index = start; index < Math.min(start + 5, end); index++) {
+  for (let index = start; index < Math.min(start + 13, end); index++) {
     const days = new Map<number, number>();
     const duplicates = new Set<number>();
     (grid[index] ?? []).forEach((cell, col) => {

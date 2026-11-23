@@ -4,7 +4,7 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
 import { hasDashboardPermission, hasDashboardPermissions } from "./dashboard-permissions.server";
-import { SPREADSHEET_ID, TABS } from "./tabs";
+import { SPREADSHEET_ID, TABS, resolveTabTitle } from "./tabs";
 import { todayJalali, yesterdayJalali, formatJ, jKey, parseJalali, type JDate } from "./jalali";
 import { isFridayJalali } from "./holidays";
 import { findReportMonth, inspectStaffDay, type StaffCompleteness } from "./monthly-staff-completeness";
@@ -57,8 +57,22 @@ export const getSheetTabs = createServerFn({ method: "POST" })
     const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("SHEETS_NOT_CONNECTED");
     const tabs = data.slugs.map(s=>TABS.find(t=>t.slug===s)!);
+    let archiveTitle: string | null = null;
+    if (data.slugs.includes("archive-scan")) {
+      const metadata = await fetch(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}?fields=sheets(properties(title))`, {
+        method:"GET",headers:{Authorization:`Bearer ${lovableKey}`,"X-Connection-Api-Key":sheetsKey}
+      });
+      if (!metadata.ok) {
+        console.error("Archive sheet metadata read failed",metadata.status);
+        throw new Error(`SHEETS_ERROR_${metadata.status}`);
+      }
+      const result = await metadata.json() as {sheets?:{properties?:{title?:string}}[]};
+      archiveTitle = resolveTabTitle("archive-scan",(result.sheets??[]).map(sheet=>sheet.properties?.title).filter((title):title is string=>!!title));
+      if (!archiveTitle) throw new Error("ARCHIVE_TAB_MISSING");
+    }
+    const resolvedTabs = tabs.map(tab=>tab.slug==="archive-scan"&&archiveTitle?{...tab,title:archiveTitle}:tab);
     const params = new URLSearchParams();
-    tabs.forEach(t=>params.append("ranges",`'${t.title.replace(/'/g,"''")}'!A1:AL1000`));
+    resolvedTabs.forEach(t=>params.append("ranges",`'${t.title.replace(/'/g,"''")}'!A1:AL1000`));
     params.set("valueRenderOption","FORMATTED_VALUE");
     params.set("majorDimension","ROWS");
     const res = await fetch(`${GATEWAY_URL}/spreadsheets/${SPREADSHEET_ID}/values:batchGet?${params}`,{
@@ -69,7 +83,7 @@ export const getSheetTabs = createServerFn({ method: "POST" })
       throw new Error(`SHEETS_ERROR_${res.status}`);
     }
     const json = await res.json() as {valueRanges?: {values?:string[][]}[]};
-    return {fetchedAt:Date.now(),tabs:tabs.map((t,i)=>({slug:t.slug,title:t.title,grid:json.valueRanges?.[i]?.values??[]}))};
+    return {fetchedAt:Date.now(),tabs:resolvedTabs.map((t,i)=>({slug:t.slug,title:t.title,grid:json.valueRanges?.[i]?.values??[]}))};
   });
 
 /** Second (read-only) sheet: daily document collection tabs, e.g. 29 میزان 1405. */

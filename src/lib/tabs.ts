@@ -17,6 +17,16 @@ export const TABS: TabDef[] = [
   { slug: "annual", title: "کالنی ګزارش", label: "کلنی راپور", description: "د ۱۴۰۵ کال لنډیز" },
 ];
 
+const TAB_TITLE_ALIASES: Record<string, string[]> = {
+  "archive-scan": ["د آرشیف دوسیو سکن"],
+};
+
+export function resolveTabTitle(slug: string, availableTitles: readonly string[]): string | null {
+  const tab = TABS.find((item) => item.slug === slug);
+  if (!tab) return null;
+  return [tab.title, ...(TAB_TITLE_ALIASES[slug] ?? [])].find((title) => availableTitles.includes(title)) ?? null;
+}
+
 export const OVERVIEW_SLUGS = ["total", "bank", "identity", "distribution", "services"];
 
 export function getTab(slug: string): TabDef | undefined {

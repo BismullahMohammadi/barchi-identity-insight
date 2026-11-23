@@ -79,6 +79,7 @@ export function errorText(err: unknown): string {
   if (m.includes("FORMS_SHEETS_ERROR_403") || m.includes("FORMS_SHEETS_ERROR_404")) return "د ورځنیو فورمو شیټ ونه موندل شو یا د لوستلو اجازه نشته.";
   if (m.includes("FORMS_SHEETS_ERROR")) return "د ورځنیو فورمونو شیټ لوستل ناکام شول.";
   if (m.includes("SHEETS_ERROR_429")) return "ګوګل د غوښتنو شمېر محدود کړی. لږ وروسته بیا هڅه وکړئ.";
+  if (m.includes("ARCHIVE_TAB_MISSING")) return "د آرشیف سکن ټاب په Google Sheet کې ونه موندل شو؛ د ټاب نوم یا د اتصال اجازه وګورئ.";
   if (m.includes("SHEETS_ERROR_403") || m.includes("SHEETS_ERROR_404")) return "شیټ ته لاسرسی نشته — د شیټ اجازه وګورئ.";
   if (m.includes("SHEETS_ERROR")) return "د شیټ لوستل ناکام شول.";
   return "له سرور سره اړیکه ټینګه نه شوه.";
