@@ -20,14 +20,15 @@ import { recentReferralsQuery } from "@/lib/queries";
 export function ProblemVisitorsPage() {
   const can = useSectionActions("problem-visitors");
   const dashboard = useSectionActions("dashboard");
-  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: dashboard("view") });
+  const arrivals = useSectionActions("arrivals");
+  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: dashboard("view") && arrivals("view") });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
     queryFn: () => getProblemMatchDetails({ data: selectedId! }),
-    enabled: !!selectedId && dashboard("view"),
+    enabled: !!selectedId && dashboard("view") && arrivals("view"),
   });
   const qc = useQueryClient();
   const [name, setName] = useState("");
@@ -197,7 +198,7 @@ export function ProblemVisitorsPage() {
                       {flagged ? "احتمالي تطابق" : v.status === "active" ? "فعال" : "حل شوی"}
                     </span>
                   </div>
-                  {(v.first_matched_at || currentMatches.has(v.id)) && dashboard("view") ? (
+                  {(v.first_matched_at || currentMatches.has(v.id)) && dashboard("view") && arrivals("view") ? (
                     <button
                       type="button"
                       className="py-1 text-sm font-bold underline after:absolute after:inset-0 after:rounded-lg focus-visible:outline-primary"
