@@ -95,7 +95,7 @@ function DashboardLayoutContent() {
   const access = useQuery(accessQuery);
   const profile = access.isError ? undefined : access.data;
   const canDashboard = canAccess(profile, "dashboard");
-  const canMatch = canDashboard && canAccess(profile, "problem-visitors");
+  const canMatch = canDashboard && canAccess(profile, "problem-visitors") && canAccess(profile, "arrivals");
   const section = sectionForPage(currentSlug);
   const firstSection = DASHBOARD_SECTIONS.find(key => canAccess(profile,key));
   const completion = useStaffCompletionMonitor(canDashboard);
