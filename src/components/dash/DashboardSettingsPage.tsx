@@ -88,7 +88,12 @@ export function DashboardSettingsPage(){
   const year=todayJalali().y,month=Number(reconciliationMonth);
   setReconciliationBusy(true);setReconciliationError("");setReconciliationDiagnostic(null);
   try{
-   const selectedRows={local:parseHeaderRow(headerRows.local),province:parseHeaderRow(headerRows.province)};
+   const localHeaderRow = parseHeaderRow(headerRows.local);
+   const provinceHeaderRow = parseHeaderRow(headerRows.province);
+   const selectedRows = {
+    ...(localHeaderRow === undefined ? {} : { local: localHeaderRow }),
+    ...(provinceHeaderRow === undefined ? {} : { province: provinceHeaderRow }),
+   };
    const result=await readReconciliation({data:{year,month,refresh:true,headerRows:selectedRows}});
    setReconciliationDiagnostic(result);
    qc.setQueryData(["reconciliation",year,month],result);
