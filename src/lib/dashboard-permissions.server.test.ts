@@ -40,4 +40,12 @@ describe('server-side manager permission checks',()=>{
    expect(await hasDashboardPermissions(arrivalsManager,['dashboard','arrivals'])).toBe(true);
  });
 
+ it('requires problem visitors and arrivals grants for saved referral details',async()=>{
+   vi.stubEnv('OWNER_EMAILS','owner@example.org');
+   const withoutArrivals=context({active:true,role:'manager',permissions:{dashboard:['view'],'problem-visitors':['view']}});
+   expect(await hasDashboardPermissions(withoutArrivals,['dashboard','problem-visitors','arrivals'])).toBe(false);
+   const allowed=context({active:true,role:'manager',permissions:{dashboard:['view'],'problem-visitors':['view'],arrivals:['view']}});
+   expect(await hasDashboardPermissions(allowed,['dashboard','problem-visitors','arrivals'])).toBe(true);
+ });
+
 });
