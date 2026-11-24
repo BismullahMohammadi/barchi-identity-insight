@@ -12,6 +12,7 @@ import { errorText } from '@/lib/queries';
 import { JALALI_MONTHS, todayJalali } from '@/lib/jalali';
 import { metricDefinitions } from '@/lib/reconciliation';
 import { StaffReconciliationMatrix } from '@/components/dash/StaffReconciliationMatrix';
+import { ArchiveReconciliationMatrix } from '@/components/dash/ArchiveReconciliationMatrix';
 
 const searchSchema = z.object({
   year: z.coerce.number().int().min(1300).max(1499).optional(),
@@ -62,7 +63,7 @@ function ReconciliationPage() {
   const year = search.year ?? today.y, month = search.month ?? today.m;
   const { data } = useSuspenseQuery(reportQuery(year, month));
   const client = useQueryClient(), fetchReport = useServerFn(getReconciliation);
-  const [view, setView] = useState<'differences' | 'staff'>('differences');
+  const [view, setView] = useState<'differences' | 'staff' | 'archive'>('differences');
   const [onlyDifferences, setOnlyDifferences] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -128,11 +129,12 @@ function ReconciliationPage() {
     <div className="grid grid-cols-3 gap-2">
       {([['توپیرونه',counts.mismatch,'text-destructive'],['برابر',counts.equal,'text-foreground'],['معلومات نشته',counts.missing,'text-muted-foreground']] as const).map(([label,value,color])=><div key={label} className="rounded-xl border p-3 text-center"><p className={`text-2xl font-bold tabular-nums ${color}`}>{number(value)}</p><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>)}
     </div>
-    <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-2" role="tablist" aria-label="د مطابقت ډول">
+    <div className="grid grid-cols-1 gap-1 rounded-lg bg-muted p-1 sm:grid-cols-3" role="tablist" aria-label="د مطابقت ډول">
       {([['differences','د مرکز او ریاست راپورونو مطابقت']] as const).map(([key,label])=><button key={key} type="button" role="tab" aria-selected={view===key} onClick={()=>{setView(key);setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view===key?'bg-background shadow-sm':''}`}>{label}</button>)}
       <button type="button" role="tab" aria-selected={view==='staff'} onClick={()=>{setView('staff');setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view==='staff'?'bg-background shadow-sm':''}`}>د کارکوونکو او تخنیکي راپورونو مطابقت</button>
+      <button type="button" role="tab" aria-selected={view==='archive'} onClick={()=>{setView('archive');setSelected(null);}} className={`min-h-10 rounded-md px-2 text-sm font-medium ${view==='archive'?'bg-background shadow-sm':''}`}>د کارکوونکو او آرشیف مطابقت</button>
     </div>
-    {view==='staff' ? <StaffReconciliationMatrix year={year} month={month}/> : <section className="space-y-3" aria-label="د مرکز او ریاست راپورونو مطابقت">
+    {view==='staff' ? <StaffReconciliationMatrix year={year} month={month}/> : view==='archive' ? <ArchiveReconciliationMatrix year={year} month={month}/> : <section className="space-y-3" aria-label="د مرکز او ریاست راپورونو مطابقت">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-3 py-3">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-sm font-semibold">د میاشتې د مطابقت جدول</h2>
