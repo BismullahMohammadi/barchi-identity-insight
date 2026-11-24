@@ -104,14 +104,22 @@ export function ArchiveReconciliationMatrix({ year, month }: { year: number; mon
               ["آرشیف", report.data.sources.archive],
             ] as const
           ).map(([label, source]) =>
-            !source.headerFound || !source.ordinaryActivities || !source.serviceActivities ? (
+            !source.headerFound ? (
               <p
                 key={label}
                 role="status"
                 className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm"
               >
-                په {label} کې د ورځو سرلیک یا د عادي/خدماتو آرشیف اړوند فعالیتونه ونه پېژندل شول؛
-                تشې شمېرې صفر نه ګڼل کېږي.
+                په {label} کې د نوم، فعالیت او ورځو سرلیکونه ونه پېژندل شول؛ شمېرې نه دي اټکل شوې.
+              </p>
+            ) : !source.ordinaryActivities || !source.serviceActivities ? (
+              <p
+                key={label}
+                role="status"
+                className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm"
+              >
+                په {label} کې د عادي یا خدماتو آرشیف فعالیت قطار ونه موندل شو؛ تشې شمېرې صفر نه ګڼل
+                کېږي.
               </p>
             ) : null,
           )}

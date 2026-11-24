@@ -69,4 +69,17 @@ describe("archive reconciliation", () => {
     ];
     expect(extractArchiveDailyTotals(blank, "employee").totals.service.get(1)?.value).toBeNull();
   });
+
+  it("finds employee activity and day columns from their headers", () => {
+    const shifted: unknown[][] = [
+      ["شمېره", "نوم", "اسم", "څانګه", "دنده", "فعالیت", "۱", "۲"],
+      ["1", "کارمند", "", "", "", "عادي", "7", "3"],
+      ["2", "کارمند", "", "", "", "خدمات", "2", "1"],
+      ["3", "کارمند", "", "", "", "توزیع عادي", "100", "100"],
+    ];
+    const totals = extractArchiveDailyTotals(shifted, "employee");
+    expect(totals.headerRow).toBe(1);
+    expect(totals.totals.ordinary.get(1)?.value).toBe(7);
+    expect(totals.totals.service.get(1)?.value).toBe(2);
+  });
 });

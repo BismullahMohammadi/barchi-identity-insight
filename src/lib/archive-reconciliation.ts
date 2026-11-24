@@ -34,45 +34,44 @@ const isCombinedActivity = (label: string, metric: ArchiveMetric) =>
 
 function activityMatches(label: string, source: ArchiveSourceKind, metric: ArchiveMetric): boolean {
   if (source === "employee") {
-    return (
-      label.includes("آرشیف") &&
-      (metric === "service" ? label.includes("خدمات") : /عادي|عادی/.test(label))
-    );
+    const archiveLabel = label.includes("آرشیف");
+    const categoryLabel = metric === "service" ? label.includes("خدمات") : /عادي|عادی/.test(label);
+    const exactCategory = metric === "service" ? label === "خدمات" : /^(?:عادي|عادی)$/.test(label);
+    return categoryLabel && (archiveLabel || exactCategory);
   }
   return metric === "service"
     ? /مثن[یي]|تجدید/.test(label)
     : /(?:^|[\s/])جدید(?:$|[\s/])|ثبت\s*تولد/.test(label);
 }
 
-function sourceRows(grid: unknown[][], source: ArchiveSourceKind) {
-  const headerRow = grid
-    .slice(0, 10)
-    .findIndex((row) =>
-      source === "employee"
-        ? reportText(row[1]).includes("اسم") &&
-          reportText(row[4]).includes("تقسیم") &&
-          reportNumber(row[5]).value === 1
-        : reportText(row[3]) === "اسم" &&
-          reportText(row[6]).includes("فعالیت") &&
-          reportNumber(row[7]).value === 1,
+function sourceRows(grid: unknown[][]) {
+  const headerIndex = grid.slice(0, 20).findIndex((row) => {
+    const nameColumn = row.findIndex((value) => reportText(value).includes("اسم"));
+    const activityColumn = row.findIndex((value) => /فعالیت|تقسیم/.test(reportText(value)));
+    return (
+      nameColumn >= 0 &&
+      activityColumn > nameColumn &&
+      row.some((value, column) => column > activityColumn && reportNumber(value).value === 1)
     );
+  });
+  const headerRow = headerIndex < 0 ? null : headerIndex + 1;
   const dayColumns = new Map<number, number>();
-  const header = headerRow < 0 ? [] : (grid[headerRow] ?? []);
-  const firstDayColumn = source === "employee" ? 5 : 7;
+  const header = headerIndex < 0 ? [] : (grid[headerIndex] ?? []);
+  const activityColumn = header.findIndex((value) => /فعالیت|تقسیم/.test(reportText(value)));
+  const firstDayColumn = activityColumn + 1;
   header.forEach((value, column) => {
     const day = reportNumber(value).value;
     if (column >= firstDayColumn && day !== null && day >= 1 && day <= 31)
       dayColumns.set(day, column);
   });
-  const activityColumn = source === "employee" ? 4 : 6;
   const rows: ActivityRow[] = [];
-  if (headerRow >= 0) {
-    for (let index = headerRow + 1; index < grid.length; index++) {
+  if (headerIndex >= 0) {
+    for (let index = headerIndex + 1; index < grid.length; index++) {
       const label = reportText(grid[index]?.[activityColumn]);
       if (label) rows.push({ label, cells: grid[index] ?? [], row: index + 1 });
     }
   }
-  return { headerRow: headerRow < 0 ? null : headerRow + 1, dayColumns, rows };
+  return { headerRow, dayColumns, rows };
 }
 
 function categoryRows(rows: ActivityRow[], source: ArchiveSourceKind, metric: ArchiveMetric) {
@@ -89,7 +88,7 @@ export function extractArchiveDailyTotals(
   grid: unknown[][],
   source: ArchiveSourceKind,
 ): ArchiveDailyTotals {
-  const parsed = sourceRows(grid, source);
+  const parsed = sourceRows(grid);
   const totals = {
     ordinary: new Map<number, ActivityTotals>(),
     service: new Map<number, ActivityTotals>(),
