@@ -1,18 +1,18 @@
 import type { DashboardContext } from "./dashboard-permissions.server";
 import { authorizedSheetHeaders } from "./sheets-access.server";
-import { MONTH_NAMES } from "./monthly-staff-completeness";
 import {
   compareArchiveDailyTotals,
   extractArchiveDailyTotals,
   type ArchiveComparisonRow,
 } from "./archive-reconciliation";
 import { reportText } from "./reconciliation";
-import { todayJalali, toLatinDigits } from "./jalali";
+import { todayJalali } from "./jalali";
 
 const BASE = "https://connector-gateway.lovable.dev/google_sheets/v4";
-const EMPLOYEE_ID = "1W82u37NeQ4Og7rANME6i3jxj1aeCZhhvIj3YtmopQ2g";
-const EMPLOYEE_GID = 2112350709;
-const ARCHIVE_ID = "1Qp5mmA9dRqZ43CLMSMM5tc53rBjAxrTj_gyRp7OVoG8";
+const ARCHIVE_SUMMARY_ID = "1W82u37NeQ4Og7rANME6i3jxj1aeCZhhvIj3YtmopQ2g";
+const ARCHIVE_SUMMARY_GID = 2112350709;
+const EMPLOYEE_REPORT_ID = "1Qp5mmA9dRqZ43CLMSMM5tc53rBjAxrTj_gyRp7OVoG8";
+const EMPLOYEE_REPORT_SUMMARY_TAB = "میاشتنۍ مجموعه";
 type SheetMeta = { sheets?: { properties?: { title?: string; sheetId?: number } }[] };
 
 async function readJson<T>(url: string, headers: Record<string, string>): Promise<T> {
@@ -27,20 +27,6 @@ async function readJson<T>(url: string, headers: Record<string, string>): Promis
     throw new Error("ARCHIVE_RECONCILIATION_SOURCE_READ_FAILED");
   }
   return response.json() as Promise<T>;
-}
-
-function findArchiveMonth(titles: string[], month: number, year: number): string | null {
-  const monthName = MONTH_NAMES[month];
-  if (!monthName) return null;
-  const candidates = titles.filter((title) => reportText(title).includes(reportText(monthName)));
-  const matchingYear = candidates.filter((title) =>
-    toLatinDigits(title)
-      .match(/\b1[34]\d{2}\b/g)
-      ?.includes(String(year)),
-  );
-  if (matchingYear.length === 1) return matchingYear[0] ?? null;
-  if (matchingYear.length > 1) return null;
-  return candidates.length === 1 ? (candidates[0] ?? null) : null;
 }
 
 async function sourceGrid(
@@ -91,32 +77,38 @@ export async function readArchiveReconciliation(
   context: DashboardContext,
 ) {
   const headers = await authorizedSheetHeaders(context, "reconciliation");
-  const [employeeMeta, archiveMeta] = await Promise.all([
-    spreadsheetMeta(EMPLOYEE_ID, headers),
-    spreadsheetMeta(ARCHIVE_ID, headers),
+  const [archiveSummaryMeta, employeeReportMeta] = await Promise.all([
+    spreadsheetMeta(ARCHIVE_SUMMARY_ID, headers),
+    spreadsheetMeta(EMPLOYEE_REPORT_ID, headers),
   ]);
-  const employeeSheets = monthSheets(employeeMeta);
-  const archiveSheets = monthSheets(archiveMeta);
-  const archiveTab = findArchiveMonth(
-    archiveSheets.map((sheet) => sheet.title),
-    input.month,
-    input.year,
+  const archiveSummarySheets = monthSheets(archiveSummaryMeta);
+  const employeeReportSheets = monthSheets(employeeReportMeta);
+  const employeeReportSheet = employeeReportSheets.find(
+    (sheet) => reportText(sheet.title) === reportText(EMPLOYEE_REPORT_SUMMARY_TAB),
   );
-  const employeeSheet = employeeSheets.find((sheet) => sheet.sheetId === EMPLOYEE_GID);
-  const archiveSheet = archiveSheets.find((sheet) => sheet.title === archiveTab);
-  if (!employeeSheet || !archiveSheet) throw new Error("ARCHIVE_RECONCILIATION_MONTH_MISSING");
+  const archiveSummarySheet = archiveSummarySheets.find(
+    (sheet) => sheet.sheetId === ARCHIVE_SUMMARY_GID,
+  );
+  if (!archiveSummarySheet || !employeeReportSheet) {
+    throw new Error("ARCHIVE_RECONCILIATION_MONTH_MISSING");
+  }
 
-  const [employeeGrid, archiveGrid] = await Promise.all([
-    sourceGrid(EMPLOYEE_ID, employeeSheet, headers),
-    sourceGrid(ARCHIVE_ID, archiveSheet, headers),
+  const [archiveSummaryGrid, employeeReportGrid] = await Promise.all([
+    sourceGrid(ARCHIVE_SUMMARY_ID, archiveSummarySheet, headers),
+    sourceGrid(EMPLOYEE_REPORT_ID, employeeReportSheet, headers),
   ]);
-  const employeeTotals = extractArchiveDailyTotals(
-    employeeGrid,
-    "employee",
+  const archiveTotals = extractArchiveDailyTotals(
+    archiveSummaryGrid,
+    "archive-summary",
     input.year,
     input.month,
   );
-  const archiveTotals = extractArchiveDailyTotals(archiveGrid, "archive", input.year, input.month);
+  const employeeTotals = extractArchiveDailyTotals(
+    employeeReportGrid,
+    "employee-report",
+    input.year,
+    input.month,
+  );
   const rows: ArchiveComparisonRow[] = compareArchiveDailyTotals(
     employeeTotals,
     archiveTotals,
@@ -125,14 +117,14 @@ export async function readArchiveReconciliation(
     todayJalali(),
   ).map((row) => ({
     ...row,
-    employeeUrl: sourceUrl(EMPLOYEE_ID, employeeSheet.sheetId, row.employeeCell),
-    archiveUrl: sourceUrl(ARCHIVE_ID, archiveSheet.sheetId, row.archiveCell),
+    employeeUrl: sourceUrl(EMPLOYEE_REPORT_ID, employeeReportSheet.sheetId, row.employeeCell),
+    archiveUrl: sourceUrl(ARCHIVE_SUMMARY_ID, archiveSummarySheet.sheetId, row.archiveCell),
   }));
   return {
     year: input.year,
     month: input.month,
-    employeeTab: employeeSheet.title,
-    archiveTab: archiveSheet.title,
+    employeeTab: employeeReportSheet.title,
+    archiveTab: archiveSummarySheet.title,
     sources: {
       employee: {
         headerFound: employeeTotals.headerRow !== null,
