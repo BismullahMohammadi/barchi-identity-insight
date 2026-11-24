@@ -86,39 +86,60 @@ function monthRows(
 }
 
 function sourceRows(grid: unknown[][], source: ArchiveSourceKind, year: number, month: number) {
-  const labelHeaderIndex = grid
-    .slice(0, 20)
-    .findIndex((row) =>
-      source === "employee"
-        ? reportText(row[1]).includes("نوع کار")
-        : reportText(row[0]).includes("فعالیت"),
-    );
-  const labelColumn = source === "employee" ? 1 : 0;
-  const firstPossibleDayColumn = labelColumn + 1;
   let headerIndex = -1;
   let dayColumns = new Map<number, number>();
-  if (labelHeaderIndex >= 0) {
-    for (
-      let index = labelHeaderIndex;
-      index < Math.min(grid.length, labelHeaderIndex + 6);
-      index++
-    ) {
-      const candidate = consecutiveDays(grid[index] ?? [], firstPossibleDayColumn);
-      if (candidate.size) {
-        headerIndex = index;
-        dayColumns = candidate;
-        break;
+  let labelColumn = source === "employee" ? 1 : 0;
+  let start = grid.length;
+  let end = grid.length;
+  let selectedMonth: { start: number; end: number } | null = null;
+
+  if (source === "employee") {
+    const labelHeaderIndex = grid
+      .slice(0, 20)
+      .findIndex((row) => reportText(row[1]).includes("نوع کار"));
+    if (labelHeaderIndex >= 0) {
+      for (
+        let index = labelHeaderIndex;
+        index < Math.min(grid.length, labelHeaderIndex + 6);
+        index++
+      ) {
+        const candidate = consecutiveDays(grid[index] ?? [], 2);
+        if (candidate.size) {
+          headerIndex = index;
+          dayColumns = candidate;
+          break;
+        }
       }
     }
+    selectedMonth = monthRows(grid, year, month);
+    start = selectedMonth?.start ?? grid.length;
+    end = selectedMonth?.end ?? grid.length;
+  } else {
+    const matrixHeaderIndex = grid.slice(0, 20).findIndex((row) => {
+      return reportText(row[0]).includes("فعالیت") && consecutiveDays(row, 1).size > 0;
+    });
+    const staffHeaderIndex =
+      matrixHeaderIndex < 0
+        ? grid.slice(0, 20).findIndex((row) => {
+            return (
+              reportText(row[3]).includes("اسم") &&
+              reportText(row[6]).includes("فعالیت") &&
+              consecutiveDays(row, 7).size > 0
+            );
+          })
+        : -1;
+    if (matrixHeaderIndex >= 0) {
+      headerIndex = matrixHeaderIndex;
+      dayColumns = consecutiveDays(grid[headerIndex] ?? [], 1);
+      labelColumn = 0;
+    } else if (staffHeaderIndex >= 0) {
+      headerIndex = staffHeaderIndex;
+      dayColumns = consecutiveDays(grid[headerIndex] ?? [], 7);
+      labelColumn = 6;
+    }
+    if (headerIndex >= 0) start = headerIndex + 1;
   }
-  const selectedMonth = source === "employee" ? monthRows(grid, year, month) : null;
-  const start =
-    source === "employee"
-      ? (selectedMonth?.start ?? grid.length)
-      : headerIndex >= 0
-        ? headerIndex + 1
-        : grid.length;
-  const end = source === "employee" ? (selectedMonth?.end ?? grid.length) : grid.length;
+
   const rows: ActivityRow[] = [];
   for (let index = start; index < end; index++) {
     const label = reportText(grid[index]?.[labelColumn]);

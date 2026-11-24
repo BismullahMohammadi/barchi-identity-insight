@@ -56,6 +56,14 @@ const archiveGrid: unknown[][] = [
   ["تجدید", "۱", "۱"],
 ];
 
+const archiveStaffGrid: unknown[][] = [
+  ["28", "فعالیت", "", "اسم", "ولد", "وظیفه", "نوعیت فعالیت", ...days],
+  ["1", "", "", "کارمند ۱", "", "ثبت نام", "جدید او ثبت تولد", "4", "1"],
+  ["2", "", "", "کارمند ۲", "", "ثبت نام", "جدید او ثبت تولد", "1", "1"],
+  ["3", "", "", "کارمند ۱", "", "کنترول کیفیت", "مثنی او تجدید", "2", "1"],
+  ["4", "", "", "کارمند ۲", "", "کنترول کیفیت", "مثنی او تجدید", "1", "1"],
+];
+
 describe("archive reconciliation", () => {
   it("compares the selected employee month block with archive activities by day", () => {
     const rows = compareArchiveReports(employeeGrid, archiveGrid, 1405, 1, {
@@ -100,6 +108,14 @@ describe("archive reconciliation", () => {
     const combined: unknown[][] = [...archiveGrid, ["مثنی او تجدید مجموعه", "8", "8"]];
     const totals = extractArchiveDailyTotals(combined, "archive", 1405, 1);
     expect(totals.totals.service.get(1)?.value).toBe(8);
+  });
+
+  it("sums archive activities from the employee-detail monthly sheet format", () => {
+    const totals = extractArchiveDailyTotals(archiveStaffGrid, "archive", 1405, 9);
+    expect(totals.headerRow).toBe(1);
+    expect(totals.matchedRows).toEqual({ ordinary: 2, service: 2 });
+    expect(totals.totals.ordinary.get(1)?.value).toBe(5);
+    expect(totals.totals.service.get(1)?.value).toBe(3);
   });
 
   it("does not turn blank activity cells into zero", () => {
