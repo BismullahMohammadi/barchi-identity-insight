@@ -4,9 +4,20 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireDashboardPermission } from "./dashboard-permissions.server";
+import { visitorWorkbook, visitorRange, parseProblemVisitorSheet } from "./problem-visitor-sheet";
+import { sheetConnectionHeaders } from "./sheets-access.server";
 
 export type ProblemVisitor = { id:string; full_name:string; father_name:string; issue:string; status:"active"|"resolved"; first_matched_at?: string | null; created_at:string };
 type Command = {action:"add";full_name:string;father_name:string;issue:string} | {action:"status";id:string;status:"active"|"resolved"} | {action:"delete";id:string};
+export const getProblemVisitorSheetHealth=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ setResponseHeader("Cache-Control","private, no-store");
+ await requireDashboardPermission(context,"problem-visitors");
+ const response=await fetch(`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${visitorWorkbook}/values/${visitorRange}`,{headers:sheetConnectionHeaders(),cache:"no-store",signal:AbortSignal.timeout(10000)});
+ if(!response.ok){await response.text();throw new Error(`VISITOR_SHEET_UNAVAILABLE_${response.status}`);}
+ const {values}=await response.json() as {values?:string[][]};
+ const {entries,skipped}=parseProblemVisitorSheet(values??[]);
+ return {status:"available" as const,validRows:entries.length,skippedRows:skipped};
+});
 export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
  setResponseHeader("Cache-Control","private, no-store");
  return loadProblemVisitors(context);
