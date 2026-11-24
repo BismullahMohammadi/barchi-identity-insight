@@ -1,6 +1,7 @@
 import { isFridayJalali } from "./holidays";
 import { columnName, reportNumber, reportText, type ReconciliationStatus } from "./reconciliation";
 import { parseJalali, type JDate } from "./jalali";
+import { MONTH_NAMES } from "./monthly-staff-completeness";
 
 export type ArchiveMetric = "ordinary" | "service";
 export type ArchiveSourceKind = "employee" | "archive";
@@ -9,6 +10,7 @@ type ActivityRow = { label: string; cells: unknown[]; row: number };
 type ActivityTotals = { value: number | null; rows: ActivityRow[] };
 export type ArchiveDailyTotals = {
   headerRow: number | null;
+  monthFound: boolean;
   dayColumns: Map<number, number>;
   totals: Record<ArchiveMetric, Map<number, ActivityTotals>>;
   matchedRows: Record<ArchiveMetric, number>;
@@ -35,43 +37,99 @@ const isCombinedActivity = (label: string, metric: ArchiveMetric) =>
 function activityMatches(label: string, source: ArchiveSourceKind, metric: ArchiveMetric): boolean {
   if (source === "employee") {
     const archiveLabel = label.includes("آرشیف");
-    const categoryLabel = metric === "service" ? label.includes("خدمات") : /عادي|عادی/.test(label);
-    const exactCategory = metric === "service" ? label === "خدمات" : /^(?:عادي|عادی)$/.test(label);
-    return categoryLabel && (archiveLabel || exactCategory);
+    return metric === "service"
+      ? archiveLabel && label.includes("خدمات")
+      : archiveLabel && /عادي|عادی/.test(label);
   }
   return metric === "service"
     ? /مثن[یي]|تجدید/.test(label)
     : /(?:^|[\s/])جدید(?:$|[\s/])|ثبت\s*تولد/.test(label);
 }
 
-function sourceRows(grid: unknown[][]) {
-  const headerIndex = grid.slice(0, 20).findIndex((row) => {
-    const nameColumn = row.findIndex((value) => reportText(value).includes("اسم"));
-    const activityColumn = row.findIndex((value) => /فعالیت|تقسیم/.test(reportText(value)));
+function consecutiveDays(row: unknown[], minimumColumn: number): Map<number, number> {
+  const firstDayColumn = row.findIndex(
+    (value, column) => column >= minimumColumn && reportNumber(value).value === 1,
+  );
+  const days = new Map<number, number>();
+  if (firstDayColumn < 0) return days;
+  for (let column = firstDayColumn, day = 1; day <= 31; column++, day++) {
+    if (reportNumber(row[column]).value !== day) break;
+    days.set(day, column);
+  }
+  return days.size >= 28 ? days : new Map<number, number>();
+}
+
+function monthRows(
+  grid: unknown[][],
+  year: number,
+  month: number,
+): { start: number; end: number } | null {
+  const monthName = MONTH_NAMES[month];
+  if (!monthName) return null;
+  const monthLabel = reportText(monthName);
+  const matches = grid.flatMap((row, index) => {
+    const title = reportText(row[0]);
+    return title.includes(monthLabel) && title.includes(String(year)) ? [index] : [];
+  });
+  if (matches.length !== 1) return null;
+  const start = matches[0];
+  if (start === undefined) return null;
+  const end = grid.findIndex((row, index) => {
+    if (index <= start) return false;
+    const title = reportText(row[0]);
     return (
-      nameColumn >= 0 &&
-      activityColumn > nameColumn &&
-      row.some((value, column) => column > activityColumn && reportNumber(value).value === 1)
+      MONTH_NAMES.slice(1).some((name) => title.includes(reportText(name))) &&
+      /1[34]\d{3}/.test(title)
     );
   });
-  const headerRow = headerIndex < 0 ? null : headerIndex + 1;
-  const dayColumns = new Map<number, number>();
-  const header = headerIndex < 0 ? [] : (grid[headerIndex] ?? []);
-  const activityColumn = header.findIndex((value) => /فعالیت|تقسیم/.test(reportText(value)));
-  const firstDayColumn = activityColumn + 1;
-  header.forEach((value, column) => {
-    const day = reportNumber(value).value;
-    if (column >= firstDayColumn && day !== null && day >= 1 && day <= 31)
-      dayColumns.set(day, column);
-  });
-  const rows: ActivityRow[] = [];
-  if (headerIndex >= 0) {
-    for (let index = headerIndex + 1; index < grid.length; index++) {
-      const label = reportText(grid[index]?.[activityColumn]);
-      if (label) rows.push({ label, cells: grid[index] ?? [], row: index + 1 });
+  return { start, end: end < 0 ? grid.length : end };
+}
+
+function sourceRows(grid: unknown[][], source: ArchiveSourceKind, year: number, month: number) {
+  const labelHeaderIndex = grid
+    .slice(0, 20)
+    .findIndex((row) =>
+      source === "employee"
+        ? reportText(row[1]).includes("نوع کار")
+        : reportText(row[0]).includes("فعالیت"),
+    );
+  const labelColumn = source === "employee" ? 1 : 0;
+  const firstPossibleDayColumn = labelColumn + 1;
+  let headerIndex = -1;
+  let dayColumns = new Map<number, number>();
+  if (labelHeaderIndex >= 0) {
+    for (
+      let index = labelHeaderIndex;
+      index < Math.min(grid.length, labelHeaderIndex + 6);
+      index++
+    ) {
+      const candidate = consecutiveDays(grid[index] ?? [], firstPossibleDayColumn);
+      if (candidate.size) {
+        headerIndex = index;
+        dayColumns = candidate;
+        break;
+      }
     }
   }
-  return { headerRow, dayColumns, rows };
+  const selectedMonth = source === "employee" ? monthRows(grid, year, month) : null;
+  const start =
+    source === "employee"
+      ? (selectedMonth?.start ?? grid.length)
+      : headerIndex >= 0
+        ? headerIndex + 1
+        : grid.length;
+  const end = source === "employee" ? (selectedMonth?.end ?? grid.length) : grid.length;
+  const rows: ActivityRow[] = [];
+  for (let index = start; index < end; index++) {
+    const label = reportText(grid[index]?.[labelColumn]);
+    if (label) rows.push({ label, cells: grid[index] ?? [], row: index + 1 });
+  }
+  return {
+    headerRow: headerIndex < 0 ? null : headerIndex + 1,
+    monthFound: source !== "employee" || selectedMonth !== null,
+    dayColumns,
+    rows,
+  };
 }
 
 function categoryRows(rows: ActivityRow[], source: ArchiveSourceKind, metric: ArchiveMetric) {
@@ -87,8 +145,10 @@ function categoryRows(rows: ActivityRow[], source: ArchiveSourceKind, metric: Ar
 export function extractArchiveDailyTotals(
   grid: unknown[][],
   source: ArchiveSourceKind,
+  year: number,
+  month: number,
 ): ArchiveDailyTotals {
-  const parsed = sourceRows(grid);
+  const parsed = sourceRows(grid, source, year, month);
   const totals = {
     ordinary: new Map<number, ActivityTotals>(),
     service: new Map<number, ActivityTotals>(),
@@ -111,7 +171,13 @@ export function extractArchiveDailyTotals(
       });
     }
   }
-  return { headerRow: parsed.headerRow, dayColumns: parsed.dayColumns, totals, matchedRows };
+  return {
+    headerRow: parsed.headerRow,
+    monthFound: parsed.monthFound,
+    dayColumns: parsed.dayColumns,
+    totals,
+    matchedRows,
+  };
 }
 
 function jalaliMonthDays(year: number, month: number): number {
@@ -127,8 +193,8 @@ export function compareArchiveReports(
   month: number,
   today: JDate,
 ): ArchiveComparisonRow[] {
-  const employee = extractArchiveDailyTotals(employeeGrid, "employee");
-  const archive = extractArchiveDailyTotals(archiveGrid, "archive");
+  const employee = extractArchiveDailyTotals(employeeGrid, "employee", year, month);
+  const archive = extractArchiveDailyTotals(archiveGrid, "archive", year, month);
   return compareArchiveDailyTotals(employee, archive, year, month, today);
 }
 

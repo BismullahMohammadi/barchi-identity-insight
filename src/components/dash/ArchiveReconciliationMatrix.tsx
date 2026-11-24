@@ -110,7 +110,15 @@ export function ArchiveReconciliationMatrix({ year, month }: { year: number; mon
                 role="status"
                 className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm"
               >
-                په {label} کې د نوم، فعالیت او ورځو سرلیکونه ونه پېژندل شول؛ شمېرې نه دي اټکل شوې.
+                په {label} کې د فعالیت او ورځو سرلیکونه ونه پېژندل شول؛ شمېرې نه دي اټکل شوې.
+              </p>
+            ) : !source.monthFound ? (
+              <p
+                key={label}
+                role="status"
+                className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm"
+              >
+                په {label} کې د ټاکل شوې میاشتې بلاک ونه موندل شو؛ شمېرې نه دي اټکل شوې.
               </p>
             ) : !source.ordinaryActivities || !source.serviceActivities ? (
               <p
