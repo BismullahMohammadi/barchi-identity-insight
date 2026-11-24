@@ -46,7 +46,7 @@ export function columnName(index: number): string {
   while (n > 0) { n--; name = String.fromCharCode(65 + n % 26) + name; n = Math.floor(n / 26); }
   return name;
 }
-export type ReportBlock = { status: 'available' | 'month_missing' | 'ambiguous_month' | 'day_header_missing'; headingRow: number | null; days: Map<number, number>; metrics: Map<string, { row: number; cells: unknown[] }>; unmapped: number; ambiguous: string[]; totalColumn: number | null; totalHeaderStatus: 'available' | 'missing' | 'ambiguous' };
+export type ReportBlock = { status: 'available' | 'month_missing' | 'ambiguous_month' | 'day_header_missing'; headingRow: number | null; dayHeaderRow: number | null; days: Map<number, number>; metrics: Map<string, { row: number; cells: unknown[] }>; unmapped: number; ambiguous: string[]; totalColumn: number | null; totalHeaderStatus: 'available' | 'missing' | 'ambiguous' };
 export function findTotalColumn(headers: unknown[][], days: Map<number, number>): { totalColumn: number | null; totalHeaderStatus: ReportBlock['totalHeaderStatus'] } {
   if (!days.size) return { totalColumn: null, totalHeaderStatus: 'missing' };
   const lastDay = Math.max(...days.values());
@@ -78,7 +78,7 @@ function dayHeaderValue(value: unknown, year: number, month: number, monthName: 
     const day = Number(dayFirstDate[1]);
     if (day >= 1 && day <= 31) return day;
   }
-  const escapedMonth = monthName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedMonth = reportText(monthName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const dayMonth = text.match(new RegExp(`^(\\d{1,2})\\s*${escapedMonth}$`));
   if (dayMonth) return Number(dayMonth[1]);
   const monthDay = text.match(new RegExp(`^${escapedMonth}\\s*(\\d{1,2})$`));
@@ -91,8 +91,8 @@ function dayHeaderValue(value: unknown, year: number, month: number, monthName: 
   }
   return null;
 }
-export function findMonthlyBlock(grid: unknown[][], year: number, month: number, source: 'local' | 'province', currentYear: number): ReportBlock {
-  const empty = (status: ReportBlock['status'], headingRow: number | null = null): ReportBlock => ({ status, headingRow, days: new Map(), metrics: new Map(), unmapped: 0, ambiguous: [], totalColumn: null, totalHeaderStatus: 'missing' });
+export function findMonthlyBlock(grid: unknown[][], year: number, month: number, source: 'local' | 'province', currentYear: number, selectedDayHeaderRow?: number): ReportBlock {
+  const empty = (status: ReportBlock['status'], headingRow: number | null = null): ReportBlock => ({ status, headingRow, dayHeaderRow: null, days: new Map(), metrics: new Map(), unmapped: 0, ambiguous: [], totalColumn: null, totalHeaderStatus: 'missing' });
   const monthName = JALALI_MONTHS[month - 1];
   if (!monthName) return empty('month_missing');
   const headings: number[] = [];
@@ -100,7 +100,7 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
     const text = reportText(row.join(' '));
     const isHeader = source === 'local' ? /بخشونه/.test(text) : /گزارش ماه/.test(text);
     const years = text.match(/1[34]\d{2}/g) ?? [];
-    if (isHeader && text.includes(monthName) && (years.length ? years.some(y => Number(y) === year) : year === currentYear)) headings.push(index);
+    if (isHeader && text.includes(reportText(monthName)) && (years.length ? years.some(y => Number(y) === year) : year === currentYear)) headings.push(index);
   });
   if (headings.length !== 1) return empty(headings.length ? 'ambiguous_month' : 'month_missing');
   const start = headings[0];
@@ -109,7 +109,11 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
   const nextHeading = grid.findIndex((row, index) => index > start && /بخشونه|گزارش ماه/.test(reportText(row.join(' '))));
   const end = nextHeading < 0 ? grid.length : nextHeading;
   let dayRow = -1;
-  for (let index = start; index < end; index++) {
+  const selectedIndex = selectedDayHeaderRow === undefined ? null : selectedDayHeaderRow - 1;
+  const scanRows = selectedIndex === null
+    ? Array.from({length:Math.max(0,end-start)},(_,offset)=>start+offset)
+    : selectedIndex >= start && selectedIndex < end ? [selectedIndex] : [];
+  for (const index of scanRows) {
     const row = grid[index] ?? [];
     const values = row.map(cell => dayHeaderValue(cell, year, month, monthName));
     const candidates: Map<number, number>[] = [];
@@ -126,7 +130,7 @@ export function findMonthlyBlock(grid: unknown[][], year: number, month: number,
     });
     const longest = Math.max(0, ...candidates.map(candidate => candidate.size));
     const best = candidates.filter(candidate => candidate.size === longest);
-    if (longest >= 28 && best.length === 1) { block.days = best[0]!; dayRow = index; break; }
+    if (longest >= 28 && best.length === 1) { block.days = best[0]!; dayRow = index; block.dayHeaderRow = index + 1; break; }
   }
   if (dayRow < 0) return empty('day_header_missing', start + 1);
   Object.assign(block, findTotalColumn(grid.slice(start, dayRow + 1), block.days));

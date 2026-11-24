@@ -38,3 +38,25 @@ it("rechecks the manager's active grant before serving cached reconciliation res
   expect(fetch).toHaveBeenCalledTimes(2);
 });
 
+it("applies a saved day-header row override to the selected source", async () => {
+  vi.stubEnv("LOVABLE_API_KEY", "fixture");
+  vi.stubEnv("GOOGLE_SHEETS_API_KEY", "fixture");
+  const profile = {active:true, role:"manager", permissions:{reconciliation:["view"]}};
+  const context = {
+    userId:"header-row-fixture", claims:{email:"manager@example.org"},
+    supabase:{from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:profile,error:null})})})})},
+  } as unknown as DashboardContext;
+  const days=Array.from({length:30},(_,index)=>String(index+1));
+  const localGrid:unknown[][]=[["بخشونه (قوس ۹)"],[],["یادښت"],days];
+  const provinceGrid:unknown[][]=[["گزارش ماه قوس سال مالی ۱۴۰۵"],["","","","","","",...days]];
+  const fetch=vi.fn(async(input:RequestInfo|URL)=>{
+    const url=String(input),local=url.includes("1knIScHAUj052s0hpx58kpALJMTgG0VUGPx1kqG_fzbs");
+    if(url.includes("/values:batchGet"))return Response.json({valueRanges:[{values:local?localGrid:provinceGrid}]});
+    return Response.json({sheets:[{properties:{title:local?"ریاست ته ګزارش":"مرکز دشت برچی",sheetId:1}}]});
+  });
+  vi.stubGlobal("fetch",fetch);
+  const result=await readReconciliation({year:1405,month:9,refresh:true,headerRows:{local:4}},context);
+  expect(result.local).toMatchObject({block:"available",dayHeaderRow:4});
+  expect(result.province).toMatchObject({block:"available",dayHeaderRow:2});
+});
+

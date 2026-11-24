@@ -2,6 +2,8 @@ import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
 import {useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
+import {Link} from "@tanstack/react-router";
+import {useServerFn} from "@tanstack/react-start";
 import {Settings2,RefreshCw,RotateCcw,Table2,FileSpreadsheet,ShieldCheck,Check,Activity,Users,BarChart3,PanelsTopLeft,ListTodo} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
@@ -10,6 +12,9 @@ import {SHEET_COLUMNS} from "@/lib/sheet-columns";
 import {readAliases,COLUMN_ALIAS_KEY,type HeaderAliases} from "@/lib/sheet-mapping-preferences";
 import {accessQuery} from "@/lib/queries";
 import {getDailyForms,getDailyCoordination,getSheetTabs} from "@/lib/sheets.functions";
+import {getReconciliation} from "@/lib/reconciliation.functions";
+import {JALALI_MONTHS,todayJalali} from "@/lib/jalali";
+import {errorText} from "@/lib/queries";
 import {TABS} from "@/lib/tabs";
 import {resolveMappedGrid} from "@/lib/sheet-mapping-preferences";
 import {normalizeGrid} from "@/lib/normalize";
@@ -17,6 +22,39 @@ import {REFERRAL_CELL_KEY,REGISTRATION_CELL_KEY,normalizeReferralCell,readReferr
 
 type Section="general"|"reports"|"sheets"|"account";
 const sections=[{id:"general",label:"عمومي",Icon:Settings2},{id:"reports",label:"راپورونه او جدولونه",Icon:Table2},{id:"sheets",label:"Google Sheets",Icon:FileSpreadsheet},{id:"account",label:"حساب او ساتنه",Icon:ShieldCheck}] as const;
+const RECONCILIATION_HEADER_ROWS_KEY="barchi-reconciliation-header-rows-v1";
+type HeaderRows={local:string;province:string};
+function reconciliationHeaderRowKey(year:number,month:number){return `${year}-${month}`;}
+function readReconciliationHeaderRows(year:number,month:number):HeaderRows{
+ try{
+  const all=JSON.parse(window.localStorage.getItem(RECONCILIATION_HEADER_ROWS_KEY)||"{}");
+  const saved=all?.[reconciliationHeaderRowKey(year,month)]??{};
+  const value=(row:unknown)=>typeof row==="number"&&Number.isInteger(row)&&row>=1&&row<=2000?String(row):"";
+  return {local:value(saved?.local),province:value(saved?.province)};
+ }catch{return {local:"",province:""};}
+}
+function parseHeaderRow(value:string):number|undefined{
+ if(!value.trim())return undefined;
+ const row=Number(value);
+ if(!Number.isInteger(row)||row<1||row>2000)throw new Error("د سرلیک قطار باید له ۱ تر ۲۰۰۰ پورې وي.");
+ return row;
+}
+type SourceDiagnostic={error:{code:string;status:number|null;retryAt:number|null}|null;block:string;headingRow:number|null;dayHeaderRow:number|null;mapped:number;unmapped:number;ambiguous:number;totalHeaderStatus:string};
+type ReconciliationDiagnostic={year:number;month:number;local:SourceDiagnostic;province:SourceDiagnostic;stale:boolean};
+function reconciliationSourceText(source:SourceDiagnostic){
+ if(source.error?.code==="rate_limited")return "د Google غوښتنې محدودې شوې؛ لږ وروسته بیا هڅه وکړئ.";
+ if(source.error?.code==="tab_missing")return "د راپور ټب ونه موندل شو؛ د سرچینې ټب نوم وګورئ.";
+ if(source.error?.code==="network_error")return "له Google Sheets سره شبکه يي اړیکه ناکامه شوه.";
+ if(source.error?.status===403)return "د Sheet لوستلو اجازه نشته؛ د Google اتصال لاسرسی وګورئ.";
+ if(source.error?.status===404)return "Sheet یا ټب ونه موندل شو؛ د راپور سرچینه وګورئ.";
+ if(source.error)return `لوستل ناکام شول (${source.error.status??source.error.code}).`;
+ if(source.block==="month_missing")return "د ټاکل شوې میاشتې سرلیک ونه موندل شو.";
+ if(source.block==="ambiguous_month")return "د میاشتې څو سرلیکونه وموندل شول؛ یوازې یو فعال سرلیک وساتئ.";
+ if(source.block==="day_header_missing")return "د ورځې کالمونه ونه پېژندل شول؛ د میاشتې د سرلیک قطار وازمویئ.";
+ if(source.ambiguous)return `${source.ambiguous} برخې تکراري یا مبهمې دي.`;
+ if(!source.mapped)return "د راپور برخې ونه پېژندل شوې.";
+ return `${source.mapped} برخې پېژندل شوې${source.unmapped?`; ${source.unmapped} نورې نه دي پېژندل شوې`:""}.`;
+}
 export function DashboardSettingsPage(){
  const can=useSectionActions("settings");
  const settings=useDashboardSettings();
@@ -38,8 +76,43 @@ export function DashboardSettingsPage(){
  const [registrationResult,setRegistrationResult]=useState("");
  const [registrationError,setRegistrationError]=useState("");
  const [registrationBusy,setRegistrationBusy]=useState(false);
+ const [reconciliationMonth,setReconciliationMonth]=useState(()=>String(todayJalali().m));
+ const [reconciliationDiagnostic,setReconciliationDiagnostic]=useState<ReconciliationDiagnostic|null>(null);
+ const [reconciliationError,setReconciliationError]=useState("");
+ const [reconciliationBusy,setReconciliationBusy]=useState(false);
+ const [headerRows,setHeaderRows]=useState<HeaderRows>(()=>readReconciliationHeaderRows(todayJalali().y,todayJalali().m));
+ const readReconciliation=useServerFn(getReconciliation);
  function update<K extends keyof DashboardSettings>(key:K,value:DashboardSettings[K]){saveDashboardSettings({...settings,[key]:value});setSaved(true);}
- async function refreshAll(){setBusy(true);try{await Promise.all(["sheet","diesel-sheet-report","daily-forms","daily-coordination","recent-referrals","problem-visitors","staff-report-completeness","insijam-report-completeness","state-report-yesterday"].map(k=>qc.invalidateQueries({queryKey:[k]})));}finally{setBusy(false);}}
+ async function refreshAll(){setBusy(true);try{await Promise.all(["sheet","diesel-sheet-report","daily-forms","daily-coordination","recent-referrals","problem-visitors","staff-report-completeness","insijam-report-completeness","state-report-yesterday","reconciliation"].map(k=>qc.invalidateQueries({queryKey:[k]})));}finally{setBusy(false);}}
+ async function testReconciliation(){
+  const year=todayJalali().y,month=Number(reconciliationMonth);
+  setReconciliationBusy(true);setReconciliationError("");setReconciliationDiagnostic(null);
+  try{
+   const selectedRows={local:parseHeaderRow(headerRows.local),province:parseHeaderRow(headerRows.province)};
+   const result=await readReconciliation({data:{year,month,refresh:true,headerRows:selectedRows}});
+   setReconciliationDiagnostic(result);
+   qc.setQueryData(["reconciliation",year,month],result);
+  }catch(error){setReconciliationError(errorText(error));}
+  finally{setReconciliationBusy(false);}
+ }
+ function saveReconciliationHeaderRows(){
+  try{
+   const rows={local:parseHeaderRow(headerRows.local),province:parseHeaderRow(headerRows.province)};
+   const all=JSON.parse(window.localStorage.getItem(RECONCILIATION_HEADER_ROWS_KEY)||"{}");
+   all[reconciliationHeaderRowKey(todayJalali().y,Number(reconciliationMonth))]=rows;
+   window.localStorage.setItem(RECONCILIATION_HEADER_ROWS_KEY,JSON.stringify(all));
+   setHeaderRows({local:rows.local?String(rows.local):"",province:rows.province?String(rows.province):""});
+   setReconciliationDiagnostic(null);setReconciliationError("");
+  }catch(error){setReconciliationError(errorText(error));}
+ }
+ function resetReconciliationHeaderRows(){
+  try{
+   const all=JSON.parse(window.localStorage.getItem(RECONCILIATION_HEADER_ROWS_KEY)||"{}");
+   delete all[reconciliationHeaderRowKey(todayJalali().y,Number(reconciliationMonth))];
+   window.localStorage.setItem(RECONCILIATION_HEADER_ROWS_KEY,JSON.stringify(all));
+  }catch{window.localStorage.removeItem(RECONCILIATION_HEADER_ROWS_KEY);}
+  setHeaderRows({local:"",province:""});setReconciliationDiagnostic(null);setReconciliationError("");
+ }
  async function testReferralCell(){
    setCellBusy(true);setCellError("");setCellResult("");
    try{
@@ -126,6 +199,33 @@ export function DashboardSettingsPage(){
    </label></div>
   </section>}
   {tab==="sheets"&&<section className="dashboard-panel space-y-4 p-4 sm:p-6">
+    <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+     <div><h2 className="text-sm font-extrabold">د مرکز او ریاست د راپورونو ازموینه</h2><p className="mt-1 text-xs text-muted-foreground">میاشت وټاکئ؛ سرچینې جلا ازمویل کېږي او د ستونزې علت دلته ښکاري.</p></div>
+     <div className="flex flex-wrap items-end gap-2">
+      <label className="grid gap-1 text-xs font-semibold">میاشت
+      <select className="h-10 min-w-40 rounded-lg border bg-background px-3 text-sm" value={reconciliationMonth} onChange={e=>{setReconciliationMonth(e.target.value);setHeaderRows(readReconciliationHeaderRows(todayJalali().y,Number(e.target.value)));setReconciliationDiagnostic(null);setReconciliationError("");}}>
+       {JALALI_MONTHS.map((name,index)=><option key={index} value={index+1}>{name} {todayJalali().y}</option>)}
+      </select>
+      </label>
+      <label className="grid gap-1 text-xs font-semibold">زموږ راپور · د ورځو د سرلیک قطار
+       <input type="number" min="1" max="2000" step="1" inputMode="numeric" className="h-10 w-40 rounded-lg border bg-background px-3 text-sm" placeholder="اتومات" value={headerRows.local} onChange={e=>{setHeaderRows(rows=>({...rows,local:e.target.value}));setReconciliationDiagnostic(null);setReconciliationError("");}}/>
+      </label>
+      <label className="grid gap-1 text-xs font-semibold">د ریاست راپور · د ورځو د سرلیک قطار
+       <input type="number" min="1" max="2000" step="1" inputMode="numeric" className="h-10 w-40 rounded-lg border bg-background px-3 text-sm" placeholder="اتومات" value={headerRows.province} onChange={e=>{setHeaderRows(rows=>({...rows,province:e.target.value}));setReconciliationDiagnostic(null);setReconciliationError("");}}/>
+      </label>
+      <Button size="sm" variant="outline" onClick={saveReconciliationHeaderRows}>قطارونه خوندي کړئ</Button>
+      <Button size="sm" variant="ghost" onClick={resetReconciliationHeaderRows}>اتومات ته ستانه شئ</Button>
+      <Button variant="outline" disabled={reconciliationBusy} onClick={()=>void testReconciliation()}><RefreshCw className={`h-4 w-4 ${reconciliationBusy?"animate-spin":""}`}/>{reconciliationBusy?"ازموینه روانه ده…":"سرچینې وازمویئ"}</Button>
+      {reconciliationDiagnostic&&<Link to="/dashboard/reconciliation" search={{year:reconciliationDiagnostic.year,month:reconciliationDiagnostic.month}} className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-primary underline underline-offset-4">پرتلې ته لاړ شئ</Link>}
+     </div>
+     {reconciliationError&&<p role="alert" className="text-sm text-destructive">{reconciliationError}</p>}
+     {reconciliationDiagnostic&&<div className="grid gap-2 sm:grid-cols-2" role="status" aria-live="polite">
+      {([["زموږ راپور",reconciliationDiagnostic.local],["د ریاست راپور",reconciliationDiagnostic.province]] as const).map(([label,source])=><div key={label} className="rounded-lg border bg-background p-3">
+      <p className="text-xs font-bold">{label}</p><p className={`mt-1 text-sm ${source.error||source.block!=="available"||source.ambiguous?"text-destructive":"text-primary"}`}>{reconciliationSourceText(source)}</p>
+      <p className="mt-1 text-xs text-muted-foreground">بلاک: {source.block} · پېژندل شوې برخې: {source.mapped}{source.headingRow?` · سرلیک قطار: ${source.headingRow}`:""}{source.dayHeaderRow?` · د ورځو قطار: ${source.dayHeaderRow}`:""}{source.totalHeaderStatus!=="missing"?` · مجموعه: ${source.totalHeaderStatus}`:""}</p>
+      </div>)}
+     </div>}
+    </div>
    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
      <h2 className="text-sm font-extrabold">نوي معرفي شوي مراجعین — د شمېر سیل</h2>
      <p className="mt-1 text-xs text-muted-foreground">اتومات پېژندنه فعاله ده؛ که سیل بدل شوی وي، دلته یې ولیکئ.</p>

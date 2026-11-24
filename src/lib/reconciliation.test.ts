@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compareMonthlyReports, compareSourceMonthlyTotals, findMonthlyBlock, findTotalColumn, metricKey, reportNumber } from './reconciliation';
+import { JALALI_MONTHS } from './jalali';
 
 const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const today = { y: 1405, m: 8, d: 30 };
@@ -93,6 +94,27 @@ describe('report reconciliation', () => {
     expect(block.status).toBe('available');
     expect(block.days.get(6)).toBe(6);
     expect(block.days.get(30)).toBe(30);
+  });
+  it('finds month blocks for every Jalali month, including both Jadi spellings', () => {
+    for (let month = 1; month <= 12; month++) {
+      const monthName = month === 10 ? 'جدی' : JALALI_MONTHS[month - 1]!;
+      const count = month <= 6 ? 31 : month <= 11 ? 30 : 29;
+      const days = Array.from({length:count},(_,index)=>String(index+1));
+      const grid:unknown[][] = [[`بخشونه (${monthName} ${month}) - سال مالی ۱۴۰۴-۱۴۰۵`,...days]];
+      const block = findMonthlyBlock(grid,1405,month,'local',1405);
+      const provinceGrid:unknown[][] = [[`گزارش ماه ${monthName} سال مالی ۱۴۰۴-۱۴۰۵`],["","","","","","",...days]];
+      const provinceBlock = findMonthlyBlock(provinceGrid,1405,month,'province',1405);
+      expect(block.status,`month ${month}`).toBe('available');
+      expect(block.days.size,`month ${month} day columns`).toBe(count);
+      expect(provinceBlock.status,`province month ${month}`).toBe('available');
+      expect(provinceBlock.days.size,`province month ${month} day columns`).toBe(count);
+    }
+  });
+  it('allows a validated manual day-header row override', () => {
+    const days = Array.from({length:30},(_,index)=>String(index+1));
+    const grid:unknown[][] = [['بخشونه (قوس ۹)'],days,['یادښت'],days];
+    expect(findMonthlyBlock(grid,1405,9,'local',1405,4).dayHeaderRow).toBe(4);
+    expect(findMonthlyBlock(grid,1405,9,'local',1405,3).status).toBe('day_header_missing');
   });
   it('refuses duplicate semantic metrics and day headers rather than guessing', () => {
     const { local } = fixture();

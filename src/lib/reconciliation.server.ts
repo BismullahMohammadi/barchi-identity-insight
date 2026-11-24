@@ -64,15 +64,15 @@ async function sourceSnapshot(source: keyof typeof SOURCES, userId: string, head
     return result;
   } finally { pending.delete(key); }
 }
-export async function readReconciliation(input: { year: number; month: number; refresh: boolean }, context: DashboardContext) {
+export async function readReconciliation(input: { year: number; month: number; refresh: boolean; headerRows?: {local?:number;province?:number} }, context: DashboardContext) {
   const headers = await authorizedSheetHeaders(context, "reconciliation"); // Always authorize before cache access.
   const today = todayJalali();
   const [local, province] = await Promise.all([sourceSnapshot('local', context.userId, headers, input.refresh), sourceSnapshot('province', context.userId, headers, input.refresh)]);
-  const lb = findMonthlyBlock(local.snapshot?.grid ?? [], input.year, input.month, 'local', today.y);
-  const pb = findMonthlyBlock(province.snapshot?.grid ?? [], input.year, input.month, 'province', today.y);
+  const lb = findMonthlyBlock(local.snapshot?.grid ?? [], input.year, input.month, 'local', today.y, input.headerRows?.local);
+  const pb = findMonthlyBlock(province.snapshot?.grid ?? [], input.year, input.month, 'province', today.y, input.headerRows?.province);
   const link = (source: keyof typeof SOURCES, snapshot: Snapshot | undefined, cell: string | null) => snapshot && cell ? `https://docs.google.com/spreadsheets/d/${SOURCES[source].id}/edit#gid=${snapshot.gid}&range=${cell}` : null;
   const rows = compareMonthlyReports(lb, pb, input.year, input.month, today).map(row => ({ ...row, localUrl: link('local', local.snapshot, row.localCell), provinceUrl: link('province', province.snapshot, row.provinceCell) }));
   const totals = compareSourceMonthlyTotals(lb, pb, input.year, input.month, today, { local: !!local.error, province: !!province.error }).map(row => ({ ...row, localUrl: link('local', local.snapshot, row.localCell), provinceUrl: link('province', province.snapshot, row.provinceCell) }));
-  const diagnostic = (data: Cached, block: typeof lb) => ({ error: data.error ?? null, fetchedAt: data.snapshot?.fetchedAt ?? null, block: block.status, headingRow: block.headingRow, mapped: block.metrics.size, unmapped: block.unmapped, ambiguous: block.ambiguous.length, totalHeaderStatus: block.totalHeaderStatus });
+  const diagnostic = (data: Cached, block: typeof lb) => ({ error: data.error ?? null, fetchedAt: data.snapshot?.fetchedAt ?? null, block: block.status, headingRow: block.headingRow, dayHeaderRow: block.dayHeaderRow, mapped: block.metrics.size, unmapped: block.unmapped, ambiguous: block.ambiguous.length, totalHeaderStatus: block.totalHeaderStatus });
   return { year: input.year, month: input.month, rows, totals, local: diagnostic(local, lb), province: diagnostic(province, pb), stale: !!local.error || !!province.error, checkedAt: Date.now() };
 }
