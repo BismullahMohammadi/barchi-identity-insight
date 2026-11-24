@@ -263,7 +263,8 @@ export const getRecentReferrals=createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<RecentReferrals>=>{
   setResponseHeader("Cache-Control","private, no-store");
-  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
+  // Referral names, father names and family counts require the explicit arrivals grant.
+  if(!(await hasDashboardPermissions(context,["dashboard","arrivals"])))throw new Error("ACCESS_DENIED");
   const headers=sheetConnectionHeaders();
   const today=todayJalali();
   const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR");
@@ -398,7 +399,8 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
  })
  .handler(async({data,context})=>{
   setResponseHeader("Cache-Control","private, no-store");
-  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
+  // Historical referral records are personal data; require dashboard and arrivals access.
+   if(!(await hasDashboardPermissions(context,["dashboard","arrivals"])))throw new Error("ACCESS_DENIED");
   const headers=sheetConnectionHeaders();
   const {from,to}=data;
   const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
