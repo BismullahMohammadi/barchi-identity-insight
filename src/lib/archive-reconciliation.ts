@@ -79,7 +79,7 @@ function monthRows(
     const title = reportText(row[0]);
     return (
       MONTH_NAMES.slice(1).some((name) => title.includes(reportText(name))) &&
-      /1[34]\d{3}/.test(title)
+      title.includes(String(year))
     );
   });
   return { start, end: end < 0 ? grid.length : end };

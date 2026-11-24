@@ -35,7 +35,7 @@ function findArchiveMonth(titles: string[], month: number, year: number): string
   const candidates = titles.filter((title) => reportText(title).includes(reportText(monthName)));
   const matchingYear = candidates.filter((title) =>
     toLatinDigits(title)
-      .match(/\b1[34]\d{3}\b/g)
+      .match(/\b1[34]\d{2}\b/g)
       ?.includes(String(year)),
   );
   if (matchingYear.length === 1) return matchingYear[0] ?? null;
