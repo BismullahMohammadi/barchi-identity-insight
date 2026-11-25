@@ -1,6 +1,6 @@
 import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Plus, Trash2, X, UserRound, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,16 +21,23 @@ export function ProblemVisitorsPage() {
   const can = useSectionActions("problem-visitors");
   const dashboard = useSectionActions("dashboard");
   const arrivals = useSectionActions("arrivals");
-  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: dashboard("view") && arrivals("view") });
+  const canViewReferralDetails = dashboard("view") && arrivals("view");
+  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: canViewReferralDetails });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const qc = useQueryClient();
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
     queryFn: () => getProblemMatchDetails({ data: selectedId! }),
-    enabled: !!selectedId && dashboard("view") && arrivals("view"),
+    enabled: !!selectedId && canViewReferralDetails,
   });
-  const qc = useQueryClient();
+  useEffect(() => {
+    if (canViewReferralDetails) return;
+    setDetailOpen(false);
+    setSelectedId(null);
+    qc.removeQueries({ queryKey: ["problem-match-details"] });
+  }, [canViewReferralDetails, qc]);
   const [name, setName] = useState("");
   const [father, setFather] = useState("");
   const [issue, setIssue] = useState("");
@@ -257,7 +264,7 @@ export function ProblemVisitorsPage() {
         )}
       </section>
       <Dialog.Root
-        open={detailOpen && !!selected}
+        open={detailOpen && !!selected && canViewReferralDetails}
         onOpenChange={setDetailOpen}
       >
         <Dialog.Portal>
