@@ -57,6 +57,7 @@ export const getProblemMatchDetails = createServerFn({method:"POST"}).middleware
    setResponseHeader("Cache-Control","private, no-store");
    await requireDashboardPermission(context,"problem-visitors");
    await requireDashboardPermission(context,"dashboard");
+   await requireDashboardPermission(context,"arrivals");
    const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
    const db=supabaseAdmin as unknown as SupabaseClient;
    const details: MatchDetail[]=[];
