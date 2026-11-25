@@ -11,6 +11,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ChartNoAxesColumn, RefreshCw, Files, ShieldCheck, Landmark, PackageCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { accessQuery, errorText, sheetQuery, dailyFormsQuery, dailyCoordinationQuery } from "@/lib/queries";
+import { canAccessOverviewSource } from "@/lib/dashboard-access";
 import { todayJalali, yesterdayJalali } from "@/lib/jalali";
 import { holidayOfToday } from "@/lib/holidays";
 import { OVERVIEW_SLUGS } from "@/lib/tabs";
@@ -129,7 +130,8 @@ function Overview() {
   const refreshMs = settingsRefreshMs(settings);
   const access=useQuery(accessQuery);
   const canView=(slug:string)=>access.data?.owner===true || access.data?.permissions?.[slug]?.includes("view")===true;
-  const allowedSlugs=OVERVIEW_SLUGS.filter(canView);
+  const canViewOverviewSource=(slug:string)=>access.data?.owner===true || canAccessOverviewSource({owner:false,permissions:access.data?.permissions??{}},slug);
+  const allowedSlugs=OVERVIEW_SLUGS.filter(canViewOverviewSource);
   const q = useQuery({...sheetQuery(allowedSlugs, refreshMs),enabled:access.isSuccess && allowedSlugs.length>0});
   const daily = useQuery({...dailyFormsQuery(refreshMs),enabled:canView("dashboard")});
   const coordination = useQuery({...dailyCoordinationQuery(refreshMs),enabled:canView("dashboard")});
@@ -181,7 +183,7 @@ function Overview() {
     emerald: {root:"dashboard-kpi-emerald",icon:"bg-emerald-700/10 text-emerald-800",number:"text-emerald-900"},
   } as const;
   const renderCard = (item: SummaryMetric) => {
-    if(!canView(item.slug))return null;
+    if(!canViewOverviewSource(item.slug))return null;
     const colors = cardStyle[item.tone];
     return (
       <Link key={item.label} to="/dashboard/$slug" params={{slug:item.slug}}
