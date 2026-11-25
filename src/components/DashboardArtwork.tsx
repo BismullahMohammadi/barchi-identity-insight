@@ -5,14 +5,22 @@ export function RotatingTazkira({
   motion = "flip",
 }: {
   className?: string;
-  motion?: "flip" | "float" | "none";
+  motion?: "flip" | "float" | "none" | "showcase";
 }) {
-  const motionClass = motion === "float" ? " tazkira-card-float" : motion === "none" ? " tazkira-card-static" : "";
+  const displayMotionClass = motion === "showcase" ? " tazkira-display-showcase" : "";
+  const motionClass =
+    motion === "float"
+      ? " tazkira-card-float"
+      : motion === "none"
+        ? " tazkira-card-static"
+        : motion === "showcase"
+          ? " tazkira-card-showcase"
+          : "";
   return (
-    <span aria-hidden="true" className={`tazkira-display no-print ${className}`}>
+    <span aria-hidden="true" className={`tazkira-display no-print${displayMotionClass} ${className}`}>
       <span className={`tazkira-card${motionClass}`}>
         <img className="tazkira-face" src="/artwork/tazkira-front.webp" alt="" decoding="async" />
-        {motion === "flip" && (
+        {(motion === "flip" || motion === "showcase") && (
           <img
             className="tazkira-face tazkira-back"
             src="/artwork/tazkira-back.webp"

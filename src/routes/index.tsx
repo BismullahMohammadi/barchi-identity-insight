@@ -108,7 +108,7 @@ function Landing() {
           </header>
 
           <div className="flex min-h-0 flex-1 items-center py-2 sm:py-4">
-            <section aria-label="خوندي ننوتل" className="grid max-h-full w-full overflow-hidden rounded-[1.75rem] border border-border/80 bg-card shadow-card md:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
+            <section aria-label="خوندي ننوتل" className="login-panel grid max-h-full w-full max-w-5xl overflow-hidden rounded-3xl border border-border/80 bg-card shadow-card md:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
               <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-12">
                 <div className="mb-5 flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-2xl bg-secondary text-primary">
@@ -131,14 +131,14 @@ function Landing() {
                 )}
 
                 {signedIn ? (
-                  <Button asChild size="lg" className="w-full justify-between px-5">
+                  <Button asChild size="lg" className="login-submit w-full justify-between px-5">
                     <Link to="/dashboard">
                       <span>ډشبورډ پرانیزئ</span>
                       <ArrowLeft className="size-5" aria-hidden="true" />
                     </Link>
                   </Button>
                 ) : (
-                  <Button size="lg" className="w-full justify-between px-5" onClick={signIn} disabled={busy}>
+                  <Button size="lg" className="login-submit w-full justify-between px-5" onClick={signIn} disabled={busy}>
                     <span>{busy ? "ننوتل روان دي…" : "په Google حساب ننوتل"}</span>
                     {busy ? <LoaderCircle className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ArrowLeft className="size-5" aria-hidden="true" />}
                   </Button>
@@ -165,7 +165,7 @@ function Landing() {
                   <div className="relative mx-auto mt-2 flex w-full max-w-sm flex-col items-center sm:mt-5">
                     <div aria-hidden="true" className="relative grid h-28 w-full place-items-center sm:h-44">
                       <span className="absolute size-36 rounded-full border border-dashed border-white/15 sm:size-48" />
-                      <RotatingTazkira motion="flip" className="relative z-10 w-44 drop-shadow-2xl sm:w-56 lg:w-64" />
+                      <RotatingTazkira motion="showcase" className="relative z-10 w-44 drop-shadow-2xl sm:w-56 lg:w-64" />
                     </div>
                     <p className="mt-1 hidden text-xs text-primary-foreground sm:block">د تذکرې د ډیزاین نمونه</p>
                   </div>
