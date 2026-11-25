@@ -129,13 +129,14 @@ function Overview() {
   const refreshMs = settingsRefreshMs(settings);
   const access=useQuery(accessQuery);
   const canView=(slug:string)=>access.data?.owner===true || access.data?.permissions?.[slug]?.includes("view")===true;
+  const canViewArrivals=canView("arrivals");
   const allowedSlugs=OVERVIEW_SLUGS.filter(canView);
   const q = useQuery({...sheetQuery(allowedSlugs, refreshMs),enabled:access.isSuccess && allowedSlugs.length>0});
   const daily = useQuery({...dailyFormsQuery(refreshMs),enabled:canView("dashboard")});
   const coordination = useQuery({...dailyCoordinationQuery(refreshMs),enabled:canView("dashboard")});
-  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:canView("dashboard")&&settings.showDailyVisitors});
+  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:canView("dashboard")&&canViewArrivals&&settings.showDailyVisitors});
   const historicalSupported=!!range&&(range.to.y-range.from.y)*12+range.to.m-range.from.m<=2;
-  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:canView("dashboard")&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
+  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:canView("dashboard")&&canViewArrivals&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
   const recentData=range?(historicalSupported?historical.data:undefined):recent.data;
   const recentLoading=range?historical.isLoading:recent.isLoading;
   const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
@@ -257,7 +258,7 @@ function Overview() {
 
       {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو د تفصیلي لېست لپاره درې میاشتې یا تر دې کمه موده وټاکئ.</p>}
       {range&&historicalSupported&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې د مراجعینو شمېرې د ثبت او جمع‌آورۍ له شیټونو څخه دي؛ د تایید او رد تاریخي حالتونه لا په دې مودې کې نه دي محاسبه شوي.</p>}
-      {settings.showDailyVisitors && (!range||historicalSupported) && (
+      {settings.showDailyVisitors && canViewArrivals && (!range||historicalSupported) && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
           <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2" aria-label="ټیمونو ته د ورځې معرفي شوي مراجعین">
