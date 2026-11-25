@@ -2,16 +2,17 @@ import type { CSSProperties } from "react";
 
 export function RotatingTazkira({
   className = "w-20 sm:w-28",
-  animate = true,
+  motion = "flip",
 }: {
   className?: string;
-  animate?: boolean;
+  motion?: "flip" | "float" | "none";
 }) {
+  const motionClass = motion === "float" ? " tazkira-card-float" : motion === "none" ? " tazkira-card-static" : "";
   return (
     <span aria-hidden="true" className={`tazkira-display no-print ${className}`}>
-      <span className={`tazkira-card${animate ? "" : " tazkira-card-static"}`}>
+      <span className={`tazkira-card${motionClass}`}>
         <img className="tazkira-face" src="/artwork/tazkira-front.webp" alt="" decoding="async" />
-        {animate && (
+        {motion === "flip" && (
           <img
             className="tazkira-face tazkira-back"
             src="/artwork/tazkira-back.webp"

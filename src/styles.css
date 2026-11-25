@@ -426,6 +426,9 @@
   .tazkira-card-static {
     transform: rotateZ(-4deg) rotateY(-10deg) rotateX(3deg);
   }
+  .tazkira-card-float {
+    transform: rotateZ(-4deg) rotateY(-10deg) rotateX(3deg);
+  }
   .tazkira-card-static::before {
     content: "";
     position: absolute;
@@ -452,12 +455,17 @@
 }
 
 @media screen and (prefers-reduced-motion: no-preference) {
-  .tazkira-card:not(.tazkira-card-static) { animation: tazkira-turn 12s linear infinite; }
+  .tazkira-card:not(.tazkira-card-static):not(.tazkira-card-float) { animation: tazkira-turn 10s cubic-bezier(.45, 0, .55, 1) infinite; }
+  .tazkira-card-float { animation: tazkira-float 6s ease-in-out infinite; }
 }
 @keyframes tazkira-turn {
-  0%, 14% { transform: rotateZ(-3deg) rotateY(0); }
-  42%, 62% { transform: rotateZ(-3deg) rotateY(180deg); }
-  90%, 100% { transform: rotateZ(-3deg) rotateY(360deg); }
+  0%, 22% { transform: rotateZ(-3deg) rotateY(0); }
+  34%, 66% { transform: rotateZ(-3deg) rotateY(180deg); }
+  78%, 100% { transform: rotateZ(-3deg) rotateY(360deg); }
+}
+@keyframes tazkira-float {
+  0%, 100% { transform: rotateZ(-4deg) rotateY(-10deg) rotateX(3deg) translateY(0); }
+  50% { transform: rotateZ(-2deg) rotateY(-4deg) rotateX(1deg) translateY(-7px); }
 }
 
 @media screen {

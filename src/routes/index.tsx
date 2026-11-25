@@ -88,10 +88,10 @@ function Landing() {
         <div className="home-launch-mark"><img src="/favicon.svg" width="72" height="72" alt="" /></div>
         <span>سیستم پرانیستل کېږي…</span>
       </div>}
-      <main dir="rtl" className="relative isolate min-h-dvh overflow-hidden bg-background px-4 py-5 text-foreground sm:px-6 sm:py-7 lg:px-8">
+      <main dir="rtl" className="relative isolate h-dvh overflow-hidden bg-background px-3 py-3 text-foreground sm:px-6 sm:py-4 lg:px-8">
         <div aria-hidden="true" className="pointer-events-none absolute -top-40 start-[-8rem] size-[28rem] rounded-full bg-primary/5 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 end-[-10rem] size-[32rem] rounded-full bg-accent/20 blur-3xl" />
-        <div className="relative mx-auto flex min-h-[calc(100dvh-2.5rem)] max-w-6xl flex-col sm:min-h-[calc(100dvh-3.5rem)]">
+        <div className="relative mx-auto flex h-full max-w-6xl flex-col">
           <header className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
@@ -107,29 +107,22 @@ function Landing() {
             </span>
           </header>
 
-          <div className="my-auto grid flex-1 items-center py-7 sm:py-10 lg:py-12">
-            <section aria-label="خوندي ننوتل" className="grid w-full overflow-hidden rounded-[1.75rem] border border-border/80 bg-card shadow-card lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
-              <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-14">
-                <div className="mb-8 flex items-center gap-3">
+          <div className="flex min-h-0 flex-1 items-center py-2 sm:py-4">
+            <section aria-label="خوندي ننوتل" className="grid max-h-full w-full overflow-hidden rounded-[1.75rem] border border-border/80 bg-card shadow-card md:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
+              <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-12">
+                <div className="mb-5 flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-2xl bg-secondary text-primary">
                     <LockKeyhole className="size-5" aria-hidden="true" />
                   </span>
-                  <div>
-                    <p className="text-sm font-bold">خوندي ننوتل</p>
-                    <p className="text-xs text-muted-foreground">یوازې د مجاز کارکوونکو لپاره</p>
+                  <div className="min-w-0">
+                    <h1 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
+                      {signedIn ? "تاسو لا دمخه ننوتلي یاست" : "سیستم ته ننوتل"}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {signedIn ? "ډشبورډ پرانیزئ." : "یوازې د مجاز کارکوونکو لپاره"}
+                    </p>
                   </div>
                 </div>
-
-                <h1 className="max-w-xl text-3xl font-extrabold leading-[1.55] tracking-tight sm:text-4xl">
-                  {signedIn ? "تاسو په بریالیتوب ننوتلي یاست" : "د خپل مجاز حساب له لارې سیستم ته ننوځئ"}
-                </h1>
-                <p className="mt-3 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base">
-                  {signedIn
-                    ? "د مرکز راپورونو ته د تګ لپاره ډشبورډ پرانیزئ."
-                    : "د دشت برچي د الکترونیکي تذکرو مرکز د راپورونو او کاري معلوماتو خوندي لاسرسی."}
-                </p>
-
-                <div className="my-7 h-px w-full bg-border/80" />
 
                 {loginError && (
                   <p role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm leading-6 text-destructive">
@@ -151,48 +144,35 @@ function Landing() {
                   </Button>
                 )}
 
-                <div className="mt-5 flex items-start gap-2.5 text-xs leading-6 text-muted-foreground">
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-                  <p>ستاسو رمز دلته نه لیکل کېږي؛ د ننوتلو تایید د Google له لارې ترسره کېږي.</p>
+                <div className="mt-3 flex items-center gap-2 text-xs leading-5 text-muted-foreground">
+                  <ShieldCheck className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                  <p>د ننوتلو تایید د Google له لارې کېږي.</p>
                 </div>
               </div>
 
-              <aside className="relative isolate flex min-h-[340px] flex-col justify-between overflow-hidden bg-primary p-7 text-primary-foreground sm:min-h-[390px] sm:p-10 lg:min-h-[560px] lg:p-12">
+              <aside className="relative isolate flex min-h-0 flex-col overflow-hidden bg-primary p-4 text-primary-foreground sm:p-7 lg:p-9">
                 <div aria-hidden="true" className="pattern-dots pointer-events-none absolute inset-0 opacity-60" />
                 <div aria-hidden="true" className="pointer-events-none absolute -end-24 -top-20 size-72 rounded-full border border-white/10" />
                 <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -start-24 size-80 rounded-full border border-white/10" />
                 <div className="relative">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold">
                     <ShieldCheck className="size-4" aria-hidden="true" />
-                    د مرکز رسمي ډشبورډ
+                    د مرکز ډشبورډ
                   </span>
 
-                  <div className="relative mx-auto my-9 flex w-full max-w-sm flex-col items-center">
-                    <div aria-hidden="true" className="relative grid min-h-56 w-full place-items-center">
-                      <span className="absolute size-48 rounded-full border border-dashed border-white/15 sm:size-56" />
-                      <RotatingTazkira animate={false} className="relative z-10 w-64 drop-shadow-2xl sm:w-72" />
+                  <h2 className="mt-3 text-lg font-bold leading-tight sm:text-2xl">د مرکز راپورونه</h2>
+
+                  <div className="relative mx-auto mt-2 flex w-full max-w-sm flex-col items-center sm:mt-5">
+                    <div aria-hidden="true" className="relative grid h-28 w-full place-items-center sm:h-44">
+                      <span className="absolute size-36 rounded-full border border-dashed border-white/15 sm:size-48" />
+                      <RotatingTazkira motion="flip" className="relative z-10 w-44 drop-shadow-2xl sm:w-56 lg:w-64" />
                     </div>
-                    <p className="mt-2 text-xs text-primary-foreground">د تذکرې د ډیزاین نمونه</p>
+                    <p className="mt-1 hidden text-xs text-primary-foreground sm:block">د تذکرې د ډیزاین نمونه</p>
                   </div>
-
-                  <h2 className="text-2xl font-bold leading-relaxed sm:text-3xl">د خدمت لپاره، د باور پر بنسټ</h2>
-                  <p className="mt-2 max-w-md text-sm leading-7 text-primary-foreground">
-                    مهم راپورونه او د مرکز کاري معلومات په روښانه، منظم او د لاسرسي له اجازو سره سم وګورئ.
-                  </p>
-                </div>
-
-                <div className="relative mt-8 border-t border-white/15 pt-5">
-                  <p className="text-xs leading-6 text-primary-foreground">د دشت برچي د الکترونیکي تذکرو مرکز</p>
-                  <p className="text-sm font-semibold">۱۴۰۵ هـ ش</p>
                 </div>
               </aside>
             </section>
           </div>
-
-          <footer className="flex flex-wrap items-center justify-between gap-2 pb-1 text-xs text-muted-foreground">
-            <span>د مرکز داخلي راپورونو ته خوندي لاسرسی</span>
-            <span>© ۱۴۰۵ د دشت برچي مرکز</span>
-          </footer>
         </div>
       </main>
     </>
