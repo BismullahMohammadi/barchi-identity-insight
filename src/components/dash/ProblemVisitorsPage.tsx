@@ -1,6 +1,6 @@
 import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Plus, Trash2, X, UserRound, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,16 +20,24 @@ import { recentReferralsQuery } from "@/lib/queries";
 export function ProblemVisitorsPage() {
   const can = useSectionActions("problem-visitors");
   const dashboard = useSectionActions("dashboard");
-  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: dashboard("view") });
+  const arrivals = useSectionActions("arrivals");
+  const canViewReferralDetails = dashboard("view") && arrivals("view");
+  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: canViewReferralDetails });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const qc = useQueryClient();
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
     queryFn: () => getProblemMatchDetails({ data: selectedId! }),
-    enabled: !!selectedId && dashboard("view"),
+    enabled: !!selectedId && canViewReferralDetails,
   });
-  const qc = useQueryClient();
+  useEffect(() => {
+    if (canViewReferralDetails) return;
+    setDetailOpen(false);
+    setSelectedId(null);
+    qc.removeQueries({ queryKey: ["problem-match-details"] });
+  }, [canViewReferralDetails, qc]);
   const [name, setName] = useState("");
   const [father, setFather] = useState("");
   const [issue, setIssue] = useState("");
@@ -197,7 +205,7 @@ export function ProblemVisitorsPage() {
                       {flagged ? "احتمالي تطابق" : v.status === "active" ? "فعال" : "حل شوی"}
                     </span>
                   </div>
-                  {(v.first_matched_at || currentMatches.has(v.id)) && dashboard("view") ? (
+                  {(v.first_matched_at || currentMatches.has(v.id)) && dashboard("view") && arrivals("view") ? (
                     <button
                       type="button"
                       className="py-1 text-sm font-bold underline after:absolute after:inset-0 after:rounded-lg focus-visible:outline-primary"
@@ -256,7 +264,7 @@ export function ProblemVisitorsPage() {
         )}
       </section>
       <Dialog.Root
-        open={detailOpen && !!selected}
+        open={detailOpen && !!selected && canViewReferralDetails}
         onOpenChange={setDetailOpen}
       >
         <Dialog.Portal>
