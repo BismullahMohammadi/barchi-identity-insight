@@ -423,6 +423,19 @@
     transform-style: preserve-3d;
     transform: rotateZ(-3deg);
   }
+  .tazkira-card-static {
+    transform: rotateZ(-4deg) rotateY(-10deg) rotateX(3deg);
+  }
+  .tazkira-card-static::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translate3d(2px, 2px, -5px);
+    border: 1px solid rgb(255 255 255 / 70%);
+    border-radius: 6% / 9%;
+    background: linear-gradient(145deg, #fff, #d7e9e3);
+    box-shadow: 0 12px 24px rgb(7 42 47 / 35%);
+  }
   .tazkira-face {
     position: absolute;
     inset: 0;
@@ -439,7 +452,7 @@
 }
 
 @media screen and (prefers-reduced-motion: no-preference) {
-  .tazkira-card { animation: tazkira-turn 12s linear infinite; }
+  .tazkira-card:not(.tazkira-card-static) { animation: tazkira-turn 12s linear infinite; }
 }
 @keyframes tazkira-turn {
   0%, 14% { transform: rotateZ(-3deg) rotateY(0); }

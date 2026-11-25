@@ -1,16 +1,24 @@
 import type { CSSProperties } from "react";
 
-export function RotatingTazkira({ className = "w-20 sm:w-28" }: { className?: string }) {
+export function RotatingTazkira({
+  className = "w-20 sm:w-28",
+  animate = true,
+}: {
+  className?: string;
+  animate?: boolean;
+}) {
   return (
     <span aria-hidden="true" className={`tazkira-display no-print ${className}`}>
-      <span className="tazkira-card">
+      <span className={`tazkira-card${animate ? "" : " tazkira-card-static"}`}>
         <img className="tazkira-face" src="/artwork/tazkira-front.webp" alt="" decoding="async" />
-        <img
-          className="tazkira-face tazkira-back"
-          src="/artwork/tazkira-back.webp"
-          alt=""
-          decoding="async"
-        />
+        {animate && (
+          <img
+            className="tazkira-face tazkira-back"
+            src="/artwork/tazkira-back.webp"
+            alt=""
+            decoding="async"
+          />
+        )}
       </span>
     </span>
   );

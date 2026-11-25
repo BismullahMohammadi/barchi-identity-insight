@@ -168,9 +168,9 @@ function Landing() {
                   </span>
 
                   <div className="relative mx-auto my-9 flex w-full max-w-sm flex-col items-center">
-                    <div aria-hidden="true" className="relative grid min-h-56 w-full place-items-center rounded-[2rem] border border-white/10 bg-white/5 sm:min-h-64">
-                      <span className="absolute size-44 rounded-full border border-dashed border-white/15 sm:size-52" />
-                      <RotatingTazkira className="relative z-10 w-48 drop-shadow-2xl sm:w-56" />
+                    <div aria-hidden="true" className="relative grid min-h-56 w-full place-items-center">
+                      <span className="absolute size-48 rounded-full border border-dashed border-white/15 sm:size-56" />
+                      <RotatingTazkira animate={false} className="relative z-10 w-64 drop-shadow-2xl sm:w-72" />
                     </div>
                     <p className="mt-2 text-xs text-primary-foreground">د تذکرې د ډیزاین نمونه</p>
                   </div>
