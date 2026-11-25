@@ -6,9 +6,15 @@ export const DASHBOARD_SECTIONS = [
 export const DASHBOARD_ACTIONS = ['view','create','edit','delete','print','export'] as const;
 
 type Access = { owner: boolean; permissions: Record<string,string[]> };
+
+function permissionSection(section: string): string {
+  // The weekly chart is an overview widget, not a separately assignable report.
+  return section === 'weekly' ? 'dashboard' : section;
+}
+
 export function canAccess(access: Access | undefined, section: string, action = 'view'): boolean {
   if (access?.owner) return true;
-  const grants = access?.permissions[section];
+  const grants = access?.permissions[permissionSection(section)];
   return Array.isArray(grants) && grants.includes('view') && grants.includes(action);
 }
 
