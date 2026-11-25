@@ -1,5 +1,5 @@
 export const DASHBOARD_SECTIONS = [
-  'dashboard','total','identity','control','services','distribution','bank',
+  'dashboard','weekly','total','identity','control','services','distribution','bank',
   'arrivals','archive-scan','annual','problem-visitors','fuel-management',
   'reconciliation','center-quality','settings',
 ] as const;
@@ -18,6 +18,7 @@ export function sectionForPage(slug: string | undefined) {
 
 export function availableActions(section: string): readonly string[] {
   switch (section) {
+    case 'weekly': return ['view'];
     case 'dashboard':
     case 'problem-visitors': return ['view','create','edit','delete'];
     case 'settings': return ['view','edit'];

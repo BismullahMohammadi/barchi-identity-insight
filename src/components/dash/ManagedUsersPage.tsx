@@ -34,7 +34,13 @@ function PermissionEditor({value,onChange}:{value:Perms;onChange:(next:Perms)=>v
        aria-label={`${names[section]} — ${actions[action]}`}
        disabled={!availableActions(section).includes(action)}
        checked={availableActions(section).includes(action) && (value[section]?.includes(action)??false)}
-       onChange={e=>{const current=value[section]??[];const next=e.target.checked?[...new Set([...current,action,...(action==='view'?[]:['view'])])]:action==='view'?[]:current.filter(a=>a!==action);onChange({...value,[section]:next});}}
+       onChange={e=>{
+        const current=value[section]??[];
+        const next:Perms={...value,[section]:e.target.checked?[...new Set([...current,action,...(action==='view'?[]:['view'])])]:action==='view'?[]:current.filter(a=>a!==action)};
+        if(section==='weekly'&&action==='view'&&e.target.checked) next['dashboard']=[...new Set([...(next['dashboard']??[]),'view'])];
+        if(section==='dashboard'&&action==='view'&&!e.target.checked) next['weekly']=[];
+        onChange(next);
+       }}
       /></td>)}
     </tr>)}</tbody>
    </table>

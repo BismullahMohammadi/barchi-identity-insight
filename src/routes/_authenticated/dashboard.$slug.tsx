@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { accessQuery } from "@/lib/queries";
+import { canAccess } from "@/lib/dashboard-access";
 import { getTab, sectionLabels } from "@/lib/tabs";
 
 const DashboardSettingsPage = lazy(() =>
@@ -29,6 +30,7 @@ const ReportPage = lazy(() => import("@/components/dash/ReportPage"));
 export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   beforeLoad: ({ params }) => {
     if (
+      params.slug === "weekly" ||
       params.slug !== "admin-users" &&
       params.slug !== "settings" &&
       params.slug !== "problem-visitors" &&
@@ -68,10 +70,18 @@ function Section({ slug }: { slug: string }) {
         <ManagedUsersPage />
       </OwnerOnly>
     );
-  if (slug === "settings") return <DashboardSettingsPage />;
-  if (slug === "problem-visitors") return <ProblemVisitorsPage />;
-  if (slug === "fuel-management") return <SimpleDieselReport />;
-  return <ReportPage slug={slug} />;
+  if (slug === "settings") return <PermissionOnly section="settings"><DashboardSettingsPage /></PermissionOnly>;
+  if (slug === "problem-visitors") return <PermissionOnly section="problem-visitors"><ProblemVisitorsPage /></PermissionOnly>;
+  if (slug === "fuel-management") return <PermissionOnly section="fuel-management"><SimpleDieselReport /></PermissionOnly>;
+  return <PermissionOnly section={slug}><ReportPage slug={slug} /></PermissionOnly>;
+}
+
+function PermissionOnly({ section, children }: { section: string; children: React.ReactNode }) {
+  const access = useQuery(accessQuery);
+  if (access.isLoading) return <p>د لاسرسي ارزونه روانه ده…</p>;
+  if (!canAccess(access.data, section))
+    return <p role="alert">دې برخې ته د لیدلو اجازه نه لرئ.</p>;
+  return <>{children}</>;
 }
 
 function OwnerOnly({ children }: { children: React.ReactNode }) {
