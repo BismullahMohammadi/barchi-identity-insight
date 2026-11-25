@@ -2,6 +2,8 @@
 
 An active manager's grants are stored in `public.dashboard_user_permissions` under their Supabase Auth user ID. In the user-management page, check the account email, active status and list of visible sections. For «د راپورونو مطابقت», grant «لیدل» on that section. This grants both the monthly report and staff reconciliation. The application reloads permissions every 15 seconds while open and on window focus.
 
+Detailed referral records (including names, father names and family-member counts) require both `dashboard:view` and `arrivals:view`. Dashboard-only access does not authorize recent or historical referral details. Saved match details additionally require `problem-visitors:view`.
+
 ## Deployment
 
 Apply the repository's permissions migration on the Supabase project identified by `supabase/config.toml`. Configure the verified owner's email in the server-side `OWNER_EMAILS` setting and verify that the corresponding Auth user has the active database super-admin row. User invitations also require server-side `SUPABASE_SERVICE_ROLE_KEY` and working Supabase invitation email settings.
