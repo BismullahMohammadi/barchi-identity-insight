@@ -3,7 +3,7 @@ import {GlobalDateProvider} from "@/lib/global-date-range";
 import {GlobalJalaliPicker} from "@/components/dash/GlobalJalaliPicker";
 import { createFileRoute, Link, Navigate, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LayoutDashboard, Fuel, AlertTriangle, LogOut, Menu, ShieldAlert, Settings, PanelRightOpen, ContactRound, ClipboardCheck, Landmark, Blocks, PackageCheck, Truck, CalendarRange, Files, ScanLine, PanelRightClose, PanelRightOpen as SidebarOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -95,7 +95,8 @@ function DashboardLayoutContent() {
   const access = useQuery(accessQuery);
   const profile = access.isError ? undefined : access.data;
   const canDashboard = canAccess(profile, "dashboard");
-  const canMatch = canDashboard && canAccess(profile, "problem-visitors");
+  const canViewArrivals = canAccess(profile, "arrivals");
+  const canMatch = canDashboard && canAccess(profile, "problem-visitors") && canViewArrivals;
   const section = sectionForPage(currentSlug);
   const firstSection = DASHBOARD_SECTIONS.find(key => canAccess(profile,key));
   const completion = useStaffCompletionMonitor(canDashboard);
@@ -116,6 +117,18 @@ function DashboardLayoutContent() {
   const reportsReady = settings.showReportHealth && !!completion.data && !completion.error && !completion.isLoading;
   const reportsComplete = reportsReady && completion.data?.complete === true;
   const qc = useQueryClient();
+  useEffect(() => {
+    if (canViewArrivals) return;
+    const sensitiveKeys = [
+      ["recent-referrals"],
+      ["historical-referrals"],
+      ["problem-match-details"],
+    ] as const;
+    for (const queryKey of sensitiveKeys) {
+      void qc.cancelQueries({ queryKey });
+      qc.removeQueries({ queryKey });
+    }
+  }, [canViewArrivals, qc]);
   const navigate = useNavigate();
   const matchesQuery=useQuery({...recentReferralsQuery(60_000),enabled:canMatch});
   const matchCount=matchesQuery.data?.potentialMatches?.length??0;
