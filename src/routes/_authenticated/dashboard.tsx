@@ -123,6 +123,7 @@ function DashboardLayoutContent() {
       ["recent-referrals"],
       ["historical-referrals"],
       ["problem-match-details"],
+      ["visitor-archive"],
     ] as const;
     for (const queryKey of sensitiveKeys) {
       void qc.cancelQueries({ queryKey });
