@@ -450,7 +450,7 @@ export const scanVisitorArchive = createServerFn({method:"POST"}).middleware([re
    return input;
  }).handler(async({data,context})=>{
   setResponseHeader("Cache-Control","private, no-store");
-  if(!(await hasDashboardPermissions(context,["dashboard","problem-visitors"])))throw new Error("ACCESS_DENIED");
+  if(!(await hasDashboardPermissions(context,["dashboard","problem-visitors","arrivals"])))throw new Error("ACCESS_DENIED");
   const {readVisitorRows}=await import("./problem-visitor-sheet.server");
   const visitors=await readVisitorRows(context,true);
   if(!visitors.length)return {next:null,scanned:0};
