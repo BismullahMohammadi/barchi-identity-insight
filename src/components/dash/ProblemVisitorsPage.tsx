@@ -52,7 +52,7 @@ export function ProblemVisitorsPage() {
   const activeIds = q.data?.visitors.filter((v) => v.status === "active").map((v) => v.id);
   const archive = useQuery({
     queryKey: ["visitor-archive", activeIds],
-    enabled: dashboard("view") && !!activeIds?.length,
+    enabled: canViewReferralDetails && !!activeIds?.length,
     staleTime: 300_000,
     refetchInterval: 600_000,
     retry: false,
@@ -100,8 +100,8 @@ export function ProblemVisitorsPage() {
           ثبتونه د مراجع د نوم او د پلار د نوم د پرتله کولو لپاره کارېږي.
         </p>
       </div>
-      {dashboard("view") && <ProblemVisitorAlerts />}
-      {dashboard("view") && !!activeIds?.length && (
+      {canViewReferralDetails && <ProblemVisitorAlerts />}
+      {canViewReferralDetails && !!activeIds?.length && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2 text-sm">
           <span role="status">
             {archive.isFetching
