@@ -117,22 +117,20 @@ function DashboardLayoutContent() {
   const reportsReady = settings.showReportHealth && !!completion.data && !completion.error && !completion.isLoading;
   const reportsComplete = reportsReady && completion.data?.complete === true;
   const qc = useQueryClient();
+  const canViewReferralData = canDashboard && canViewArrivals;
   useEffect(() => {
-    if (canViewArrivals) return;
-    const sensitiveKeys = [
-      ["recent-referrals"],
-      ["historical-referrals"],
-      ["problem-match-details"],
-      ["visitor-archive"],
-    ] as const;
+    const sensitiveKeys: readonly (readonly string[])[] = [
+      ...(!canViewReferralData ? [["recent-referrals"], ["historical-referrals"]] : []),
+      ...(!canMatch ? [["problem-match-details"], ["visitor-archive"]] : []),
+    ];
     for (const queryKey of sensitiveKeys) {
       void qc.cancelQueries({ queryKey });
       qc.removeQueries({ queryKey });
     }
-  }, [canViewArrivals, qc]);
+  }, [canViewReferralData, canMatch, qc]);
   const navigate = useNavigate();
   const matchesQuery=useQuery({...recentReferralsQuery(60_000),enabled:canMatch});
-  const matchCount=matchesQuery.data?.potentialMatches?.length??0;
+  const matchCount=canMatch ? matchesQuery.data?.potentialMatches?.length??0 : 0;
 
   async function signOut() {
     await qc.cancelQueries();
