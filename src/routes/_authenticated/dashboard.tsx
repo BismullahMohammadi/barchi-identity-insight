@@ -17,6 +17,7 @@ import { NewProblemVisitorNotice } from "@/components/dash/NewProblemVisitorNoti
 import { ProblemNotificationBell } from "@/components/dash/ProblemNotificationBell";
 import { useDashboardSettings } from "@/lib/dashboard-settings";
 import { useStaffCompletionMonitor } from "@/lib/staff-completion-alerts";
+import type { RecentReferrals } from "@/lib/recent-referrals";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -96,7 +97,8 @@ function DashboardLayoutContent() {
   const profile = access.isError ? undefined : access.data;
   const canDashboard = canAccess(profile, "dashboard");
   const canViewArrivals = canAccess(profile, "arrivals");
-  const canMatch = canDashboard && canAccess(profile, "problem-visitors") && canViewArrivals;
+  const canViewProblemVisitors = canAccess(profile, "problem-visitors");
+  const canMatch = canDashboard && canViewProblemVisitors && canViewArrivals;
   const section = sectionForPage(currentSlug);
   const firstSection = DASHBOARD_SECTIONS.find(key => canAccess(profile,key));
   const completion = useStaffCompletionMonitor(canDashboard);
@@ -121,13 +123,20 @@ function DashboardLayoutContent() {
   useEffect(() => {
     const sensitiveKeys: readonly (readonly string[])[] = [
       ...(!canViewReferralData ? [["recent-referrals"], ["historical-referrals"]] : []),
+      ...(!canViewProblemVisitors ? [["problem-visitors"]] : []),
       ...(!canMatch ? [["problem-match-details"], ["visitor-archive"]] : []),
     ];
     for (const queryKey of sensitiveKeys) {
       void qc.cancelQueries({ queryKey });
       qc.removeQueries({ queryKey });
     }
-  }, [canViewReferralData, canMatch, qc]);
+    if (!canViewProblemVisitors && canViewReferralData) {
+      void qc.cancelQueries({ queryKey: ["recent-referrals"] });
+      qc.setQueriesData<RecentReferrals>({ queryKey: ["recent-referrals"] }, current =>
+        current ? { ...current, potentialMatches: [] } : current,
+      );
+    }
+  }, [canViewReferralData, canViewProblemVisitors, canMatch, qc]);
   const navigate = useNavigate();
   const matchesQuery=useQuery({...recentReferralsQuery(60_000),enabled:canMatch});
   const matchCount=canMatch ? matchesQuery.data?.potentialMatches?.length??0 : 0;
