@@ -136,7 +136,7 @@ function Overview() {
   const coordination = useQuery({...dailyCoordinationQuery(refreshMs),enabled:canView("dashboard")});
   const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:canView("dashboard")&&canViewArrivals&&settings.showDailyVisitors});
   const historicalSupported=!!range&&(range.to.y-range.from.y)*12+range.to.m-range.from.m<=2;
-  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:canView("dashboard")&&canViewArrivals&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
+  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:({signal})=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)},signal}),enabled:canView("dashboard")&&canViewArrivals&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
   const recentData=range?(historicalSupported?historical.data:undefined):recent.data;
   const recentLoading=range?historical.isLoading:recent.isLoading;
   const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
