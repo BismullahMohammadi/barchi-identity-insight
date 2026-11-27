@@ -22,18 +22,23 @@ export function ProblemVisitorsPage() {
   const dashboard = useSectionActions("dashboard");
   const arrivals = useSectionActions("arrivals");
   const canViewReferralDetails = dashboard("view") && arrivals("view");
-  const canViewProblemMatches = can("view") && canViewReferralDetails;
-  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: canViewReferralDetails });
+  const canViewProblemVisitors = can("view");
+  const canViewProblemMatches = canViewProblemVisitors && canViewReferralDetails;
+  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: canViewProblemMatches });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const qc = useQueryClient();
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
-    queryFn: () => getProblemMatchDetails({ data: selectedId! }),
+    queryFn: ({ signal }) => getProblemMatchDetails({ data: selectedId!, signal }),
     enabled: !!selectedId && canViewProblemMatches,
   });
   useEffect(() => {
+    if (!canViewProblemVisitors) {
+      void qc.cancelQueries({ queryKey: ["problem-visitors"] });
+      qc.removeQueries({ queryKey: ["problem-visitors"] });
+    }
     if (canViewProblemMatches) return;
     setDetailOpen(false);
     setSelectedId(null);
@@ -41,13 +46,14 @@ export function ProblemVisitorsPage() {
     qc.removeQueries({ queryKey: ["problem-match-details"] });
     void qc.cancelQueries({ queryKey: ["visitor-archive"] });
     qc.removeQueries({ queryKey: ["visitor-archive"] });
-  }, [canViewProblemMatches, qc]);
+  }, [canViewProblemVisitors, canViewProblemMatches, qc]);
   const [name, setName] = useState("");
   const [father, setFather] = useState("");
   const [issue, setIssue] = useState("");
   const q = useQuery({
     queryKey: ["problem-visitors"],
-    queryFn: () => getProblemVisitors(),
+    queryFn: ({ signal }) => getProblemVisitors({ signal }),
+    enabled: canViewProblemVisitors,
     refetchInterval: 60_000,
     retry: false,
   });
