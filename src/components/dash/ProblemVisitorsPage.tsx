@@ -22,6 +22,7 @@ export function ProblemVisitorsPage() {
   const dashboard = useSectionActions("dashboard");
   const arrivals = useSectionActions("arrivals");
   const canViewReferralDetails = dashboard("view") && arrivals("view");
+  const canViewProblemMatches = can("view") && canViewReferralDetails;
   const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: canViewReferralDetails });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
   const [detailOpen, setDetailOpen] = useState(false);
@@ -30,14 +31,17 @@ export function ProblemVisitorsPage() {
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
     queryFn: () => getProblemMatchDetails({ data: selectedId! }),
-    enabled: !!selectedId && canViewReferralDetails,
+    enabled: !!selectedId && canViewProblemMatches,
   });
   useEffect(() => {
-    if (canViewReferralDetails) return;
+    if (canViewProblemMatches) return;
     setDetailOpen(false);
     setSelectedId(null);
+    void qc.cancelQueries({ queryKey: ["problem-match-details"] });
     qc.removeQueries({ queryKey: ["problem-match-details"] });
-  }, [canViewReferralDetails, qc]);
+    void qc.cancelQueries({ queryKey: ["visitor-archive"] });
+    qc.removeQueries({ queryKey: ["visitor-archive"] });
+  }, [canViewProblemMatches, qc]);
   const [name, setName] = useState("");
   const [father, setFather] = useState("");
   const [issue, setIssue] = useState("");
@@ -52,7 +56,7 @@ export function ProblemVisitorsPage() {
   const activeIds = q.data?.visitors.filter((v) => v.status === "active").map((v) => v.id);
   const archive = useQuery({
     queryKey: ["visitor-archive", activeIds],
-    enabled: canViewReferralDetails && !!activeIds?.length,
+    enabled: canViewProblemMatches && !!activeIds?.length,
     staleTime: 300_000,
     refetchInterval: 600_000,
     retry: false,
@@ -100,8 +104,8 @@ export function ProblemVisitorsPage() {
           ثبتونه د مراجع د نوم او د پلار د نوم د پرتله کولو لپاره کارېږي.
         </p>
       </div>
-      {canViewReferralDetails && <ProblemVisitorAlerts />}
-      {canViewReferralDetails && !!activeIds?.length && (
+      {canViewProblemMatches && <ProblemVisitorAlerts />}
+      {canViewProblemMatches && !!activeIds?.length && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2 text-sm">
           <span role="status">
             {archive.isFetching
@@ -205,7 +209,7 @@ export function ProblemVisitorsPage() {
                       {flagged ? "احتمالي تطابق" : v.status === "active" ? "فعال" : "حل شوی"}
                     </span>
                   </div>
-                  {(v.first_matched_at || currentMatches.has(v.id)) && dashboard("view") && arrivals("view") ? (
+                  {(v.first_matched_at || currentMatches.has(v.id)) && canViewProblemMatches ? (
                     <button
                       type="button"
                       className="py-1 text-sm font-bold underline after:absolute after:inset-0 after:rounded-lg focus-visible:outline-primary"
@@ -264,7 +268,7 @@ export function ProblemVisitorsPage() {
         )}
       </section>
       <Dialog.Root
-        open={detailOpen && !!selected && canViewReferralDetails}
+        open={detailOpen && !!selected && canViewProblemMatches}
         onOpenChange={setDetailOpen}
       >
         <Dialog.Portal>
