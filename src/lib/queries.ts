@@ -40,7 +40,7 @@ export const dailyCoordinationQuery = (refreshMs = REFRESH_MS) => queryOptions({
 
 export const recentReferralsQuery=(refreshMs=REFRESH_MS)=>queryOptions({
  queryKey:["recent-referrals"],
- queryFn:()=>getRecentReferrals(),
+ queryFn:({signal})=>getRecentReferrals({signal}),
  staleTime:30_000,refetchInterval:refreshMs,refetchIntervalInBackground:false,retry:1,
 });
 export const staffCompletenessQuery = (refreshMs=REFRESH_MS) => queryOptions({
