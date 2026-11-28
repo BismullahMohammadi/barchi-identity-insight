@@ -9,18 +9,18 @@ import { sheetConnectionHeaders } from "./sheets-access.server";
 
 export type ProblemVisitor = { id:string; full_name:string; father_name:string; issue:string; status:"active"|"resolved"; first_matched_at?: string | null; created_at:string };
 type Command = {action:"add";full_name:string;father_name:string;issue:string} | {action:"status";id:string;status:"active"|"resolved"} | {action:"delete";id:string};
-export const getProblemVisitorSheetHealth=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+export const getProblemVisitorSheetHealth=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context,signal})=>{
  setResponseHeader("Cache-Control","private, no-store");
  await requireDashboardPermission(context,"problem-visitors");
- const response=await fetch(`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${visitorWorkbook}/values/${visitorRange}`,{headers:sheetConnectionHeaders(),cache:"no-store",signal:AbortSignal.timeout(10000)});
+ const response=await fetch(`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${visitorWorkbook}/values/${visitorRange}`,{headers:sheetConnectionHeaders(),cache:"no-store",signal:signal ?? AbortSignal.timeout(10000)});
  if(!response.ok){await response.text();throw new Error(`VISITOR_SHEET_UNAVAILABLE_${response.status}`);}
  const {values}=await response.json() as {values?:string[][]};
  const {entries,skipped}=parseProblemVisitorSheet(values??[]);
  return {status:"available" as const,validRows:entries.length,skippedRows:skipped};
 });
-export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context,signal})=>{
  setResponseHeader("Cache-Control","private, no-store");
- return loadProblemVisitors(context);
+ return loadProblemVisitors(context,false,signal);
 });
 export const changeProblemVisitor=createServerFn({method:"POST"}).middleware([requireSupabaseAuth])
  .validator((data:Command)=>{
@@ -53,7 +53,7 @@ export const getProblemMatchDetails = createServerFn({method:"POST"}).middleware
  .validator((id:string)=>{
    if(typeof id!=="string" || !/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id))throw new Error("INVALID_REQUEST");
    return id;
- }).handler(async({data:id,context})=>{
+ }).handler(async({data:id,context,signal})=>{
    setResponseHeader("Cache-Control","private, no-store");
    await requireDashboardPermission(context,"problem-visitors");
    await requireDashboardPermission(context,"dashboard");
@@ -62,9 +62,12 @@ export const getProblemMatchDetails = createServerFn({method:"POST"}).middleware
    const db=supabaseAdmin as unknown as SupabaseClient;
    const details: MatchDetail[]=[];
    for(let offset=0;;offset+=200){
-     const {data,error}=await db.from("problem_match_details")
+     signal?.throwIfAborted();
+     let query=db.from("problem_match_details")
        .select("detail,problem_visitors!inner(user_id)").eq("visitor_id",id).eq("problem_visitors.user_id",context.userId)
        .order("recorded_at",{ascending:false}).order("record_key").range(offset,offset+199);
+     if(signal)query=query.abortSignal(signal);
+     const {data,error}=await query;
      if(error)throw new Error("MATCH_DETAILS_READ_FAILED");
      details.push(...data.map(row=>row.detail as MatchDetail));
      if(data.length<200)return details;
