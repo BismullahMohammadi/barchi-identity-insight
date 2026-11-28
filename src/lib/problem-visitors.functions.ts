@@ -1,6 +1,6 @@
 import { loadProblemVisitors } from "./problem-visitor-sheet.server";
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseHeader } from "@tanstack/react-start/server";
+import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireDashboardPermission } from "./dashboard-permissions.server";
@@ -9,7 +9,8 @@ import { sheetConnectionHeaders } from "./sheets-access.server";
 
 export type ProblemVisitor = { id:string; full_name:string; father_name:string; issue:string; status:"active"|"resolved"; first_matched_at?: string | null; created_at:string };
 type Command = {action:"add";full_name:string;father_name:string;issue:string} | {action:"status";id:string;status:"active"|"resolved"} | {action:"delete";id:string};
-export const getProblemVisitorSheetHealth=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context,signal})=>{
+export const getProblemVisitorSheetHealth=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ const signal=getRequest().signal;
  setResponseHeader("Cache-Control","private, no-store");
  await requireDashboardPermission(context,"problem-visitors");
  const response=await fetch(`https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${visitorWorkbook}/values/${visitorRange}`,{headers:sheetConnectionHeaders(),cache:"no-store",signal:signal ?? AbortSignal.timeout(10000)});
@@ -18,7 +19,8 @@ export const getProblemVisitorSheetHealth=createServerFn({method:"GET"}).middlew
  const {entries,skipped}=parseProblemVisitorSheet(values??[]);
  return {status:"available" as const,validRows:entries.length,skippedRows:skipped};
 });
-export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context,signal})=>{
+export const getProblemVisitors=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ const signal=getRequest().signal;
  setResponseHeader("Cache-Control","private, no-store");
  return loadProblemVisitors(context,false,signal);
 });
@@ -53,7 +55,8 @@ export const getProblemMatchDetails = createServerFn({method:"POST"}).middleware
  .validator((id:string)=>{
    if(typeof id!=="string" || !/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id))throw new Error("INVALID_REQUEST");
    return id;
- }).handler(async({data:id,context,signal})=>{
+ }).handler(async({data:id,context})=>{
+   const signal=getRequest().signal;
    setResponseHeader("Cache-Control","private, no-store");
    await requireDashboardPermission(context,"problem-visitors");
    await requireDashboardPermission(context,"dashboard");
