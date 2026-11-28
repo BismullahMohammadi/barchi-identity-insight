@@ -62,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
+const FIRST_SEEN_STORAGE_KEY = "barchi-intake-first-seen-v1";
 type SummaryMetric = {slug:string;artwork?: "new-card";label:string;value:number|null;change:number|null;icon:typeof Files;tone:"teal"|"blue"|"amber"|"violet"|"emerald";money?:boolean;description?:string};
 const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
@@ -130,6 +131,7 @@ function Overview() {
   const access=useQuery(accessQuery);
   const canView=(slug:string)=>access.data?.owner===true || access.data?.permissions?.[slug]?.includes("view")===true;
   const canViewArrivals=canView("arrivals");
+  const canKeepReferralIds=access.data?.owner===true || (canView("dashboard")&&canViewArrivals);
   const allowedSlugs=OVERVIEW_SLUGS.filter(canView);
   const q = useQuery({...sheetQuery(allowedSlugs, refreshMs),enabled:access.isSuccess && allowedSlugs.length>0});
   const daily = useQuery({...dailyFormsQuery(refreshMs),enabled:canView("dashboard")});
@@ -142,11 +144,18 @@ function Overview() {
   const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
   const [firstSeenTimes,setFirstSeenTimes]=useState<Record<string,string>>({});
   useEffect(()=>{
+    if(!access.isSuccess&&!access.isError)return;
+    if(access.isSuccess&&canKeepReferralIds)return;
+    try{window.localStorage.removeItem(FIRST_SEEN_STORAGE_KEY);}catch{/* browser storage may be disabled */}
+    setFirstSeenTimes({});
+  },[access.isSuccess,access.isError,canKeepReferralIds]);
+  useEffect(()=>{
+    if(!access.isSuccess||!canKeepReferralIds)return;
     const people=recentData?.newReferrals.people;
     if(!people?.length)return;
     // Keep first observation per stable Sheet record, not each refresh timestamp.
     try {
-      const storageKey="barchi-intake-first-seen-v1";
+      const storageKey=FIRST_SEEN_STORAGE_KEY;
       const stored=JSON.parse(window.localStorage.getItem(storageKey)??"{}") as Record<string,string>;
       const next={...stored};
       let changed=false;
@@ -157,7 +166,7 @@ function Overview() {
       if(changed)window.localStorage.setItem(storageKey,JSON.stringify(next));
       setFirstSeenTimes(next);
     }catch { /* Private browser storage may be disabled. */ }
-  },[recentData?.newReferrals]);
+  },[access.isSuccess,canKeepReferralIds,recentData?.newReferrals]);
 
 
   const {y:year,m:month,d:day} = today;
