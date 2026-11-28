@@ -32,4 +32,20 @@ describe('server-side manager permission checks',()=>{
    expect(await hasDashboardPermission(context(null,{message:'database unavailable'}),'total')).toBe(false);
    expect(await hasDashboardPermission(context({active:true,role:'super_admin',permissions:{total:['view']}}),'total')).toBe(false);
  });
+ it('requires both dashboard and arrivals grants for referral details',async()=>{
+   vi.stubEnv('OWNER_EMAILS','owner@example.org');
+   const dashboardOnly=context({active:true,role:'manager',permissions:{dashboard:['view']}});
+   expect(await hasDashboardPermissions(dashboardOnly,['dashboard','arrivals'])).toBe(false);
+   const arrivalsManager=context({active:true,role:'manager',permissions:{dashboard:['view'],arrivals:['view']}});
+   expect(await hasDashboardPermissions(arrivalsManager,['dashboard','arrivals'])).toBe(true);
+ });
+
+ it('requires problem visitors and arrivals grants for saved referral details',async()=>{
+   vi.stubEnv('OWNER_EMAILS','owner@example.org');
+   const withoutArrivals=context({active:true,role:'manager',permissions:{dashboard:['view'],'problem-visitors':['view']}});
+   expect(await hasDashboardPermissions(withoutArrivals,['dashboard','problem-visitors','arrivals'])).toBe(false);
+   const allowed=context({active:true,role:'manager',permissions:{dashboard:['view'],'problem-visitors':['view'],arrivals:['view']}});
+   expect(await hasDashboardPermissions(allowed,['dashboard','problem-visitors','arrivals'])).toBe(true);
+ });
+
 });

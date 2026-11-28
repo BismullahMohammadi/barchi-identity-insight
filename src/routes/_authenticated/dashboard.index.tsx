@@ -62,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 const fmt = (n: number) => n.toLocaleString("fa-AF", { maximumFractionDigits: 0 });
+const FIRST_SEEN_STORAGE_KEY = "barchi-intake-first-seen-v1";
 type SummaryMetric = {slug:string;artwork?: "new-card";label:string;value:number|null;change:number|null;icon:typeof Files;tone:"teal"|"blue"|"amber"|"violet"|"emerald";money?:boolean;description?:string};
 const PLACEHOLDERS:SummaryMetric[]=[
  {slug:"total",label:"عمومي راپور (انفرادي)",value:null,change:null,icon:Users,tone:"teal",description:"پاس شوي + مثنی + تجدید"},
@@ -129,23 +130,32 @@ function Overview() {
   const refreshMs = settingsRefreshMs(settings);
   const access=useQuery(accessQuery);
   const canView=(slug:string)=>access.data?.owner===true || access.data?.permissions?.[slug]?.includes("view")===true;
+  const canViewArrivals=canView("arrivals");
+  const canKeepReferralIds=access.data?.owner===true || (canView("dashboard")&&canViewArrivals);
   const allowedSlugs=OVERVIEW_SLUGS.filter(canView);
   const q = useQuery({...sheetQuery(allowedSlugs, refreshMs),enabled:access.isSuccess && allowedSlugs.length>0});
   const daily = useQuery({...dailyFormsQuery(refreshMs),enabled:canView("dashboard")});
   const coordination = useQuery({...dailyCoordinationQuery(refreshMs),enabled:canView("dashboard")});
-  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:canView("dashboard")&&settings.showDailyVisitors});
+  const recent = useQuery({...recentReferralsQuery(refreshMs),enabled:canView("dashboard")&&canViewArrivals&&settings.showDailyVisitors});
   const historicalSupported=!!range&&(range.to.y-range.from.y)*12+range.to.m-range.from.m<=2;
-  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:()=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)}}),enabled:canView("dashboard")&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
+  const historical=useQuery({queryKey:["historical-referrals",range?.from,range?.to],queryFn:({signal})=>getHistoricalReferrals({data:{from:formatJ(range!.from),to:formatJ(range!.to)},signal}),enabled:canView("dashboard")&&canViewArrivals&&historicalSupported&&settings.showDailyVisitors,staleTime:60000,retry:1});
   const recentData=range?(historicalSupported?historical.data:undefined):recent.data;
   const recentLoading=range?historical.isLoading:recent.isLoading;
   const recentError=range?(historicalSupported?historical.error:new Error("له درېیو میاشتو اوږده تاریخي موده نه ده ملاتړ شوې")):recent.error;
   const [firstSeenTimes,setFirstSeenTimes]=useState<Record<string,string>>({});
   useEffect(()=>{
+    if(!access.isSuccess&&!access.isError)return;
+    if(access.isSuccess&&canKeepReferralIds)return;
+    try{window.localStorage.removeItem(FIRST_SEEN_STORAGE_KEY);}catch{/* browser storage may be disabled */}
+    setFirstSeenTimes({});
+  },[access.isSuccess,access.isError,canKeepReferralIds]);
+  useEffect(()=>{
+    if(!access.isSuccess||!canKeepReferralIds)return;
     const people=recentData?.newReferrals.people;
     if(!people?.length)return;
     // Keep first observation per stable Sheet record, not each refresh timestamp.
     try {
-      const storageKey="barchi-intake-first-seen-v1";
+      const storageKey=FIRST_SEEN_STORAGE_KEY;
       const stored=JSON.parse(window.localStorage.getItem(storageKey)??"{}") as Record<string,string>;
       const next={...stored};
       let changed=false;
@@ -156,7 +166,7 @@ function Overview() {
       if(changed)window.localStorage.setItem(storageKey,JSON.stringify(next));
       setFirstSeenTimes(next);
     }catch { /* Private browser storage may be disabled. */ }
-  },[recentData?.newReferrals]);
+  },[access.isSuccess,canKeepReferralIds,recentData?.newReferrals]);
 
 
   const {y:year,m:month,d:day} = today;
@@ -257,7 +267,7 @@ function Overview() {
 
       {range&&!historicalSupported&&<p role="status" className="rounded-lg border bg-muted/30 p-3 text-sm">د مراجعینو د تفصیلي لېست لپاره درې میاشتې یا تر دې کمه موده وټاکئ.</p>}
       {range&&historicalSupported&&<p role="status" className="rounded-lg border p-3 text-xs text-muted-foreground">د ټاکلې مودې د مراجعینو شمېرې د ثبت او جمع‌آورۍ له شیټونو څخه دي؛ د تایید او رد تاریخي حالتونه لا په دې مودې کې نه دي محاسبه شوي.</p>}
-      {settings.showDailyVisitors && (!range||historicalSupported) && (
+      {settings.showDailyVisitors && canViewArrivals && (!range||historicalSupported) && (
         <section className="dashboard-panel p-4 sm:p-5" aria-label="ورځني مراجعین">
           <h2 className="mb-3 text-base font-bold">ورځني مراجعین</h2>
           <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2" aria-label="ټیمونو ته د ورځې معرفي شوي مراجعین">

@@ -1,6 +1,6 @@
 import { loadProblemVisitors, matchRecordKey, rememberProblemMatches } from "./problem-visitor-sheet.server";
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseHeader } from "@tanstack/react-start/server";
+import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isEmailAllowed } from "./access";
 import { hasDashboardPermission, hasDashboardPermissions } from "./dashboard-permissions.server";
@@ -223,8 +223,9 @@ export const getStaffDailyCompleteness = createServerFn({method:"GET"})
 
 /** Second source for completion checking; independent of the registration report. */
 const INSIJAM_SPREADSHEET_ID="1W82u37NeQ4Og7rANME6i3jxj1aeCZhhvIj3YtmopQ2g";
-async function sheetsGet<T>(url:string,headers:Record<string,string>,errorCode:string):Promise<T>{
- const response=await fetch(url,{headers});
+async function sheetsGet<T>(url:string,headers:Record<string,string>,errorCode:string,signal?:AbortSignal):Promise<T>{
+ signal?.throwIfAborted();
+ const response=await fetch(url,{headers,...(signal?{signal}:{})});
  if(!response.ok)throw new Error(`${errorCode}_${response.status}`);
  return response.json() as Promise<T>;
 }
@@ -262,17 +263,18 @@ export const getStateReportForYesterday=createServerFn({method:"GET"}).middlewar
 export const getRecentReferrals=createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
  .handler(async({context}):Promise<RecentReferrals>=>{
+  const signal=getRequest().signal;
   setResponseHeader("Cache-Control","private, no-store");
-  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
+  if(!(await hasDashboardPermissions(context,["dashboard","arrivals"])))throw new Error("ACCESS_DENIED");
   const headers=sheetConnectionHeaders();
   const today=todayJalali();
-  const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR");
+  const intakeMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"FORMS_SHEETS_ERROR",signal);
   const intakeTitles=(intakeMeta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
   const month=MONTH_NAMES[today.m]??"";
   const collection=intakeTitles.find(title=>
    title.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(title)&&
    (title.includes(String(today.y))||title.includes("۱۴۰۵")));
-  const intakeData=collection?await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR"):{values:[] as unknown[][]};
+  const intakeData=collection?await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${collection.replace(/'/g,"''")}'!A1:H5000`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR",signal):{values:[] as unknown[][]};
   const newReferrals=newestCollectedPeople(intakeData.values??[],today,Number.POSITIVE_INFINITY);
   // Daily verification sheets are dated separately from the monthly intake sheet.
   // Never borrow yesterday's rejection reasons for today's intake records.
@@ -282,7 +284,7 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   let rejectedToday=new Map<string,string>();
   if(dailyVerification){
    try{
-    const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR");
+    const dailyGrid=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${DAILY_FORMS_SPREADSHEET_ID}/values/${encodeURIComponent(`'${dailyVerification.name.replace(/'/g,"''")}'!A1:AP600`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"FORMS_SHEETS_ERROR",signal);
     rejectedToday=extractRejectedFiles(dailyGrid.values??[]);
     birthConfirmed=birthCardConfirmations(dailyGrid.values??[]);
     dailyApprovals=dailyApprovalDetails(dailyGrid.values??[]);
@@ -291,7 +293,8 @@ export const getRecentReferrals=createServerFn({method:"GET"})
      if(key&&dailyApprovals.has(key))person.dailyApproved=true;
      else if(key&&rejectedToday.has(key))person.rejectionReason=rejectedToday.get(key);
     }
-   }catch{
+   }catch(error){
+    if(signal?.aborted) throw error;
     // Preserve intake list when verification sheet is unavailable; never guess a reason.
     console.error(`[recent-referrals] verification read failed for ${formatJ(today)}`);
    }
@@ -302,14 +305,15 @@ export const getRecentReferrals=createServerFn({method:"GET"})
   let registrationTarget:{name:string;date:JDate}|null=null;
   let registrationError:string|null=null;
   try{
-   const coordinationMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"COORDINATION_SHEETS_ERROR");
+   const coordinationMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}?fields=sheets(properties(title))`,headers,"COORDINATION_SHEETS_ERROR",signal);
    coordinationTitles=(coordinationMeta.sheets??[]).map(s=>s.properties?.title).filter((x):x is string=>!!x);
    registrationTarget=selectTodayCoordinationTab(coordinationTitles,today).today;
    if(registrationTarget){
-    const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${registrationTarget.name.replace(/'/g,"''")}'!A1:Z400`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR");
+    const data=await sheetsGet<{values?:unknown[][]}>(`${GATEWAY_URL}/spreadsheets/${COORDINATION_SPREADSHEET_ID}/values/${encodeURIComponent(`'${registrationTarget.name.replace(/'/g,"''")}'!A1:Z400`)}?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS`,headers,"COORDINATION_SHEETS_ERROR",signal);
     registrationGrid=data.values??[];
    }
   }catch(error){
+   if(signal?.aborted) throw error;
    registrationError=error instanceof Error&&/^COORDINATION_SHEETS_ERROR_\d+$/.test(error.message)?error.message:"COORDINATION_SHEETS_ERROR";
    // Safe log: error code and Jalali date only, no sheet content.
    console.error(`[recent-referrals] registration read failed: ${registrationError} for ${formatJ(today)}`);
@@ -379,9 +383,9 @@ export const getRecentReferrals=createServerFn({method:"GET"})
     fetchedAt:Date.now()
   };
   const watchList = await hasDashboardPermission(context,"problem-visitors")
-    ? (await loadProblemVisitors(context,true)).visitors : [];
+    ? (await loadProblemVisitors(context,true,signal)).visitors : [];
   const matches=findPotentialProblemMatches(watchList,fullGroups);
-  const matchHistorySaved = await rememberProblemMatches(context.userId, matches);
+  const matchHistorySaved = await rememberProblemMatches(context.userId, matches,signal);
   return {
     matchHistorySaved,
     newReferrals:{...newReferrals,source:collection??null},registration,teamCounts:registrationTeamCounts(registrationGrid),birthCardAddedCount,fetchedAt:Date.now(),
@@ -397,35 +401,38 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   return {from,to};
  })
  .handler(async({data,context})=>{
+  const signal=getRequest().signal;
   setResponseHeader("Cache-Control","private, no-store");
-  if(!(await hasDashboardPermission(context,"dashboard","view")))throw new Error("ACCESS_DENIED");
+  if(!(await hasDashboardPermissions(context,["dashboard","arrivals"])))throw new Error("ACCESS_DENIED");
   const headers=sheetConnectionHeaders();
   const {from,to}=data;
-  const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR");
+  const meta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"FORMS_SHEETS_ERROR",signal);
   const titles=(meta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
   const months:{y:number;m:number}[]=[];
   for(let y=from.y,m=from.m;y<to.y||(y===to.y&&m<=to.m);){months.push({y,m});m++;if(m>12){m=1;y++;}}
   const intake:import("./recent-referrals").RecentReferral[]=[];
   const usedTabs:string[]=[];
   for(const item of months){
+   signal?.throwIfAborted();
    const month=MONTH_NAMES[item.m]??"";
    const tab=titles.find(t=>t.includes(month)&&/جمع\s*آوری|جمع\s*اوری|جمع\s*آوري/.test(t)&&(t.includes(String(item.y))||t.includes(String(item.y).replace(/[0-9]/g,d=>"۰۱۲۳۴۵۶۷۸۹".charAt(Number(d))))));
    if(!tab)continue;
    usedTabs.push(tab);
    const path="'"+tab.replace(/'/g,"''")+"'!A1:H5000";
-   const collection=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR");
+   const collection=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+DAILY_FORMS_SPREADSHEET_ID+"/values/"+encodeURIComponent(path)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"FORMS_SHEETS_ERROR",signal);
    intake.push(...collectedPeopleInRange(collection.values??[],from,to).map(p=>({...p,sourceTab:tab,sourceDate:p.recordKey?.split(":")[0]??null})));
   }
   if(usedTabs.length!==months.length)throw new Error("HISTORICAL_INTAKE_MONTH_MISSING");
-  const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR");
+  const regMeta=await sheetsGet<{sheets?:{properties?:{title?:string}}[]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"?fields=sheets(properties(title))",headers,"COORDINATION_SHEETS_ERROR",signal);
   const regTitles=(regMeta.sheets??[]).map(x=>x.properties?.title).filter((x):x is string=>!!x);
   const regDays=regTitles.map(name=>({name,date:parseCoordinationTabDate(name,to.y)})).filter((x):x is {name:string;date:JDate}=>!!x.date&&jKey(x.date)>=jKey(from)&&jKey(x.date)<=jKey(to));
   if(regDays.length>93)throw new Error("HISTORICAL_RANGE_TOO_LARGE");
   const registration:import("./recent-referrals").RecentReferral[]=[];
   const teamCounts:[number,number,number,number]=[0,0,0,0];
   for(const day of regDays){
+   signal?.throwIfAborted();
    const tabPath="'"+day.name.replace(/'/g,"''")+"'!A1:Z400";
-   const result=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"/values/"+encodeURIComponent(tabPath)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"COORDINATION_SHEETS_ERROR");
+   const result=await sheetsGet<{values?:unknown[][]}>(GATEWAY_URL+"/spreadsheets/"+COORDINATION_SPREADSHEET_ID+"/values/"+encodeURIComponent(tabPath)+"?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",headers,"COORDINATION_SHEETS_ERROR",signal);
    const grid=result.values??[];
    const group=newestRegisteredPeople([day.name],{date:day.date,grid},day.date,Number.POSITIVE_INFINITY);
    registration.push(...group.people.map(p=>({...p,sourceTab:day.name,sourceDate:formatJ(day.date)})));
@@ -438,7 +445,7 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   if (await hasDashboardPermission(context, "problem-visitors")) {
     const { visitors } = await loadProblemVisitors(context, true);
     const matches = findPotentialProblemMatches(visitors, result);
-    result.matchHistorySaved = await rememberProblemMatches(context.userId, matches);
+    result.matchHistorySaved = await rememberProblemMatches(context.userId, matches,signal);
   }
   return result;
  });
@@ -449,28 +456,30 @@ export const scanVisitorArchive = createServerFn({method:"POST"}).middleware([re
    if(![0,1].includes(input?.book)||!Number.isSafeInteger(input.offset)||input.offset<0)throw new Error("INVALID_ARCHIVE_PAGE");
    return input;
  }).handler(async({data,context})=>{
+  const signal=getRequest().signal;
   setResponseHeader("Cache-Control","private, no-store");
-  if(!(await hasDashboardPermissions(context,["dashboard","problem-visitors"])))throw new Error("ACCESS_DENIED");
+  if(!(await hasDashboardPermissions(context,["dashboard","problem-visitors","arrivals"])))throw new Error("ACCESS_DENIED");
   const {readVisitorRows}=await import("./problem-visitor-sheet.server");
-  const visitors=await readVisitorRows(context,true);
+  const visitors=await readVisitorRows(context,true,signal);
   if(!visitors.length)return {next:null,scanned:0};
   const {archivePeople}=await import("./visitor-archive");
   const {normalizedPerson}=await import("./problem-visitor-matching");
   const headers=sheetConnectionHeaders();
   const url=GATEWAY_URL+"/spreadsheets/"+[DAILY_FORMS_SPREADSHEET_ID,COORDINATION_SPREADSHEET_ID][data.book];
-  const metadata=await sheetsGet<{sheets:{properties:{title:string}}[]}>(url+"?fields=sheets(properties(title))",headers,"ARCHIVE_METADATA");
+  const metadata=await sheetsGet<{sheets:{properties:{title:string}}[]}>(url+"?fields=sheets(properties(title))",headers,"ARCHIVE_METADATA",signal);
   const titles=metadata.sheets.map(s=>s.properties.title).filter(t=>normalizedPerson(t)!==normalizedPerson("مراجعین مشکلاتی")).sort();
   const batch=titles.slice(data.offset,data.offset+6);
   if(batch.length){
     const query=new URLSearchParams();
     batch.forEach(t=>query.append("ranges","'"+t.replace(/'/g,"''")+"'"));
-    const response=await sheetsGet<{valueRanges:{values?:string[][]}[]}>(url+"/values:batchGet?"+query,headers,"ARCHIVE_READ");
+    const response=await sheetsGet<{valueRanges:{values?:string[][]}[]}>(url+"/values:batchGet?"+query,headers,"ARCHIVE_READ",signal);
     if(response.valueRanges.length!==batch.length)throw new Error("ARCHIVE_INCOMPLETE");
     for(const [i,title] of batch.entries()){
+      signal?.throwIfAborted();
       const people=archivePeople(title,response.valueRanges[i]?.values??[],todayJalali(),data.book===1);
       const group={date:null,source:title,people},empty={date:null,source:null,people:[]};
       const matches=findPotentialProblemMatches(visitors,{newReferrals:data.book===0?group:empty,registration:data.book===1?group:empty,fetchedAt:Date.now()});
-      if(!await rememberProblemMatches(context.userId,matches))throw new Error("ARCHIVE_SAVE");
+      if(!await rememberProblemMatches(context.userId,matches,signal))throw new Error("ARCHIVE_SAVE");
     }
   }
   const offset=data.offset+batch.length;

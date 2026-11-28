@@ -1,6 +1,6 @@
 import { RotatingTazkira } from "@/components/DashboardArtwork";
 import { useSectionActions } from "@/lib/dashboard-access-context";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Plus, Trash2, X, UserRound, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,22 +20,40 @@ import { recentReferralsQuery } from "@/lib/queries";
 export function ProblemVisitorsPage() {
   const can = useSectionActions("problem-visitors");
   const dashboard = useSectionActions("dashboard");
-  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: dashboard("view") });
+  const arrivals = useSectionActions("arrivals");
+  const canViewReferralDetails = dashboard("view") && arrivals("view");
+  const canViewProblemVisitors = can("view");
+  const canViewProblemMatches = canViewProblemVisitors && canViewReferralDetails;
+  const recent = useQuery({ ...recentReferralsQuery(60_000), enabled: canViewProblemMatches });
   const currentMatches = new Set(recent.data?.potentialMatches?.map((match) => match.visitorId));
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const qc = useQueryClient();
   const details = useQuery({
     queryKey: ["problem-match-details", selectedId],
-    queryFn: () => getProblemMatchDetails({ data: selectedId! }),
-    enabled: !!selectedId && dashboard("view"),
+    queryFn: ({ signal }) => getProblemMatchDetails({ data: selectedId!, signal }),
+    enabled: !!selectedId && canViewProblemMatches,
   });
-  const qc = useQueryClient();
+  useEffect(() => {
+    if (!canViewProblemVisitors) {
+      void qc.cancelQueries({ queryKey: ["problem-visitors"] });
+      qc.removeQueries({ queryKey: ["problem-visitors"] });
+    }
+    if (canViewProblemMatches) return;
+    setDetailOpen(false);
+    setSelectedId(null);
+    void qc.cancelQueries({ queryKey: ["problem-match-details"] });
+    qc.removeQueries({ queryKey: ["problem-match-details"] });
+    void qc.cancelQueries({ queryKey: ["visitor-archive"] });
+    qc.removeQueries({ queryKey: ["visitor-archive"] });
+  }, [canViewProblemVisitors, canViewProblemMatches, qc]);
   const [name, setName] = useState("");
   const [father, setFather] = useState("");
   const [issue, setIssue] = useState("");
   const q = useQuery({
     queryKey: ["problem-visitors"],
-    queryFn: () => getProblemVisitors(),
+    queryFn: ({ signal }) => getProblemVisitors({ signal }),
+    enabled: canViewProblemVisitors,
     refetchInterval: 60_000,
     retry: false,
   });
@@ -44,7 +62,7 @@ export function ProblemVisitorsPage() {
   const activeIds = q.data?.visitors.filter((v) => v.status === "active").map((v) => v.id);
   const archive = useQuery({
     queryKey: ["visitor-archive", activeIds],
-    enabled: dashboard("view") && !!activeIds?.length,
+    enabled: canViewProblemMatches && !!activeIds?.length,
     staleTime: 300_000,
     refetchInterval: 600_000,
     retry: false,
@@ -92,8 +110,8 @@ export function ProblemVisitorsPage() {
           ثبتونه د مراجع د نوم او د پلار د نوم د پرتله کولو لپاره کارېږي.
         </p>
       </div>
-      {dashboard("view") && <ProblemVisitorAlerts />}
-      {dashboard("view") && !!activeIds?.length && (
+      {canViewProblemMatches && <ProblemVisitorAlerts />}
+      {canViewProblemMatches && !!activeIds?.length && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2 text-sm">
           <span role="status">
             {archive.isFetching
@@ -197,7 +215,7 @@ export function ProblemVisitorsPage() {
                       {flagged ? "احتمالي تطابق" : v.status === "active" ? "فعال" : "حل شوی"}
                     </span>
                   </div>
-                  {(v.first_matched_at || currentMatches.has(v.id)) && dashboard("view") ? (
+                  {(v.first_matched_at || currentMatches.has(v.id)) && canViewProblemMatches ? (
                     <button
                       type="button"
                       className="py-1 text-sm font-bold underline after:absolute after:inset-0 after:rounded-lg focus-visible:outline-primary"
@@ -256,7 +274,7 @@ export function ProblemVisitorsPage() {
         )}
       </section>
       <Dialog.Root
-        open={detailOpen && !!selected}
+        open={detailOpen && !!selected && canViewProblemMatches}
         onOpenChange={setDetailOpen}
       >
         <Dialog.Portal>
