@@ -262,7 +262,8 @@ export const getStateReportForYesterday=createServerFn({method:"GET"}).middlewar
  */
 export const getRecentReferrals=createServerFn({method:"GET"})
  .middleware([requireSupabaseAuth])
- .handler(async({context}):Promise<RecentReferrals>=>{\n  const signal=getRequest().signal;
+ .handler(async({context}):Promise<RecentReferrals>=>{
+  const signal=getRequest().signal;
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermissions(context,["dashboard","arrivals"])))throw new Error("ACCESS_DENIED");
   const headers=sheetConnectionHeaders();
@@ -399,7 +400,8 @@ export const getHistoricalReferrals=createServerFn({method:"POST"})
   if(!from||!to||jKey(from)>jKey(to)||(to.y-from.y)*12+to.m-from.m>2)throw new Error("HISTORICAL_RANGE_MAX_THREE_MONTHS");
   return {from,to};
  })
- .handler(async({data,context})=>{\n  const signal=getRequest().signal;
+ .handler(async({data,context})=>{
+  const signal=getRequest().signal;
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermissions(context,["dashboard","arrivals"])))throw new Error("ACCESS_DENIED");
   const headers=sheetConnectionHeaders();
@@ -453,7 +455,8 @@ export const scanVisitorArchive = createServerFn({method:"POST"}).middleware([re
  .validator((input:{book:number;offset:number})=>{
    if(![0,1].includes(input?.book)||!Number.isSafeInteger(input.offset)||input.offset<0)throw new Error("INVALID_ARCHIVE_PAGE");
    return input;
- }).handler(async({data,context})=>{\n  const signal=getRequest().signal;
+ }).handler(async({data,context})=>{
+  const signal=getRequest().signal;
   setResponseHeader("Cache-Control","private, no-store");
   if(!(await hasDashboardPermissions(context,["dashboard","problem-visitors","arrivals"])))throw new Error("ACCESS_DENIED");
   const {readVisitorRows}=await import("./problem-visitor-sheet.server");
